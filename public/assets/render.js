@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=13';
-import {isZh} from './teams.js?v=13';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=13';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=14';
+import {isZh} from './teams.js?v=14';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=14';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -2270,7 +2270,7 @@ function statCells(team, text, info) {
   const cells = {
     no: [zh ? '号码' : 'NO.', text.number || '—'],
     est: [zh ? '始于' : 'EST.', String(team.est)],
-    titles: titled ? [short, `${team.titles.n}×`] : null,
+    titles: titled ? [short, zh ? `${team.titles.n}冠` : `${team.titles.n}×`] : null,
     legends: team.retired && team.retired.length ? [zh ? '传奇' : 'LEGENDS', String(team.retired.length)] : null,
     home: [words.home, team.homeNick || team.home],
     city: [zh ? '城市' : 'CITY', zh ? team.city : upper(team.city)],
@@ -2524,8 +2524,8 @@ const fronts = {
       const ph = info.mem.id === 'tag' ? u * 5 : u * 3.4;
       relic(ctx, team, info, area.x + area.w - pw - u * .55, plateY - ph - u * 2.1, pw, ph, u, text, words);
     }
-    autograph(ctx, info, text, words, area.x + u * 1.2, plateY - u * 1.6, area.w * (info.mem ? .52 : .7), u);
-    serialStamp(ctx, info, area.x + u * .4, info.auto ? plateY - u * 5.9 : plateY - u * 2.2, u, words);
+    autograph(ctx, info, text, words, area.x + u * 1.2, plateY - u * 2.2, area.w * (info.mem ? .52 : .7), u);
+    serialStamp(ctx, info, area.x + u * .4, info.auto ? plateY - u * 6.5 : plateY - u * 2.2, u, words);
     const crest = u * 5.2;
     const ccx = area.x + area.w - crest * .5 - u * .2;
     const ccy = area.y + crest * .5 + u * .2;
@@ -3019,10 +3019,29 @@ const fronts = {
       ctx.stroke();
       autograph(ctx, info, text, words, sx + u * .2, lowY + lowH * .62, F.w - u * 10.5, u * .95);
     } else {
-      ctx.fillStyle = 'rgba(255,255,255,.75)';
+      // The insert, then the facts stacked on gold rules, as on a showcase card.
+      const cw = F.x + F.w - u * 1.6 - sx;
+      ctx.fillStyle = 'rgba(255,255,255,.8)';
       ctx.textAlign = 'left';
-      fit(ctx, info.insert, F.w - u * 10.5, 900, u * .55, SANS, u * .14);
-      ctx.fillText(info.insert, sx, lowY + lowH * .5);
+      fit(ctx, info.insert, cw, 900, u * .5, SANS, u * .14);
+      ctx.fillText(info.insert, sx, lowY + u * .7);
+      const cells = statCells(team, text, info).filter(([, value]) => value !== text.number).slice(0, 3);
+      const rh = Math.min(u * 1.5, (lowH - u * 1.2) / Math.max(1, cells.length));
+      cells.forEach(([label, value], k) => {
+        const ry = lowY + u * 1.2 + k * rh;
+        ctx.fillStyle = goldInk;
+        ctx.globalAlpha = .55;
+        ctx.fillRect(sx, ry, cw, Math.max(1, u * .04));
+        ctx.globalAlpha = 1;
+        ctx.textAlign = 'left';
+        fit(ctx, label, cw * .4, 900, u * .36, SANS, u * .1);
+        ctx.fillText(label, sx, ry + rh * .62);
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'right';
+        fit(ctx, value, cw * .6, 400, rh * .58, DISPLAY, u * .02);
+        ctx.fillText(value, sx + cw, ry + rh * .7);
+      });
+      ctx.textAlign = 'left';
     }
     // Name across the foot, in gold.
     ctx.fillStyle = goldInk;
@@ -4159,7 +4178,11 @@ const backs = {
         fit(ctx, who, wIn - u * 1.8, 800, u * .5, SANS, u * .04);
         ctx.fillText(who, x0 + u * 1.7, ly + u * .72);
       });
+      y += info.legends.length * u * .95 + u * .3;
     }
+    // Trivia in the room left above the foot.
+    triviaBox(ctx, info.facts, x0, y + u * .3, wIn, Math.min(u * 4.4, B.y + B.h - u * 2.9 - y), u,
+      {bg: 'rgba(255,255,255,.7)', line: ink, label: ink, ink: '#1b1b1b'}, words.trivia);
     backFoot(ctx, team, text, B, info, r, u, words);
   },
 
@@ -4546,6 +4569,37 @@ const backs = {
     ctx.textAlign = 'center';
     fit(ctx, zh ? 'HOT 主场相框 · 认证部' : 'HOT AUTHENTICATION', wIn, 800, u * .36, SANS, u * .14);
     ctx.fillText(zh ? 'HOT 主场相框 · 认证部' : 'HOT AUTHENTICATION', mid, lineY + u * .65);
+    // The card's record, gold-ruled, in what room is left.
+    const ty = lineY + u * 1.4;
+    const rows = [
+      [zh ? '球员' : 'PLAYER', text.name],
+      [zh ? '球队' : 'TEAM', zh ? team.name : upper(team.short || team.name)],
+      [zh ? '系列' : 'SET', info.set],
+      [words.parallel, info.name],
+      [zh ? '编号' : 'NUMBERED', info.serial || (zh ? '不限' : 'UNNUMBERED')],
+      [zh ? '赛季' : 'SEASON', seasonYear(text)],
+    ];
+    const rh = Math.min(u * 1.15, (fy - u * .5 - ty) / 3);
+    if (rh > u * .8) {
+      const cw = wIn / 2;
+      const x0 = mid - wIn / 2;
+      ctx.fillStyle = gold;
+      ctx.fillRect(x0, ty, wIn, Math.max(1, u * .05));
+      rows.forEach(([label, value], k) => {
+        const cx = x0 + (k % 2) * cw;
+        const cy = ty + Math.floor(k / 2) * rh;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(232,191,85,.8)';
+        fit(ctx, label, cw * .38, 900, u * .32, SANS, u * .1);
+        ctx.fillText(label, cx + u * .2, cy + rh * .62);
+        ctx.fillStyle = '#ffffff';
+        fit(ctx, value, cw * .58, 800, u * .42, SANS, u * .02);
+        ctx.fillText(value, cx + cw * .4, cy + rh * .62);
+        ctx.fillStyle = 'rgba(232,191,85,.35)';
+        ctx.fillRect(cx, cy + rh, cw - u * .2, Math.max(1, u * .03));
+      });
+      ctx.fillRect(mid - Math.max(1, u * .03) / 2, ty + rh * .15, Math.max(1, u * .03), rh * 2.7);
+    }
     ctx.textAlign = 'left';
     backFoot(ctx, team, text, B, info, r, u, words);
   },
