@@ -579,6 +579,234 @@ export const motifs = {
     }
     void bg;
   },
+  jacket(ctx, fg, bg) {
+    // Buzz, Georgia Tech's yellow jacket, seen from above with its wings spread.
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.ellipse(50 + side * 22, 38, 20, 10, side * -.5, 0, TAU);
+      ctx.globalAlpha = .55;
+      ctx.fillStyle = fg;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = fg;
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+    }
+    line(ctx, fg, 2.4, [45, 16, 37, 4]);
+    line(ctx, fg, 2.4, [55, 16, 63, 4]);
+    circle(ctx, 50, 22, 9, fg);
+    circle(ctx, 50, 42, 12, fg);
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(50, 70, 15, 22, 0, 0, TAU);
+    ctx.fillStyle = fg;
+    ctx.fill();
+    ctx.clip();
+    ctx.fillStyle = bg;
+    for (const y of [59, 69, 79]) ctx.fillRect(30, y, 40, 4);
+    ctx.restore();
+    fillPath(ctx, 'M45 90 L50 99 L55 90Z', fg);
+  },
+  hokiebird(ctx, fg, bg) {
+    // The HokieBird: a fanned turkey tail behind a round body.
+    ctx.save();
+    ctx.translate(50, 66);
+    for (let k = -4; k <= 4; k++) {
+      ctx.save();
+      ctx.rotate(k * .32);
+      ctx.beginPath();
+      ctx.ellipse(0, -36, 8, 26, 0, 0, TAU);
+      ctx.fillStyle = fg;
+      ctx.fill();
+      ctx.strokeStyle = bg;
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+    circle(ctx, 50, 70, 23, bg);
+    circle(ctx, 50, 70, 20, fg);
+    circle(ctx, 50, 44, 12, bg);
+    circle(ctx, 50, 44, 10, fg);
+    circle(ctx, 53, 42, 2.4, bg);
+    fillPath(ctx, 'M58 43 L69 46 L58 50Z', fg);
+    fillPath(ctx, 'M47 52 C49 58 47 64 44 64 C42 60 43 55 47 52Z', fg);
+    line(ctx, fg, 4, [42, 88, 40, 98]);
+    line(ctx, fg, 4, [58, 88, 60, 98]);
+  },
+  pine(ctx, fg) {
+    // The Lone Pine, Dartmouth's oldest symbol: a tall trunk with wind-swept clumps.
+    fillPath(ctx, 'M46 96 C48 70 46 46 50 6 C52 40 54 70 56 96Z', fg);
+    for (const [x, y, w, h, side] of [[34, 30, 22, 7, -1], [66, 22, 18, 6, 1], [29, 48, 28, 8, -1], [70, 42, 24, 7, 1], [34, 66, 22, 7, -1], [66, 60, 22, 7, 1]]) {
+      ctx.beginPath();
+      ctx.ellipse(x, y, w / 2 + 4, h, side * .12, 0, TAU);
+      ctx.fillStyle = fg;
+      ctx.fill();
+      line(ctx, fg, 2.4, [50, y + 5, x - side * (w / 2 - 2), y]);
+    }
+    ctx.fillStyle = fg;
+    ctx.fillRect(26, 94, 48, 4);
+  },
+  vcat(ctx, fg, bg) {
+    // Villanova's V with a wildcat's head set in it.
+    fillPath(ctx, 'M4 10 H36 L50 52 L64 10 H96 L58 94 H42Z', fg);
+    ctx.save();
+    svgPath(ctx, 'M34 30 L39 12 L48 24 H52 L61 12 L66 30 C70 42 64 54 50 60 C36 54 30 42 34 30Z');
+    ctx.strokeStyle = bg;
+    ctx.lineWidth = 4;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    ctx.fillStyle = fg;
+    ctx.fill();
+    ctx.restore();
+    fillPath(ctx, 'M38 34 L47 38 L40 41Z M62 34 L53 38 L60 41Z', bg);
+    fillPath(ctx, 'M46 46 H54 L50 51Z', bg);
+  },
+  cyclone(ctx, fg) {
+    // A cyclone funnel, after the 1895 headline "Struck by a Cyclone".
+    const rings = 8;
+    ctx.strokeStyle = fg;
+    for (let k = 0; k < rings; k++) {
+      const t = k / (rings - 1);
+      ctx.beginPath();
+      ctx.ellipse(50 + Math.sin(t * 3.2) * 8, 12 + t * 72, 42 - t * 34, 5 + (1 - t) * 3, 0, 0, TAU);
+      ctx.lineWidth = 5.5 - t * 2.5;
+      ctx.stroke();
+    }
+    fillPath(ctx, 'M53 84 C55 91 51 96 46 99 C48 94 47 90 49 84Z', fg);
+  },
+  powercat(ctx, fg, bg) {
+    // An angular wildcat head in profile, in the spirit of K-State's Powercat.
+    fillPath(ctx, 'M10 42 L28 10 L40 30 L58 22 L70 34 L95 44 L80 52 L92 60 L70 64 L60 86 L34 92 L16 76Z', fg);
+    fillPath(ctx, 'M28 22 L35 32 L26 33Z', bg);
+    fillPath(ctx, 'M55 39 L73 44 L57 47Z', bg);
+    line(ctx, bg, 2, [72, 62, 60, 70]);
+  },
+  iu(ctx, fg, bg) {
+    // Indiana's interlocking IU: the I standing in front of the U.
+    fillPath(ctx, 'M16 18 H40 V24 H36 V64 C36 76 64 76 64 64 V24 H60 V18 H84 V24 H80 V66 C80 86 66 94 50 94 C34 94 20 86 20 66 V24 H16Z', fg);
+    ctx.save();
+    svgPath(ctx, 'M38 4 H62 V12 H56 V86 H62 V96 H38 V86 H44 V12 H38Z');
+    ctx.strokeStyle = bg;
+    ctx.lineWidth = 5;
+    ctx.lineJoin = 'miter';
+    ctx.stroke();
+    ctx.fillStyle = fg;
+    ctx.fill();
+    ctx.restore();
+  },
+  schooner(ctx, fg, bg) {
+    // The Sooner Schooner, the covered wagon that runs onto Owen Field.
+    fillPath(ctx, 'M18 56 C14 34 20 16 30 16 C38 16 42 22 50 22 C58 22 62 16 70 16 C80 16 86 34 82 56Z', fg);
+    for (const x of [34, 50, 66]) line(ctx, bg, 2.2, [x, 23, x, 55]);
+    ctx.fillStyle = fg;
+    ctx.fillRect(10, 56, 80, 12);
+    for (const x of [26, 74]) {
+      ctx.beginPath();
+      ctx.arc(x, 80, 14, 0, TAU);
+      ctx.strokeStyle = fg;
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      for (let k = 0; k < 6; k++) {
+        const a = k * Math.PI / 3;
+        line(ctx, fg, 2, [x, 80, x + Math.cos(a) * 13, 80 + Math.sin(a) * 13]);
+      }
+      circle(ctx, x, 80, 3.5, fg);
+    }
+    line(ctx, fg, 3, [90, 62, 99, 72]);
+  },
+  lionhead(ctx, fg, bg) {
+    // Roar-ee: a lion's head inside a spiked mane.
+    star(ctx, 50, 50, 48, fg, 14, .72);
+    circle(ctx, 50, 52, 26, bg);
+    circle(ctx, 50, 52, 22, fg);
+    fillPath(ctx, 'M28 34 L33 21 L41 31Z M72 34 L67 21 L59 31Z', fg);
+    circle(ctx, 41, 46, 3.5, bg);
+    circle(ctx, 59, 46, 3.5, bg);
+    fillPath(ctx, 'M44 55 H56 L50 62Z', bg);
+    line(ctx, bg, 2, [50, 62, 50, 67, 43, 71]);
+    line(ctx, bg, 2, [50, 67, 57, 71]);
+  },
+  duck(ctx, fg, bg) {
+    // The Beijing Ducks: a duck's head and broad bill.
+    fillPath(ctx, 'M20 94 C16 72 22 56 34 47 C24 40 22 24 32 14 C42 4 62 6 70 18 C74 24 74 30 72 34 L96 40 C99 46 93 52 84 52 L70 52 C66 60 64 72 70 94Z', fg);
+    circle(ctx, 54, 24, 6, bg);
+    circle(ctx, 56, 24, 3, fg);
+    line(ctx, bg, 2.4, [73, 45, 92, 46]);
+  },
+  tiger(ctx, fg, bg) {
+    // The Southern Tiger's face, with stripes on the brow and cheeks.
+    fillPath(ctx, 'M16 24 L32 30 L20 6Z M84 24 L68 30 L80 6Z', fg);
+    fillPath(ctx, 'M50 12 C76 12 90 30 90 52 C90 76 72 94 50 94 C28 94 10 76 10 52 C10 30 24 12 50 12Z', fg);
+    fillPath(ctx, 'M50 15 L44 30 L50 26 L56 30Z M39 18 L36 32 L44 26Z M61 18 L64 32 L56 26Z', bg);
+    fillPath(ctx, 'M11 48 L28 53 L13 58Z M13 64 L28 64 L17 71Z M89 48 L72 53 L87 58Z M87 64 L72 64 L83 71Z', bg);
+    fillPath(ctx, 'M29 43 L44 46 L34 52Z M71 43 L56 46 L66 52Z', bg);
+    fillPath(ctx, 'M42 62 H58 L50 70Z', bg);
+    line(ctx, bg, 2.4, [50, 70, 50, 76, 42, 82]);
+    line(ctx, bg, 2.4, [50, 76, 58, 82]);
+  },
+  tsinghua(ctx, fg, bg) {
+    // Tsinghua's Second Gate (二校门): a white arch under a pediment.
+    fillPath(ctx, 'M8 92 V40 H92 V92 H64 V62 C64 52 58 46 50 46 C42 46 36 52 36 62 V92Z', fg);
+    fillPath(ctx, 'M12 38 L50 12 L88 38Z', fg);
+    circle(ctx, 50, 29, 5, bg);
+    ctx.fillStyle = bg;
+    for (const x of [16, 26, 74, 84]) ctx.fillRect(x - 1.5, 50, 3, 38);
+    ctx.fillRect(10, 38, 80, 2);
+    ctx.fillStyle = fg;
+    ctx.fillRect(4, 92, 92, 5);
+  },
+  boya(ctx, fg) {
+    // Boya Pagoda over Weiming Lake, Peking University.
+    ctx.fillStyle = fg;
+    for (let k = 0; k < 9; k++) {
+      const y = 70 - k * 6.4;
+      const half = 14 - k * 1.1;
+      fillPath(ctx, `M${50 - half - 3} ${y} H${50 + half + 3} L${50 + half} ${y - 3} H${50 - half}Z`, fg);
+      ctx.fillRect(50 - half + 2, y - 6.4, (half - 2) * 2, 3.6);
+    }
+    fillPath(ctx, 'M47 14 L50 2 L53 14Z', fg);
+    ctx.fillRect(38, 70, 24, 6);
+    for (const [y, w] of [[82, 40], [89, 30], [95, 18]]) line(ctx, fg, 2.4, [50 - w, y, 50 + w, y]);
+  },
+  shuttle(ctx, fg, bg) {
+    // A shuttlecock, for the 2008 Olympic badminton hall on campus.
+    ctx.save();
+    ctx.translate(50, 50);
+    ctx.rotate(-.5);
+    ctx.translate(-50, -50);
+    fillPath(ctx, 'M28 6 H72 L60 66 H40Z', fg);
+    for (const x of [37, 46, 54, 63]) line(ctx, bg, 1.6, [x, 9, 50 + (x - 50) * .45, 63]);
+    line(ctx, bg, 2, [32, 28, 68, 28]);
+    line(ctx, bg, 2, [36, 47, 64, 47]);
+    fillPath(ctx, 'M38 66 H62 V72 C62 86 56 94 50 94 C44 94 38 86 38 72Z', fg);
+    ctx.restore();
+  },
+  yanan(ctx, fg, bg) {
+    // Pagoda Hill and the Yan River bridge, from BIT's emblem and its 1940 start in Yan'an.
+    fillPath(ctx, 'M2 62 C20 44 34 40 50 40 C66 40 80 44 98 62Z', fg);
+    ctx.fillStyle = fg;
+    for (let k = 0; k < 6; k++) {
+      const y = 41 - k * 5;
+      const half = 7 - k * .7;
+      ctx.fillRect(50 - half, y - 5, half * 2, 3.6);
+      fillPath(ctx, `M${50 - half - 2.5} ${y - 1.4} H${50 + half + 2.5} L${50 + half} ${y - 4} H${50 - half}Z`, fg);
+    }
+    fillPath(ctx, 'M48 12 L50 3 L52 12Z', fg);
+    ctx.fillStyle = fg;
+    ctx.fillRect(2, 66, 96, 28);
+    ctx.fillStyle = bg;
+    ctx.fillRect(2, 72, 96, 1.6);
+    for (const x of [18, 50, 82]) {
+      ctx.beginPath();
+      ctx.moveTo(x - 12, 95);
+      ctx.lineTo(x - 12, 88);
+      ctx.arc(x, 88, 12, Math.PI, 0);
+      ctx.lineTo(x + 12, 95);
+      ctx.closePath();
+      ctx.fill();
+    }
+  },
 };
 
 // Draws `motif` scaled into a square of `size` centred on (cx, cy).
@@ -807,6 +1035,13 @@ export function trim(ctx, team, x, y, w, h) {
         ctx.fillStyle = (k + row) % 2 ? team.c1 : team.c2;
         ctx.fillRect(px, y + row * s, s, s);
       }
+    }
+  } else if (t === 'candystripe') {
+    // Indiana's candy-striped warm-up pants: crimson and white upright stripes.
+    const s = Math.max(2, h * .45);
+    for (let px = x, k = 0; px < x + w; px += s, k++) {
+      ctx.fillStyle = k % 2 ? '#ffffff' : team.c1;
+      ctx.fillRect(px, y, s, h);
     }
   } else if (t === 'senyera') {
     ctx.fillStyle = '#edbb00';

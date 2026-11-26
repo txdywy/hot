@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos} from './teams.js?v=3';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine} from './render.js?v=3';
-import {venue, kit, trim, drawMotif} from './art.js?v=3';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=3';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=3';
+import {groups, teams, styles, slogans, byId, logos} from './teams.js?v=4';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine} from './render.js?v=4';
+import {venue, kit, trim, drawMotif} from './art.js?v=4';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=4';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=4';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;

@@ -2,7 +2,7 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers) and its emblem, plus the words typed in. A team's logo
 // file is drawn too when one has been added (see logos in teams.js).
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=3';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=4';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
