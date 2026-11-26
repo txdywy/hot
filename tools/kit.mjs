@@ -78,7 +78,9 @@ export async function open(browser, url, device, problems, label) {
   const page = await context.newPage();
   page.on('pageerror', error => problems.push(`${label}: script error: ${error.message}`));
   page.on('console', message => {
-    if (message.type() === 'error') problems.push(`${label}: console error: ${message.text()}`);
+    if (message.type() !== 'error') return;
+    const where = message.location();
+    problems.push(`${label}: console error: ${message.text()} (at ${where.url || 'no url'}:${where.lineNumber})`);
   });
   page.on('response', response => {
     if (response.status() >= 400) problems.push(`${label}: ${response.status()} ${response.url()}`);
