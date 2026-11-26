@@ -1283,7 +1283,7 @@ export function cardInfo(team, seed) {
     nameZh = '普卡';
   } else {
     name = `${colour.id === 'silver' ? '' : `${colour.en} `}${finish.en}`;
-    nameZh = colour.id === 'silver' ? `银色${finish.zh}` : `${colour.zh}色${finish.zh}`;
+    nameZh = colour.id === 'team' ? `队色${finish.zh}` : `${colour.zh}色${finish.zh}`;
   }
   const serial = run > 1 ? Math.floor(rand() * run) + 1 : run;
   const serialText = run ? `${String(serial).padStart(String(run).length, '0')}/${run}` : '';
@@ -2062,8 +2062,8 @@ const fronts = {
       const ph = info.mem.id === 'tag' ? u * 5 : u * 3.4;
       relic(ctx, team, info, area.x + area.w - pw - u * .55, plateY - ph - u * 2.1, pw, ph, u, text, words);
     }
-    autograph(ctx, info, text, words, area.x + u * 1.2, plateY - u * 1.2, area.w * (info.mem ? .52 : .7), u);
-    serialStamp(ctx, info, area.x + u * .4, info.auto ? plateY - u * 4.4 : plateY - u * 2, u, words);
+    autograph(ctx, info, text, words, area.x + u * 1.2, plateY - u * 1.6, area.w * (info.mem ? .52 : .7), u);
+    serialStamp(ctx, info, area.x + u * .4, info.auto ? plateY - u * 5.9 : plateY - u * 2.2, u, words);
     const crest = u * 5.2;
     const ccx = area.x + area.w - crest * .5 - u * .2;
     const ccy = area.y + crest * .5 + u * .2;
