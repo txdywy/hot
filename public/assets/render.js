@@ -722,7 +722,7 @@ function ticket(ctx, team, text, L) {
   const headW = ctx.measureText(words.history).width;
   ctx.fillRect(px + headW + u * .3, hTop - u * .13, P - headW - u * .3, Math.max(1, u * .05));
   (team.moments || []).slice(0, 3).forEach(([year, line, note], k) => {
-    const y = hTop + u * 1.05 + k * u * 1.18;
+    const y = hTop + u * .98 + k * u * 1.1;
     ctx.fillStyle = strip === PAPER ? ink : solid(team);
     fit(ctx, String(year), u * 2.2, 400, u * .82, DISPLAY);
     ctx.fillText(String(year), px, y + u * .1);
@@ -741,7 +741,7 @@ function ticket(ctx, team, text, L) {
     ctx.fillStyle = ink;
     ctx.globalAlpha = .8;
     fit(ctx, legends, P, 800, u * .32, SANS, u * .06);
-    ctx.fillText(legends, px, top + u * 13.3);
+    ctx.fillText(legends, px, top + u * 13.5);
     ctx.globalAlpha = 1;
   }
 
