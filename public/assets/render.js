@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=15';
-import {isZh} from './teams.js?v=15';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=15';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=16';
+import {isZh} from './teams.js?v=16';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=16';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -2909,10 +2909,10 @@ const fronts = {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     const mid = F.x + F.w / 2;
-    nameBlock(ctx, text.name, mid, by + u * 2.5, F.w - u * 7.4, u * 1.7, {metal: 'gold', weight: .03});
+    nameBlock(ctx, text.name, mid, by + u * 2.5, F.w - u * 8.4, u * 1.7, {metal: 'gold', weight: .03, align: 'center'});
     ctx.textAlign = 'center';
     ctx.fillStyle = '#f6e7b8';
-    fit(ctx, `${info.set} · ${isZh(team) ? team.name : upper(team.name)} · ${info.role}`, F.w - u * 7.4, 800, u * .4, SANS, u * .1);
+    fit(ctx, `${info.set} · ${isZh(team) ? team.name : upper(team.name)} · ${info.role}`, F.w - u * 8.4, 800, u * .4, SANS, u * .1);
     ctx.globalAlpha = .85;
     ctx.fillText(`${info.set} · ${isZh(team) ? team.name : upper(team.name)} · ${info.role}`, mid, by + u * 3.2);
     ctx.globalAlpha = 1;
@@ -3419,7 +3419,7 @@ const fronts = {
     rookieMark(ctx, info.rookie, cx, F.y + u * 13.2, u * 2.6, team, words);
     // The name over the ratings.
     const ny = area.y + area.h + u * 2.55;
-    nameBlock(ctx, text.name, F.x + F.w / 2, ny, F.w - u * 3, u * 2.1, kind ? {metal: kind} : {ink: '#ffffff'});
+    nameBlock(ctx, text.name, F.x + F.w / 2, ny, F.w - u * 3, u * 2.1, kind ? {metal: kind, align: 'center'} : {ink: '#ffffff', align: 'center'});
     ctx.textAlign = 'center';
     ctx.fillStyle = two;
     const teamLine = `${zh ? team.name : upper(team.name)} · ${info.insert}`;
