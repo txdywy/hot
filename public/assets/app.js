@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=8';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine} from './render.js?v=8';
-import {venue, kit, trim, drawMotif} from './art.js?v=8';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=8';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=8';
+import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=9';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo} from './render.js?v=9';
+import {venue, kit, trim, drawMotif} from './art.js?v=9';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=9';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=9';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -71,7 +71,13 @@ const state = {
   slogan: '',
   date: false,
   mark: true,
+  // Which trading card comes out of the pack; 再抽一张 picks a new one.
+  seed: newSeed(),
 };
+
+function newSeed() {
+  return Math.floor(Math.random() * 4294967296) >>> 0;
+}
 // image is full size for saving; the smaller copies keep redraws fast.
 let image = null;
 let previewSource = null;
@@ -114,6 +120,7 @@ function loadChoices() {
     if (typeof saved.slogan === 'string') state.slogan = saved.slogan.slice(0, 24);
     state.date = saved.date === true;
     state.mark = saved.mark !== false;
+    if (typeof saved.seed === 'number' && saved.seed >= 0 && saved.seed < 4294967296) state.seed = Math.floor(saved.seed);
   } catch (error) {
     // Private browsing or blocked storage: start fresh.
   }
@@ -126,7 +133,7 @@ function storeChoices() {
     try {
       localStorage.setItem(storeKey, JSON.stringify({
         team: state.team.id, style: state.style, ratio: state.ratio,
-        name: state.name, number: state.number, slogan: state.slogan, date: state.date, mark: state.mark,
+        name: state.name, number: state.number, slogan: state.slogan, date: state.date, mark: state.mark, seed: state.seed,
       }));
     } catch (error) {
       // Nothing to do: the choices simply are not remembered.
@@ -149,6 +156,7 @@ function words() {
     number: state.number || state.team.number,
     slogan: state.slogan.trim() || state.team.slogan,
     date: dateText(),
+    seed: state.seed,
   };
 }
 
@@ -229,6 +237,7 @@ function render() {
   const styleName = styles.find(item => item[0] === state.style)[1];
   preview.setAttribute('aria-label', `${own ? '你的照片' : '示例照片'}，${state.team.name}，${styleName}款式`);
   updateDrag();
+  updateCardNote();
   drawVenue();
   paintSwatches();
   if (thumbsDirty) drawThumbs();
@@ -508,8 +517,43 @@ $('styles').addEventListener('click', event => {
   if (!card || card.dataset.style === state.style) return;
   state.style = card.dataset.style;
   syncPressed($('styles'), 'style', state.style);
+  showCardTools();
   changed(false);
 });
+
+// ---------- Trading card: the pull and 再抽一张 ----------
+
+// The trading card has its own shape, so the photo-shape chips give way to the
+// reroll button and a line saying what came out of the pack.
+function showCardTools() {
+  const isCard = state.style === 'card';
+  $('draw-row').hidden = !isCard;
+  $('ratio-row').hidden = isCard;
+  updateCardNote();
+}
+
+let cardNoteKey = '';
+function updateCardNote() {
+  if (state.style !== 'card') return;
+  const key = `${state.team.id} ${state.seed}`;
+  if (key === cardNoteKey) return;
+  cardNoteKey = key;
+  const info = cardInfo(state.team, state.seed);
+  $('draw-note').textContent = `这张：${info.label}`;
+  $('draw-note').dataset.tier = info.tier.id;
+}
+
+$('draw').addEventListener('click', () => {
+  state.seed = newSeed();
+  changed();
+  if (!calmMotion.matches) {
+    stage.classList.remove('pulled');
+    // Restart the little flip animation.
+    void stage.offsetWidth;
+    stage.classList.add('pulled');
+  }
+});
+stage.addEventListener('animationend', () => stage.classList.remove('pulled'));
 
 $('ratios').addEventListener('click', event => {
   const chip = event.target.closest('[data-ratio]');
@@ -886,7 +930,7 @@ let dragAxis = '';
 
 function updateDrag() {
   dragAxis = '';
-  if (own && state.ratio !== 'original' && lastLayout && previewSource) {
+  if (own && (state.ratio !== 'original' || state.style === 'card') && lastLayout && previewSource) {
     const want = lastLayout.area.w / lastLayout.area.h;
     const have = previewSource.width / previewSource.height;
     if (Math.abs(Math.log(have / want)) > .01) dragAxis = have > want ? 'x' : 'y';
@@ -1408,6 +1452,7 @@ drawGroups();
 drawTeams();
 drawStyles();
 drawRatios();
+showCardTools();
 drawSlogans();
 theme();
 drawDossier();

@@ -180,7 +180,7 @@ async function problemShown(page) {
   await context.close();
 }
 
-// 6. Team logos: when a file is listed in teams.js, it shows on the card and in all three styles.
+// 6. Team logos: when a file is listed in teams.js, it shows on the card and in all four styles.
 {
   const label = 'logos';
   const context = await browser.newContext(Object.assign({}, phones.iphone, engine === 'webkit' ? {isMobile: undefined} : {}));
@@ -203,7 +203,7 @@ async function problemShown(page) {
     const img = document.querySelector('[data-team="lakers"] .swatch img');
     return Boolean(img && img.naturalWidth);
   }), `${label}: logo does not show on the Lakers card`);
-  for (const style of ['jersey', 'ticket', 'patch']) {
+  for (const style of ['jersey', 'ticket', 'patch', 'card']) {
     await page.click(`[data-style="${style}"]`);
     await page.waitForTimeout(250);
     await page.evaluate(frame);
