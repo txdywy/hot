@@ -27,24 +27,28 @@ jobs:
           node-version: 22
       - name: Asset versions and script syntax
         run: node tools/check-assets.mjs
+      # Runs even when the asset check fails, so the browser tests still report.
       - name: Install Playwright and the syntax checker
+        id: install
+        if: always()
         run: |
           npm install --no-save --no-package-lock playwright@1.49.1 acorn@8.14.0
           npx playwright install --with-deps chromium
       - name: Syntax older phones understand (iOS 12, older Android browsers)
+        if: always() && steps.install.outcome == 'success'
         run: node tools/old-syntax.mjs
       - name: Whole flow on Android, HarmonyOS, iPhone, WeChat and a computer
-        if: always()
+        if: always() && steps.install.outcome == 'success'
         run: node tools/smoke.mjs
         env:
           SHOT_DIR: screenshots/smoke
       - name: Every screen size, also with large text
-        if: always()
+        if: always() && steps.install.outcome == 'success'
         run: node tools/layout.mjs
         env:
           SHOT_DIR: screenshots/layout
       - name: Bad files, HEIC, dragging the photo, stuck share sheet, Back button
-        if: always()
+        if: always() && steps.install.outcome == 'success'
         run: node tools/edges.mjs
         env:
           SHOT_DIR: screenshots/edges
@@ -70,19 +74,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install Playwright
+        id: install
         run: npm install --no-save --no-package-lock playwright@1.49.1
       - name: Whole flow on iPhone Safari, iPhone WeChat and a computer
-        if: always()
+        if: always() && steps.install.outcome == 'success'
         run: node tools/smoke.mjs
         env:
           SHOT_DIR: screenshots/smoke
       - name: Every screen size, also with large text
-        if: always()
+        if: always() && steps.install.outcome == 'success'
         run: node tools/layout.mjs
         env:
           SHOT_DIR: screenshots/layout
       - name: Bad files, dragging the photo, stuck share sheet, Back button
-        if: always()
+        if: always() && steps.install.outcome == 'success'
         run: node tools/edges.mjs
         env:
           SHOT_DIR: screenshots/edges
