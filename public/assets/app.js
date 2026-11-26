@@ -557,11 +557,12 @@ async function isHeic(file) {
 
 async function importPhoto(file) {
   if (!file) return;
-  const version = ++importVersion;
+  // Checked before taking over, so a photo still opening keeps going.
   if (file.size > maxImportSize) {
     showProblem('这张照片太大，换一张试试。', '可以在相册里把照片另存一份小一点的，或者截个屏，再选截屏。');
     return;
   }
+  const version = ++importVersion;
   reading = true;
   updateBar();
   try {
