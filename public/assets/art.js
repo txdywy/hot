@@ -868,6 +868,39 @@ export const motifs = {
     fillPath(ctx, 'M10 84 L58 14 L70 26 L30 84Z', fg);
     fillPath(ctx, 'M46 84 L68 46 L92 84 H82 C80 70 72 64 64 64 C56 64 50 72 50 84Z', accent || fg);
   },
+  bj8(ctx, fg, bg, accent) {
+    // Beijing No.8 High School: the 八 standing over a 人 in a round seal.
+    circle(ctx, 50, 50, 47, fg);
+    circle(ctx, 50, 50, 42, bg);
+    fillPath(ctx, 'M46 10 L46 30 L36 42 H22Z M54 10 L54 30 L64 42 H78Z', accent || fg);
+    fillPath(ctx, 'M38 48 H62 L86 74 H14Z', accent || fg);
+    fillPath(ctx, 'M34 60 H42 L39 66 H31Z M58 60 H66 L69 66 H61Z', bg);
+  },
+  cnuhs(ctx, fg, bg) {
+    // Capital Normal University High School: a wheat wreath round an open book, 1914.
+    ctx.save();
+    ctx.strokeStyle = fg;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(50, 52, 40, Math.PI * .45, Math.PI * 1.55);
+    ctx.stroke();
+    ctx.fillStyle = fg;
+    for (let i = 0; i < 9; i++) {
+      const a = Math.PI * (.5 + i * .12);
+      ctx.save();
+      ctx.translate(50 + 40 * Math.cos(a), 52 + 40 * Math.sin(a));
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.ellipse(0, -5, 3, 7, .6, 0, TAU);
+      ctx.ellipse(0, 5, 3, 7, -.6, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+    fillPath(ctx, 'M28 58 C38 52 46 54 50 60 C54 54 62 52 72 58 V68 C62 62 54 64 50 70 C46 64 38 62 28 68Z', fg);
+    fillPath(ctx, 'M40 46 C44 34 56 30 66 32 C58 36 52 40 50 50 C48 44 44 44 40 46Z', fg);
+  },
   puckman(ctx, fg, bg) {
     // RPI's Puckman: a hockey puck in an engineer's hard hat, crossed sticks behind.
     ctx.save();
