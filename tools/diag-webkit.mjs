@@ -24,6 +24,7 @@ const variants = {
   noViewport: html.replace(/<meta name="viewport"[^>]*>/, ''),
 };
 for (const touch of [true, false]) {
+  const lines = [];
   for (const [name, body] of Object.entries(variants)) {
     const context = await browser.newContext({viewport: {width: 390, height: 844}, hasTouch: touch});
     const page = await context.newPage();
@@ -32,9 +33,10 @@ for (const touch of [true, false]) {
     await page.route('**/', route => route.fulfill({contentType: 'text/html', body}));
     await page.goto(server.url);
     await page.waitForTimeout(1500);
-    console.log(`::warning title=diag::touch=${touch} ${name}: ${errors.length} errors ${errors.join(' | ')}`);
+    lines.push(`${name}=${errors.length}`);
     await context.close();
   }
+  console.log(`::warning title=diag touch=${touch}::${lines.join(' ')}`);
 }
 await browser.close();
 server.close();
