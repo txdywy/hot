@@ -8,6 +8,12 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same pull request stops the older run, so only the latest
+# commit is tested and an outdated run never reports a failure.
+concurrency:
+  group: check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Chromium is the engine behind Android Chrome, HarmonyOS browsers and
   # WeChat on Android.
