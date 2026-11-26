@@ -1122,7 +1122,7 @@ const TIERS = [
   {id: 'silver', w: 28, run: 0, en: 'SILVER', zh: '银折', auto: .25, patch: .2},
   {id: 'team', w: 20, run: 199, en: 'TEAM COLOR', zh: '队色折', auto: .45, patch: .4},
   {id: 'gold', w: 11, run: 10, en: 'GOLD', zh: '金折', auto: 1, patch: 1},
-  {id: 'black', w: 5, run: 1, en: 'BLACK 1/1', zh: '黑金 1/1', auto: 1, patch: 1},
+  {id: 'black', w: 5, run: 1, en: 'BLACK', zh: '黑金', auto: 1, patch: 1},
 ];
 
 // Positions and insert-set names, by group.
@@ -1475,17 +1475,17 @@ function cardFront(ctx, team, text, L, info) {
   shadow(ctx, u, false);
   ctx.fillStyle = second;
   ctx.beginPath();
-  ctx.moveTo(plateX, plateY - u * .5);
-  ctx.lineTo(plateX + plateW * .62, plateY - u * .5);
-  ctx.lineTo(plateX + plateW * .62 - u * .45, plateY);
+  ctx.moveTo(plateX, plateY - u * .78);
+  ctx.lineTo(plateX + plateW * .66, plateY - u * .78);
+  ctx.lineTo(plateX + plateW * .66 - u * .7, plateY);
   ctx.lineTo(plateX, plateY);
   ctx.closePath();
   ctx.fill();
   // Insert name on the accent stripe.
   ctx.fillStyle = readable(second);
   ctx.textAlign = 'left';
-  fit(ctx, info.insert, plateW * .5, 900, u * .4, SANS, u * .12);
-  ctx.fillText(info.insert, area.x + u * .3, plateY - u * .1);
+  fit(ctx, info.insert, plateW * .54, 900, u * .52, SANS, u * .12);
+  ctx.fillText(info.insert, area.x + u * .3, plateY - u * .2);
   ctx.fillStyle = ink;
   const nameW = plateW - plateH * .45 - (area.x - F.x) - u * .9;
   fit(ctx, text.name, nameW, 400, u * 2.2, DISPLAY, u * .05);
