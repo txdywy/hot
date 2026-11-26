@@ -188,7 +188,7 @@ async function problemShown(page) {
   page.on('pageerror', error => r.problems.push(`${label}: script error: ${error.message}`));
   await page.route('**/assets/teams.js*', async route => {
     const response = await route.fetch();
-    const body = (await response.text()).replace('export const logos = {};', "export const logos = {lakers: 'lakers.svg'};");
+    const body = (await response.text()).replace(/(export const logos = \{)[^]*?(\n\};|\};)/, "$1lakers: 'lakers.svg'};");
     await route.fulfill({response, body});
   });
   await page.route('**/assets/logos/lakers.svg*', route => route.fulfill({contentType: 'image/svg+xml',
