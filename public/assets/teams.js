@@ -1790,6 +1790,7 @@ export const styles = [
   ['jersey', '球衣', '背后印上你的名字和号码'],
   ['ticket', '球票', '一张写着日期的入场券'],
   ['patch', '徽章', '潮牌贴纸和刺绣字母'],
+  ['card', '球星卡', '随机抽一张，正反两面'],
 ];
 
 export const slogans = [

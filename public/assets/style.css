@@ -239,7 +239,7 @@ a { color: var(--hl); }
   font: 900 13px/22px var(--sans); text-align: center;
 }
 
-.styles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.styles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .style {
   display: flex; flex-direction: column; align-items: stretch; gap: 6px; min-width: 0;
   padding: 8px 8px 10px; border: 1.5px solid var(--line); border-radius: 14px;
@@ -253,6 +253,19 @@ a { color: var(--hl); }
 .style[aria-pressed="true"] { border-color: var(--hl); background: var(--surface-2); }
 .style[aria-pressed="true"] b { color: var(--hl); }
 
+.draw-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+.draw-row[hidden], .ratio-row[hidden] { display: none; }
+.draw { min-height: 48px; padding: 0 18px; }
+.draw-note { flex: 1 1 160px; margin: 0; font-size: .875rem; font-weight: 800; line-height: 1.35; color: var(--muted); }
+.draw-note[data-tier="silver"] { color: #d7dde4; }
+.draw-note[data-tier="team"] { color: var(--hl); }
+.draw-note[data-tier="gold"] { color: #f2cf6b; }
+.draw-note[data-tier="black"] { color: #f2cf6b; text-shadow: 0 0 10px rgba(242, 207, 107, .45); }
+.stage.pulled #preview { animation: pull .45s ease-out; }
+@keyframes pull {
+  0% { transform: perspective(900px) rotateY(-75deg) scale(.92); opacity: .3; }
+  100% { transform: none; opacity: 1; }
+}
 .ratio-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .ratio-label { font-size: .8125rem; font-weight: 800; color: var(--muted); }
 .ratios { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -431,7 +444,7 @@ body.dragging-file .drop { display: flex; }
 .no-flex-gap .groups > * + *, .no-flex-gap .bar-buttons > * + * { margin-left: 10px; }
 .no-flex-gap .team > * + *, .no-flex-gap .style > * + * { margin-top: 6px; }
 .no-flex-gap .slogans > *, .no-flex-gap .ratios > * { margin: 0 8px 8px 0; }
-.no-flex-gap .ratio-row > * { margin-right: 10px; }
+.no-flex-gap .ratio-row > *, .no-flex-gap .draw-row > * { margin-right: 10px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }

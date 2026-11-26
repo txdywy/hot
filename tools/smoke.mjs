@@ -99,7 +99,18 @@ for (const [name, way] of runs) {
   await page.click('[data-slogan]:last-child');
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   r.check(await previewPixels(page) !== pixels, `${label}: slogan did not reach the preview`);
+  // The trading card: its own shape (no photo-shape chips), a reroll that changes the card.
+  await page.click('[data-style="card"]');
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  r.check(await page.isVisible('#draw') && !(await page.isVisible('#ratio-row')), `${label}: card style does not swap photo shapes for 再抽一张`);
+  r.check(/^这张：/.test(await page.textContent('#draw-note')), `${label}: card style does not say which card came out`);
+  pixels = await previewPixels(page);
+  await page.click('#draw');
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  r.check(await previewPixels(page) !== pixels, `${label}: 再抽一张 did not change the card`);
+  await shot(page, `${name}-2-card`);
   await page.click('[data-style="jersey"]');
+  r.check(await page.isVisible('#ratio-row') && !(await page.isVisible('#draw')), `${label}: photo shapes do not come back after the card`);
   await page.evaluate(() => document.activeElement && document.activeElement.blur());
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await layoutOk(page, `${label} edited`);
