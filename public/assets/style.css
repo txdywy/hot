@@ -232,8 +232,8 @@ a { color: var(--hl); }
 .field.number input { text-align: center; font-size: 1.625rem; }
 .slogan { margin-top: 12px; }
 .slogans { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.slogans .chip { min-height: 40px; padding: 0 12px; font: 400 .9375rem/1 var(--display); letter-spacing: .04em; }
-.slogans .chip.cn { font: 800 .875rem/1 var(--sans); letter-spacing: 0; }
+.slogans .chip { min-height: 40px; max-width: 100%; padding: 6px 12px; white-space: normal; text-align: left; font: 400 .9375rem/1.15 var(--display); letter-spacing: .04em; }
+.slogans .chip.cn { font: 800 .875rem/1.25 var(--sans); letter-spacing: 0; }
 
 .toggle { position: relative; display: flex; align-items: center; gap: 12px; margin-top: 18px; min-height: 48px; font-weight: 800; cursor: pointer; }
 .toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
@@ -300,9 +300,11 @@ dialog {
   background: var(--surface); color: var(--text);
   overscroll-behavior: contain;
 }
+/* Before iOS 15.4 a <dialog> is an unknown element and would show as page content. */
+dialog:not([open]) { display: none; }
 dialog::backdrop { background: rgba(0, 0, 0, .72); }
 dialog.no-modal[open] {
-  position: fixed; inset: 0; z-index: 20; display: block; overflow: auto;
+  position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 20; display: block; overflow: auto;
   box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .72);
 }
 .sheet { display: grid; gap: 12px; padding: 20px; padding-bottom: max(20px, var(--safe-b)); }
@@ -345,7 +347,7 @@ dialog.no-modal[open] {
 .view-scroll.zoomed #view-canvas { max-width: none; }
 
 .drop {
-  position: fixed; inset: 0; z-index: 30; display: none; align-items: center; justify-content: center;
+  position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 30; display: none; align-items: center; justify-content: center;
   background: rgba(0, 0, 0, .7); border: 4px dashed var(--hl); pointer-events: none;
 }
 .drop span { padding: 14px 22px; border-radius: 16px; background: var(--hl); color: var(--hl-ink); font-weight: 900; font-size: 1.25rem; }
@@ -381,6 +383,15 @@ body.dragging-file .drop { display: flex; }
 @media (min-width: 900px) and (max-width: 1099px) {
   .teams { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* Phones older than iOS 14.1 and Chrome 84 lay out flex rows without gap. */
+.no-flex-gap .brand > * + *, .no-flex-gap .label > * + *, .no-flex-gap .chip > * + *,
+.no-flex-gap .button > * + *, .no-flex-gap .stage-tool > * + *, .no-flex-gap .drag-hint > * + *,
+.no-flex-gap .toggle > * + * { margin-left: 8px; }
+.no-flex-gap .groups > * + *, .no-flex-gap .bar-buttons > * + * { margin-left: 10px; }
+.no-flex-gap .team > * + *, .no-flex-gap .style > * + * { margin-top: 6px; }
+.no-flex-gap .slogans > *, .no-flex-gap .ratios > * { margin: 0 8px 8px 0; }
+.no-flex-gap .ratio-row > * { margin-right: 10px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }

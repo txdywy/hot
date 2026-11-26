@@ -113,7 +113,8 @@ async function problemShown(page) {
   await page.click('#bar-main');
   await until(page, () => document.querySelector('#result').open && !document.querySelector('#share').hidden, null, 15000, 'the result window');
   await page.click('#share');
-  await page.waitForTimeout(150);
+  // A second tap within 1.5 s is a double tap; a later one means the sheet is stuck.
+  await page.waitForTimeout(1700);
   await page.click('#share');
   await until(page, () => document.querySelector('#share').hidden, null, 3000).catch(() => {});
   const after = await page.evaluate(() => ({
@@ -237,6 +238,87 @@ if (engine === 'chromium') {
   await page.reload();
   await until(page, () => window.hotAppReady === true, null, 10000).catch(() => {});
   r.check(await page.evaluate(() => window.hotAppReady === true), `${label}: the page does not start without a connection`);
+  await context.close();
+}
+
+// 8. A phone photo the camera marked "turn a quarter" (EXIF orientation 6) comes out
+// upright: left half red becomes the top, right half blue the bottom.
+{
+  const label = 'turned photo';
+  const {context, page} = await open(browser, server.url, phones.iphone, r.problems, label);
+  const data = await page.evaluate(() => {
+    const c = document.createElement('canvas');
+    c.width = 200;
+    c.height = 100;
+    const x = c.getContext('2d');
+    x.fillStyle = '#f00';
+    x.fillRect(0, 0, 100, 100);
+    x.fillStyle = '#00f';
+    x.fillRect(100, 0, 100, 100);
+    const jpeg = atob(c.toDataURL('image/jpeg', .95).split(',')[1]);
+    const exif = '\xff\xe1\x00\x22Exif\x00\x00MM\x00\x2a\x00\x00\x00\x08\x00\x01'
+      + '\x01\x12\x00\x03\x00\x00\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00';
+    return btoa(jpeg.slice(0, 2) + exif + jpeg.slice(2));
+  });
+  await choosePhoto(page, {name: 'IMG_0002.JPG', mimeType: 'image/jpeg', buffer: Buffer.from(data, 'base64')});
+  await page.click('[data-ratio="original"]');
+  await page.evaluate(frame);
+  const seen = await page.evaluate(() => {
+    const c = document.querySelector('#preview');
+    const copy = document.createElement('canvas');
+    copy.width = c.width;
+    copy.height = c.height;
+    const g = copy.getContext('2d');
+    g.drawImage(c, 0, 0);
+    const at = (fx, fy) => Array.from(g.getImageData(Math.round(c.width * fx), Math.round(c.height * fy), 1, 1).data.slice(0, 3));
+    return {tall: c.height > c.width, upper: at(.5, .35), lower: at(.5, .6)};
+  });
+  const red = rgb => rgb[0] > 200 && rgb[2] < 60;
+  const blue = rgb => rgb[2] > 200 && rgb[0] < 60;
+  r.check(seen.tall && red(seen.upper) && blue(seen.lower), `${label}: photo is not upright (${JSON.stringify(seen)})`);
+  await context.close();
+}
+
+// 9. An older iPhone (iOS 13/14, or WeChat on one): no <dialog>, no file sharing, no
+// pointer events, no replaceChildren or Blob arrayBuffer. The page still starts, the
+// photo opens, and the result window offers a long press straight into Photos.
+{
+  const label = 'old iPhone';
+  const device = Object.assign({}, phones.iphone, {
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Mobile/15E148 Safari/604.1',
+  });
+  const {context, page} = await open(browser, server.url, device, r.problems, label);
+  await context.addInitScript(() => {
+    if (window.HTMLDialogElement) {
+      delete HTMLDialogElement.prototype.showModal;
+      delete HTMLDialogElement.prototype.close;
+      Object.defineProperty(HTMLDialogElement.prototype, 'open', {get() { return undefined; }, configurable: true});
+    }
+    delete Element.prototype.replaceChildren;
+    delete Blob.prototype.arrayBuffer;
+    delete Navigator.prototype.share;
+    delete Navigator.prototype.canShare;
+    delete window.PointerEvent;
+  });
+  await page.reload();
+  await ready(page);
+  await choosePhoto(page, await photo(page));
+  await page.click('[data-ratio="1:1"]');
+  r.check(await page.evaluate(() => document.querySelector('#drag-hint').hidden), `${label}: shows a drag hint without pointer events`);
+  await page.click('#bar-main');
+  await until(page, () => document.querySelector('#result').hasAttribute('open'), null, 15000, 'the result window');
+  await until(page, () => document.querySelector('#result-image').src.startsWith('data:'), null, 5000, 'the picture').catch(() => {});
+  const seen = await page.evaluate(() => ({
+    title: document.querySelector('#result-title').textContent,
+    data: document.querySelector('#result-image').src.startsWith('data:'),
+    fixed: getComputedStyle(document.querySelector('#result')).position,
+  }));
+  r.check(/按住/.test(seen.title) && seen.data, `${label}: no long press into Photos (${seen.title})`);
+  r.check(seen.fixed === 'fixed', `${label}: result window is not pinned to the screen (${seen.fixed})`);
+  await shot(page, 'edges-9-old-iphone');
+  await page.goBack();
+  await until(page, () => !document.querySelector('#result').hasAttribute('open'), null, 3000).catch(() => {});
+  r.check(!(await page.evaluate(() => document.querySelector('#result').hasAttribute('open'))), `${label}: Back did not close the result window`);
   await context.close();
 }
 

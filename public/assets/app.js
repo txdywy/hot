@@ -1,10 +1,23 @@
 import {groups, teams, styles, slogans, byId, logos} from './teams.js?v=2';
 import {layout, paint, crop, demoPhoto, luminance, fontFaces} from './render.js?v=2';
-import {photoDate} from './photo-date.js?v=2';
-import {openDialog, closeDialog} from './dialog.js?v=2';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=2';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=2';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
+// Flex gap arrived in Safari 14.1 and Chrome 84; older phones get margins instead.
+(function checkFlexGap() {
+  const box = document.createElement('div');
+  box.style.display = 'flex';
+  box.style.flexDirection = 'column';
+  box.style.rowGap = '1px';
+  box.appendChild(document.createElement('div'));
+  box.appendChild(document.createElement('div'));
+  document.body.appendChild(box);
+  const works = box.scrollHeight === 1;
+  box.parentNode.removeChild(box);
+  if (!works) root.classList.add('no-flex-gap');
+})();
 const stage = $('stage');
 const stagePanel = $('stage-panel');
 const preview = $('preview');
@@ -274,7 +287,8 @@ function drawTeams() {
     swatch.style.setProperty('--c', team.c3);
     cards.append(card);
   }
-  box.replaceChildren(cards);
+  box.textContent = '';
+  box.append(cards);
 }
 
 function drawStyles() {
@@ -444,7 +458,7 @@ function updateBar() {
   $('bar-main-text').textContent = exporting ? '正在制作…' : reading ? '正在打开…' : own ? make : '选一张照片';
   $('bar-icon').firstElementChild.setAttribute('href', own ? '#i-save' : '#i-photo');
   const hint = $('bar-hint');
-  const pending = madeNotSaved && !resultDialog.open;
+  const pending = madeNotSaved && !isOpen(resultDialog);
   hint.textContent = problem || (savedNote ? '✓ 已保存，换个主队再来一张'
     : pending ? `还没存好，再点「${make}」`
     : own ? '换主队、换款式，随时看效果'
@@ -510,10 +524,57 @@ function loadImage(src) {
   });
 }
 
+// Chrome 81 and iOS 13.4 on turn photos upright by their EXIF orientation; older
+// phones draw them as the sensor saw them. A two-by-one JPEG marked "turn a quarter"
+// tells which: upright-turning browsers report it one pixel wide.
+let turnsByItself = null;
+function browserTurnsPhotos() {
+  if (!turnsByItself) {
+    turnsByItself = new Promise(resolve => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 2;
+      canvas.height = 1;
+      const jpeg = atob(canvas.toDataURL('image/jpeg').split(',')[1]);
+      if (jpeg.charCodeAt(0) !== 0xff || jpeg.charCodeAt(1) !== 0xd8) {
+        resolve(true);
+        return;
+      }
+      // APP1 "Exif" with one entry: Orientation (0x0112), SHORT, 6.
+      const exif = '\xff\xe1\x00\x22Exif\x00\x00MM\x00\x2a\x00\x00\x00\x08\x00\x01'
+        + '\x01\x12\x00\x03\x00\x00\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00';
+      const marked = jpeg.slice(0, 2) + exif + jpeg.slice(2);
+      const bytes = new Uint8Array(marked.length);
+      for (let i = 0; i < marked.length; i++) bytes[i] = marked.charCodeAt(i);
+      const url = URL.createObjectURL(new Blob([bytes], {type: 'image/jpeg'}));
+      const test = new Image();
+      test.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve(test.naturalWidth === 1);
+      };
+      test.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(true);
+      };
+      test.src = url;
+    });
+  }
+  return turnsByItself;
+}
+
+// Draws the photo upright on an older phone, by its EXIF orientation.
+function turnCanvas(ctx, turn, w, h) {
+  const [a, b, c, d, e, f] = {
+    2: [-1, 0, 0, 1, w, 0], 3: [-1, 0, 0, -1, w, h], 4: [1, 0, 0, -1, 0, h],
+    5: [0, 1, 1, 0, 0, 0], 6: [0, 1, -1, 0, w, 0], 7: [0, -1, -1, 0, w, h], 8: [0, -1, 1, 0, 0, h],
+  }[turn];
+  ctx.transform(a, b, c, d, e, f);
+}
+
 async function readPhoto(file) {
   const url = URL.createObjectURL(file);
   try {
-    const photo = await loadImage(url);
+    const [photo, upright] = await Promise.all([loadImage(url), browserTurnsPhotos()]);
+    const turn = upright ? 1 : await photoTurn(file);
     if (photo.naturalWidth * photo.naturalHeight > maxImportPixels) {
       const error = new Error('Too many pixels');
       error.name = 'TooManyPixels';
@@ -523,7 +584,7 @@ async function readPhoto(file) {
       Math.sqrt(exportPixels / (photo.naturalWidth * photo.naturalHeight)));
     const width = Math.max(1, Math.round(photo.naturalWidth * scale));
     const height = Math.max(1, Math.round(photo.naturalHeight * scale));
-    if (scale < 1 && typeof createImageBitmap === 'function') {
+    if (scale < 1 && turn === 1 && typeof createImageBitmap === 'function') {
       try {
         return await createImageBitmap(photo, {
           imageOrientation: 'from-image', resizeWidth: width, resizeHeight: height, resizeQuality: 'high',
@@ -534,10 +595,12 @@ async function readPhoto(file) {
     }
     // Copy into a canvas so the photo stays drawable after its URL is revoked.
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    const sideways = turn >= 5;
+    canvas.width = sideways ? height : width;
+    canvas.height = sideways ? width : height;
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingQuality = 'high';
+    if (turn > 1) turnCanvas(ctx, turn, canvas.width, canvas.height);
     ctx.drawImage(photo, 0, 0, width, height);
     return canvas;
   } finally {
@@ -549,7 +612,7 @@ async function readPhoto(file) {
 async function isHeic(file) {
   if (/\.(heic|heif)$/i.test(file.name || '') || /image\/hei[cf]/.test(file.type)) return true;
   try {
-    const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    const bytes = new Uint8Array(await readStart(file, 12));
     const text = String.fromCharCode.apply(null, bytes);
     return text.slice(4, 8) === 'ftyp' && /^(heic|heix|hevc|hevx|heim|heis|mif1|msf1)$/.test(text.slice(8, 12));
   } catch (error) {
@@ -678,6 +741,8 @@ function updateDrag() {
     const have = previewSource.width / previewSource.height;
     if (Math.abs(Math.log(have / want)) > .01) dragAxis = have > want ? 'x' : 'y';
   }
+  // iOS 12 has no pointer events, so the photo cannot be dragged there.
+  if (!window.PointerEvent) dragAxis = '';
   stage.classList.toggle('can-drag', Boolean(dragAxis));
   stage.classList.toggle('drag-x', dragAxis === 'x');
   stage.classList.toggle('drag-y', dragAxis === 'y');
@@ -770,7 +835,22 @@ function exportName() {
 // Saving by a long press on the photo: WeChat and similar apps always, and
 // iPhone Safari once its share sheet has stopped working.
 function holdToSave() {
-  return longPressSave || (isApple && shareBroken);
+  return longPressSave || (isApple && (shareBroken || !canShareFiles()));
+}
+
+// iOS 15 and later can hand a file to the share sheet; older iPhones cannot, and
+// their download goes to the Files app (iOS 13-14) or nowhere useful (iOS 12).
+let fileShare = null;
+function canShareFiles() {
+  if (fileShare === null) {
+    try {
+      fileShare = Boolean(navigator.canShare && typeof File === 'function'
+        && navigator.canShare({files: [new File(['x'], 'x.jpg', {type: 'image/jpeg'})]}));
+    } catch (error) {
+      fileShare = false;
+    }
+  }
+  return fileShare;
 }
 
 // What a long press offers is called differently on each phone and iOS version.
@@ -811,7 +891,7 @@ function showResult() {
   if (shareFirst) download.before(share);
   else download.after(share);
   showResultHelp(hold, shareFirst);
-  if (!resultDialog.open) openDialog(resultDialog, barMain);
+  if (!isOpen(resultDialog)) openDialog(resultDialog, barMain);
   updateBar();
 }
 
@@ -853,7 +933,7 @@ async function exportPhoto() {
   const version = importVersion;
   const canvas = document.createElement('canvas');
   try {
-    await whenFontsReady();
+    await fontsForSaving();
     // Painting the full-size photo blocks the page for a moment, so show 正在制作… first.
     await nextPaint();
     if (version !== importVersion) return;
@@ -877,6 +957,7 @@ async function exportPhoto() {
         resultFile = null;
       }
     }
+    if (problem) showProblem('');
     showResult();
     if (savesDirectly()) download.click();
   } catch (error) {
@@ -892,7 +973,7 @@ async function exportPhoto() {
 download.addEventListener('click', () => {
   $('share-status').textContent = '';
   markSaved(isApple ? '已存进「文件」App 的「下载项」。'
-    : isAndroid ? '已存进手机的「下载」，相册里一般也能看到。'
+    : isAndroid ? '在手机的「下载」里，相册里一般也能看到。没找到的话，按住上面的照片保存。'
     : '已存进这台设备的「下载」文件夹。');
   $('download-text').textContent = '再存一次';
 });
@@ -921,12 +1002,17 @@ async function shareStuck() {
   }
 }
 
+let shareStarted = 0;
 share.addEventListener('click', async () => {
+  // A quick second tap while the share sheet is still opening is a double tap, not
+  // a sign that the sheet is stuck.
+  if (sharePending && (!isApple || Date.now() - shareStarted < 1500)) return;
   if (isApple && sharePending) {
     void shareStuck();
     return;
   }
   sharePending = true;
+  shareStarted = Date.now();
   try {
     await navigator.share({files: [resultFile]});
     sharePending = false;
@@ -1126,11 +1212,25 @@ document.addEventListener('touchstart', () => {}, {passive: true});
 // ---------- Fonts ----------
 
 let fontsWaiting = null;
-function whenFontsReady() {
-  if (!fontsWaiting) {
-    const load = document.fonts && document.fonts.load
+let fontsLoad = null;
+function loadFonts() {
+  if (!fontsLoad) {
+    fontsLoad = document.fonts && document.fonts.load
       ? Promise.all(fontFaces.map(face => document.fonts.load(face))).catch(() => {})
       : Promise.resolve();
+  }
+  return fontsLoad;
+}
+
+// The saved photo waits longer than the preview for the real fonts, so it never
+// goes out in a stand-in font on a slow first visit.
+function fontsForSaving() {
+  return Promise.race([loadFonts(), new Promise(resolve => setTimeout(resolve, 8000))]);
+}
+
+function whenFontsReady() {
+  if (!fontsWaiting) {
+    const load = loadFonts();
     // A slow connection should not hold the page back: after a moment the frame is
     // drawn with the fallback fonts and redrawn when the real ones arrive.
     const timeout = new Promise(resolve => setTimeout(resolve, 1800));

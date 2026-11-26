@@ -27,7 +27,7 @@ function assetsIn(html) {
 // the saved page and drops the files it no longer names. If the connection drops
 // halfway, the previous saved copy stays whole and still opens offline.
 function keep(response) {
-  return response.clone().text().then(function (html) {
+  return response.clone().text().then(function (html) { // old-ok: Response.text, not Blob
     var wanted = assetsIn(html);
     return caches.open(CACHE).then(function (cache) {
       return cache.keys().then(function (keys) {

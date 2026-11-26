@@ -56,6 +56,11 @@ export function openDialog(dialog, opener = document.activeElement) {
   if (first) first.focus();
 }
 
+// Before iOS 15.4 <dialog> is an unknown element with no .open property.
+export function isOpen(dialog) {
+  return dialog.hasAttribute('open');
+}
+
 export function closeDialog(dialog) {
   if (typeof dialog.close === 'function') {
     if (dialog.open) dialog.close();

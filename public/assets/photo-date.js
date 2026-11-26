@@ -35,19 +35,20 @@ function readTiff(view, start) {
       const entry = at + 2 + i * 12;
       const tag = view.getUint16(entry, little);
       if (tag === 0x8769) exif = view.getUint32(entry + 8, little);
+      else if (tag === 0x0112 && view.getUint16(entry + 2, little) === 3) found.turn = view.getUint16(entry + 8, little);
       else if (tag === 0x9003 || tag === 0x9004 || tag === 0x0132) found[tag] = readDate(view, start, little, entry);
     }
     return exif;
   };
   const exif = walk(view.getUint32(start + 4, little));
   if (exif) walk(exif);
-  return found[0x9003] || found[0x9004] || found[0x0132] || null;
+  return {date: found[0x9003] || found[0x9004] || found[0x0132] || null, turn: found.turn || 1};
 }
 
-// iOS 12 and 13 have no Blob.arrayBuffer(); FileReader works everywhere.
-function readStart(file) {
-  const part = file.slice(0, scanBytes);
-  if (part.arrayBuffer) return part.arrayBuffer();
+// iOS 12 and 13 have no Blob arrayBuffer; FileReader works everywhere.
+export function readStart(file, size = scanBytes) {
+  const part = file.slice(0, size);
+  if (part.arrayBuffer) return part.arrayBuffer(); // old-ok: checked on the line itself
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
@@ -56,7 +57,9 @@ function readStart(file) {
   });
 }
 
-export async function photoDate(file) {
+// Finds the first TIFF block and reads the date and the EXIF orientation (1 to 8).
+async function photoFacts(file) {
+  const facts = {date: null, turn: 1};
   try {
     const buffer = await readStart(file);
     const view = new DataView(buffer);
@@ -67,14 +70,30 @@ export async function photoDate(file) {
         || (bytes[i] === 0x4d && bytes[i + 1] === 0x4d && bytes[i + 2] === 0 && bytes[i + 3] === 42);
       if (!tiff) continue;
       try {
-        const date = readTiff(view, i);
-        if (date) return date;
+        const found = readTiff(view, i);
+        if (!found) continue;
+        if (found.turn > 1 && facts.turn === 1) facts.turn = found.turn;
+        if (found.date) {
+          facts.date = found.date;
+          break;
+        }
       } catch {
         // A stray match, or a block cut off at the end of what was read: look further.
       }
     }
   } catch {
-    // Reading the file failed; the caller falls back to today.
+    // Reading the file failed; the caller falls back to today and upright.
   }
-  return null;
+  return facts;
+}
+
+export async function photoDate(file) {
+  return (await photoFacts(file)).date;
+}
+
+// How the camera says the photo should be turned: 1 upright, 3 upside down,
+// 6 and 8 a quarter turn, 2/4/5/7 the same mirrored.
+export async function photoTurn(file) {
+  const turn = (await photoFacts(file)).turn;
+  return turn >= 1 && turn <= 8 ? turn : 1;
 }
