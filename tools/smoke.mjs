@@ -34,6 +34,8 @@ const runs = [
 // Android phones run on Chromium as they do in real life.
 
 async function layoutOk(page, label) {
+  // The bar slides back in once the keyboard would have closed.
+  await until(page, () => getComputedStyle(document.getElementById('bar')).transform === 'none', null, 2000, 'the bar to come back').catch(() => {});
   const facts = await page.evaluate(() => {
     const view = document.documentElement.clientWidth;
     const box = id => document.getElementById(id).getBoundingClientRect();
@@ -82,6 +84,15 @@ for (const [name, way] of runs) {
 
   // Words.
   await page.fill('#name', 'Mia');
+  if (way !== 'dialog') {
+    // While typing on a phone the preview stays in view and the bar steps aside.
+    const typing = await page.evaluate(() => ({
+      on: document.documentElement.classList.contains('typing'),
+      stage: document.getElementById('stage').getBoundingClientRect().height,
+      field: document.getElementById('name').getBoundingClientRect().top,
+    }));
+    r.check(typing.on && typing.stage >= 120, `${label}: preview not kept while typing (${Math.round(typing.stage)}px)`);
+  }
   await page.fill('#number', '7a');
   r.check(await page.inputValue('#number') === '7', `${label}: number field kept a letter`);
   pixels = await previewPixels(page);

@@ -317,6 +317,16 @@ dialog.no-modal[open] {
   .sheet { gap: 10px; padding: 16px; }
   .sheet h2 { font-size: 1.25rem; }
 }
+/* Phones: short screens drop the everyday bar hint so the choices get the room,
+   and while typing the bar steps aside for the keyboard. */
+@media (max-width: 899px) and (max-height: 700px) {
+  .bar-hint.quiet { display: none; }
+  .bar { padding-top: 10px; }
+}
+@media (max-width: 899px) {
+  .bar { transition: transform .2s, visibility .2s; }
+  .typing .bar { transform: translateY(110%); visibility: hidden; }
+}
 .share-status { margin: 0; color: #ff9d8c; font-size: .875rem; }
 .share-status:empty { display: none; }
 .actions { display: grid; gap: 8px; }

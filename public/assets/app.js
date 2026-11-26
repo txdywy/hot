@@ -452,6 +452,8 @@ function updateBar() {
   hint.classList.toggle('error', Boolean(problem));
   hint.classList.toggle('pending', !problem && pending);
   hint.classList.toggle('saved', !problem && savedNote);
+  // The everyday hints can give way on short screens; news about saving cannot.
+  hint.classList.toggle('quiet', !problem && !savedNote && !pending);
 }
 
 // Any change to the user's photo after saving it needs saving again.
@@ -1052,7 +1054,7 @@ function layoutPage() {
   let height = 0;
   if (phone) {
     const typing = root.classList.contains('typing');
-    const portion = root.classList.contains('short-phone') ? .6 : typing ? .3 : .44;
+    const portion = root.classList.contains('short-phone') ? .6 : typing ? .3 : view < 700 ? .4 : .44;
     height = Math.round(Math.max(170, Math.min(view * portion, 560)));
   }
   if (height !== stageHeight) {
