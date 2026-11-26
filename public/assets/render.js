@@ -65,14 +65,37 @@ function font(ctx, weight, size, family, spacing = 0, text = '') {
   if ('letterSpacing' in ctx) ctx.letterSpacing = `${Math.round(spacing)}px`;
 }
 
+// Width of the text in the current font. Some browsers leave letter spacing out of
+// measureText, so it is added back when they do.
+let spacingMeasured = null;
+function measure(ctx, text) {
+  const width = ctx.measureText(text).width;
+  if (!('letterSpacing' in ctx)) return width;
+  const spacing = parseFloat(ctx.letterSpacing) || 0;
+  if (!spacing) return width;
+  if (spacingMeasured === null) {
+    const kept = ctx.letterSpacing;
+    ctx.letterSpacing = '0px';
+    const plain = ctx.measureText('MMMM').width;
+    ctx.letterSpacing = '20px';
+    spacingMeasured = ctx.measureText('MMMM').width > plain + 40;
+    ctx.letterSpacing = kept;
+  }
+  return spacingMeasured ? width : width + spacing * Array.from(text).length;
+}
+
 // Shrinks the font until the text fits in maxWidth; returns the size used.
 function fit(ctx, text, maxWidth, weight, size, family, spacing = 0) {
   font(ctx, weight, size, family, spacing, text);
-  const width = ctx.measureText(text).width;
-  if (width > maxWidth && width > 0) {
+  let width = measure(ctx, text);
+  for (let k = 0; k < 4 && width > maxWidth && width > 0 && size > 1; k++) {
+    // Font sizes are whole pixels, so a scaled size can round up: take a pixel off.
     const scale = maxWidth / width;
-    size *= scale;
-    font(ctx, weight, size, family, spacing * scale, text);
+    const next = Math.min(size * scale, size - 1);
+    spacing *= next / size;
+    size = next;
+    font(ctx, weight, size, family, spacing, text);
+    width = measure(ctx, text);
   }
   return size;
 }
@@ -287,7 +310,7 @@ function photoMarks(ctx, logo, area, m, mask, island) {
     ctx.clip();
     const cx = right ? area.x + area.w - size * .16 : area.x + size * .16;
     const cy = bottom ? area.y + area.h - size * .14 : area.y + size * .14;
-    watermark(ctx, logo, cx, cy, size, '#ffffff', .2, right ? -.18 : .18);
+    watermark(ctx, logo, cx, cy, size, '#ffffff', .26, right ? -.18 : .18);
     ctx.restore();
   }
   if (island) {
@@ -425,10 +448,10 @@ function jersey(ctx, team, text, L) {
 
   // The logo, big and faint, printed across the lower shirt behind the number.
   const y0 = area.y + area.h;
-  if (logo) watermark(ctx, logo, W / 2, (y0 + H - m * .8) / 2, (H - m * .8 - y0) * 1.15, ink, .13);
+  if (logo) watermark(ctx, logo, W / 2, (y0 + H - m * .8) / 2, (H - m * .8 - y0) * 1.15, ink, .16);
 
   // Top corners: the logo on the left, stars or the title count on the right.
-  if (logo) sticker(ctx, logo, area.x + m * .62, topY, m * 1.35, m, -.08);
+  if (logo) sticker(ctx, logo, area.x + m * .62, topY, m * 1.75, m, -.08);
   else drawMotif(ctx, team.motif, area.x + m * .55, topY, m * .95, ink, team.c1, team.accent);
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'right';
