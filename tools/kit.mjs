@@ -56,11 +56,23 @@ export function report(name) {
   };
 }
 
+const shooting = new WeakMap();
+const toolStyle = /^Refused to apply a stylesheet because its hash, its nonce, or 'unsafe-inline'/;
+
 export async function shots() {
   const dir = process.env.SHOT_DIR;
   if (dir) await mkdir(dir, {recursive: true});
   return async (page, name) => {
-    if (dir) await page.screenshot({path: join(dir, `${name}.png`)});
+    if (!dir) return;
+    // Playwright's WebKit adds an empty <style> to the page while it takes a picture
+    // (to line up animations). The page's security policy rightly refuses it and logs
+    // an error; that one comes from the test tool, not the site, so it is let through.
+    shooting.set(page, Infinity);
+    try {
+      await page.screenshot({path: join(dir, `${name}.png`)});
+    } finally {
+      shooting.set(page, Date.now() + 1000);
+    }
   };
 }
 
@@ -79,6 +91,7 @@ export async function open(browser, url, device, problems, label) {
   page.on('pageerror', error => problems.push(`${label}: script error: ${error.message}`));
   page.on('console', message => {
     if (message.type() !== 'error') return;
+    if (toolStyle.test(message.text()) && Date.now() < (shooting.get(page) || 0)) return;
     const where = message.location();
     problems.push(`${label}: console error: ${message.text()} (at ${where.url || 'no url'}:${where.lineNumber})`);
   });
