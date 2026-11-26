@@ -1203,22 +1203,24 @@ export function cardInfo(team, seed) {
     team.homeNick ? [w.home, `${team.home} · ${team.homeNick}`] : null,
     team.story ? [w.story, team.story] : null,
   ].filter(Boolean);
-  const fact = trivia.length ? pick(trivia) : null;
+  const facts = [];
+  while (trivia.length && facts.length < 2) facts.push(trivia.splice(Math.floor(rand() * trivia.length), 1)[0]);
   const name = zh ? tier.zh : tier.en;
   const label = [tier.zh, serialText, auto ? '签字' : '', patch ? '球衣碎片' : ''].filter(Boolean).join(' · ');
-  return {tier, name, serial: serialText, auto, patch, cardNo, role, insert, moments, legends, fact, label, turn: rand()};
+  return {tier, name, serial: serialText, auto, patch, cardNo, role, insert, moments, legends, facts, label};
 }
 
 // Splits text into at most maxLines lines of maxWidth, Chinese character by
-// character and other text word by word, with … when it runs out of room.
-function wrapLines(ctx, text, maxWidth, maxLines) {
+// character and other text word by word, with … when it runs out of room. The first
+// line can be shorter (firstWidth), for text that starts after a label.
+function wrapLines(ctx, text, maxWidth, maxLines, firstWidth = maxWidth) {
   const tokens = String(text).match(/[⺀-鿿豈-﫿＀-￯]|[^\s⺀-鿿豈-﫿＀-￯]+|\s+/g) || [];
   const lines = [];
   let line = '';
   let k = 0;
   for (; k < tokens.length; k++) {
     const next = line + tokens[k];
-    if (line.trim() && measure(ctx, next.trim()) > maxWidth) {
+    if (line.trim() && measure(ctx, next.trim()) > (lines.length ? maxWidth : firstWidth)) {
       lines.push(line.trim());
       line = /\s/.test(tokens[k]) ? '' : tokens[k];
       if (lines.length === maxLines) break;
@@ -1228,7 +1230,8 @@ function wrapLines(ctx, text, maxWidth, maxLines) {
     if (line.trim()) lines.push(line.trim());
   } else if (k < tokens.length) {
     let last = lines[maxLines - 1];
-    while (last.length > 1 && measure(ctx, `${last}…`) > maxWidth) last = last.slice(0, -1);
+    const room = maxLines === 1 ? firstWidth : maxWidth;
+    while (last.length > 1 && measure(ctx, `${last}…`) > room) last = last.slice(0, -1);
     lines[maxLines - 1] = `${last}…`;
   }
   return lines;
@@ -1304,7 +1307,7 @@ function rookieBadge(ctx, cx, cy, s, colour, ink, word) {
 }
 
 // A swatch of the team's shirt with stitching round it, in a window.
-function swatch(ctx, team, x, y, w, h, u, word) {
+function swatch(ctx, team, x, y, w, h, u, word, number) {
   shadow(ctx, u, true);
   roundRect(ctx, x - u * .18, y - u * .18, w + u * .36, h + u * .36 + u * .7, u * .3);
   ctx.fillStyle = '#ffffff';
@@ -1315,6 +1318,18 @@ function swatch(ctx, team, x, y, w, h, u, word) {
   ctx.clip();
   kit(ctx, team, x - w * .5, y - h * .5, w * 2, h * 2, u * 1.4);
   trim(ctx, team, x, y + h * .62, w, h * .16);
+  // A piece of the shirt number, cut off by the window like a real patch.
+  if (number) {
+    ctx.font = `400 ${Math.round(h * 1.5)}px ${DISPLAY}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = team.c3 === team.c1 ? team.c2 : team.c3;
+    ctx.lineWidth = h * .08;
+    ctx.strokeText(number, x + w * .42, y + h * 1.05);
+    ctx.fillStyle = team.ink === team.c1 ? team.c2 : team.ink;
+    ctx.fillText(number, x + w * .42, y + h * 1.05);
+  }
   // Fabric weave.
   ctx.globalAlpha = .12;
   ctx.fillStyle = '#000000';
@@ -1504,7 +1519,7 @@ function cardFront(ctx, team, text, L, info) {
   if (info.patch) {
     const pw = u * 4.4;
     const ph = u * 3.2;
-    swatch(ctx, team, area.x + area.w - pw - u * .55, plateY - ph - u * 2.1, pw, ph, u, words.patch);
+    swatch(ctx, team, area.x + area.w - pw - u * .55, plateY - ph - u * 2.1, pw, ph, u, words.patch, text.number);
   }
   if (info.auto) {
     const ink2 = tier.id === 'black' ? '#f2cf6b' : tier.id === 'gold' ? '#ffffff' : '#1e4fd8';
@@ -1679,7 +1694,7 @@ function cardBack(ctx, team, text, L, info) {
   y += u * .8;
   const footH = u * 2.6;
   const boxH = Math.max(u * 3, B.y + B.h - footH - u * 1.9 - y);
-  if (info.fact) {
+  if (info.facts.length) {
     roundRect(ctx, x0, y, wIn, boxH, u * .35);
     ctx.fillStyle = 'rgba(255,255,255,.75)';
     ctx.fill();
@@ -1687,13 +1702,27 @@ function cardBack(ctx, team, text, L, info) {
     ctx.lineWidth = Math.max(1, u * .1);
     ctx.stroke();
     ctx.fillStyle = ink;
-    fit(ctx, `${words.trivia} ${info.fact[0]}`, wIn - u * 1, 900, u * .44, SANS, u * .08);
-    ctx.fillText(`${words.trivia} ${info.fact[0]}`, x0 + u * .5, y + u * .9);
-    ctx.fillStyle = '#1b1b1b';
-    const lines = Math.max(1, Math.min(3, Math.floor((boxH - u * 1.3) / (u * .9))));
-    font(ctx, 700, u * .64, SANS, u * .02);
-    wrapLines(ctx, info.fact[1], wIn - u * 1, lines).forEach((part, k) => {
-      ctx.fillText(part, x0 + u * .5, y + u * 1.85 + k * u * .9);
+    fit(ctx, words.trivia, wIn - u * 1, 900, u * .44, SANS, u * .12);
+    ctx.fillText(words.trivia, x0 + u * .5, y + u * .9);
+    // Each fact: its label in the team colour, then the words, wrapped to fit.
+    let line = 0;
+    const room = Math.max(1, Math.floor((boxH - u * 1.3) / (u * .82)));
+    info.facts.forEach(([label, value], k) => {
+      const left = room - line;
+      if (left < 1) return;
+      const lines = k === info.facts.length - 1 ? Math.min(3, left) : Math.min(2, Math.max(1, left - 1));
+      ctx.fillStyle = ink;
+      font(ctx, 900, u * .46, SANS, u * .06, label);
+      const lw = measure(ctx, label) + u * .35;
+      const ty = y + u * 1.8 + line * u * .82;
+      ctx.fillText(label, x0 + u * .5, ty);
+      ctx.fillStyle = '#1b1b1b';
+      font(ctx, 700, u * .58, SANS, u * .02);
+      // The words start after the label and run on under it.
+      wrapLines(ctx, value, wIn - u * 1, lines, wIn - u * 1 - lw).forEach((part, n) => {
+        ctx.fillText(part, x0 + u * .5 + (n ? 0 : lw), ty + n * u * .82);
+        line += 1;
+      });
     });
   }
 
