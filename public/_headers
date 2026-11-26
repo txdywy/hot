@@ -1,0 +1,20 @@
+# Cloudflare Pages headers. The page and the service worker are always checked
+# for a new version; files under assets/ carry ?v= in the page, so a new version
+# gets a new address and can be cached for a while.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  X-Frame-Options: SAMEORIGIN
+
+/
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+/sw.js
+  Cache-Control: no-cache
+
+/assets/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' blob: data:; connect-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0c0b">
+  <meta name="color-scheme" content="dark">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="description" content="HOT 主场相框：把主队的颜色、你的名字和号码印在照片上。NBA、NCAA、名校、欧洲豪门，球衣、球票、徽章三种款式。照片只在你的手机里处理，不上传。">
+  <meta property="og:title" content="HOT 主场相框">
+  <meta property="og:description" content="把主队的颜色、你的名字和号码印在照片上。">
+  <title>HOT 主场相框</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/icon-180.png">
+  <link rel="preload" href="./assets/fonts/anton.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./assets/fonts/graduate.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./assets/style.css?v=2">
+  <script src="./assets/old.js?v=2"></script>
+  <script type="module" src="./assets/app.js?v=2"></script>
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-photo" viewBox="0 0 24 24"><path d="M4 5h16v14H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m4 16 5-5 4 4 2-2 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="9" r="1.6" fill="currentColor"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m16 16 4 4M11 8.5v5M8.5 11h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V4m0 0L8 8m4-4 4 4M6 11v8h12v-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="currentColor"/></symbol>
+    <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3 9 6m3-3 3 3M12 21l-3-3m3 3 3-3M3 12l3-3m-3 3 3 3m15-3-3-3m3 3-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <p class="old-browser" id="old-browser" hidden>这个浏览器版本太旧，打不开 HOT 主场相框。请把手机系统或微信更新到新版本，或者换用手机自带的浏览器打开。</p>
+
+  <header class="top" id="top">
+    <div class="shell top-inner">
+      <a class="brand" href="#top" aria-label="HOT 主场相框">
+        <span class="wordmark" aria-hidden="true">HOT</span>
+        <span class="brand-sub">主场相框</span>
+      </a>
+      <button class="icon-button" id="help-open" type="button" aria-label="怎么用">
+        <svg class="icon" aria-hidden="true"><use href="#i-help"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="shell workspace">
+    <section class="stage-panel" id="stage-panel" aria-label="预览">
+      <div class="stage" id="stage">
+        <canvas id="preview" role="img" aria-label="相框预览"></canvas>
+        <button class="stage-tool" id="view-open" type="button" hidden>
+          <svg class="icon" aria-hidden="true"><use href="#i-zoom"/></svg><span>看大图</span>
+        </button>
+        <span class="drag-hint" id="drag-hint" hidden>
+          <svg class="icon" aria-hidden="true"><use href="#i-move"/></svg><span>拖动照片调位置</span>
+        </span>
+      </div>
+      <div class="problem" id="problem" role="alert" hidden>
+        <p id="problem-text"></p>
+        <details id="problem-help">
+          <summary>怎么办？</summary>
+          <p id="problem-help-text"></p>
+        </details>
+      </div>
+    </section>
+
+    <section class="panel" id="editor" aria-label="设计你的相框">
+      <div class="hero">
+        <p class="kicker">NBA · NCAA · CAMPUS · EUROPE</p>
+        <h1>你的主队，<em>印在照片上</em></h1>
+        <p>选主队配色，挑一种款式，写上你的名字和号码。照片只在你的手机里处理，不上传。</p>
+      </div>
+
+      <section class="step" aria-labelledby="step-team">
+        <h2 class="label" id="step-team"><span>01</span> 选主队</h2>
+        <div class="groups" id="groups" role="group" aria-label="分组"></div>
+        <div class="teams" id="teams" role="group" aria-label="主队"></div>
+      </section>
+
+      <section class="step" aria-labelledby="step-style">
+        <h2 class="label" id="step-style"><span>02</span> 选款式</h2>
+        <div class="styles" id="styles" role="group" aria-label="款式"></div>
+        <div class="ratio-row">
+          <span class="ratio-label" id="ratio-label">照片比例</span>
+          <div class="ratios" id="ratios" role="group" aria-labelledby="ratio-label"></div>
+        </div>
+      </section>
+
+      <section class="step" aria-labelledby="step-words">
+        <h2 class="label" id="step-words"><span>03</span> 印上你的字</h2>
+        <div class="fields">
+          <label class="field">
+            <span>名字</span>
+            <input id="name" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" placeholder="HOME">
+          </label>
+          <label class="field number">
+            <span>号码</span>
+            <input id="number" maxlength="2" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="done">
+          </label>
+        </div>
+        <label class="field slogan">
+          <span>口号</span>
+          <input id="slogan" maxlength="24" autocomplete="off" spellcheck="false" enterkeyhint="done">
+        </label>
+        <div class="slogans" id="slogans" role="group" aria-label="常用口号"></div>
+        <label class="toggle">
+          <input type="checkbox" id="date">
+          <span class="switch" aria-hidden="true"></span>
+          <span class="toggle-text">加日期 <small id="date-note">印上拍照那天</small></span>
+        </label>
+      </section>
+    </section>
+  </main>
+
+  <div class="bar" id="bar">
+    <div class="shell bar-inner">
+      <p class="bar-hint" id="bar-hint" aria-live="polite"></p>
+      <div class="bar-buttons">
+        <button class="button secondary" id="bar-pick" type="button" aria-label="换照片" hidden>
+          <svg class="icon" aria-hidden="true"><use href="#i-swap"/></svg><span>换照片</span>
+        </button>
+        <button class="button primary" id="bar-main" type="button">
+          <svg class="icon" id="bar-icon" aria-hidden="true"><use href="#i-photo"/></svg><span id="bar-main-text">选一张照片</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="file" accept="image/*,.heic,.heif" hidden>
+  <div class="drop" id="drop" aria-hidden="true"><span>松手，放入照片</span></div>
+
+  <dialog id="result" aria-labelledby="result-title">
+    <div class="sheet">
+      <h2 id="result-title">还差一步：把照片存好</h2>
+      <p class="lead" id="result-lead"></p>
+      <div class="result-photo"><img id="result-image" alt="做好的照片"></div>
+      <p class="share-status" id="share-status" role="status"></p>
+      <div class="actions">
+        <button class="button primary" id="share" type="button" hidden>
+          <svg class="icon" aria-hidden="true"><use href="#i-share"/></svg><span id="share-text">保存到相册</span>
+        </button>
+        <a class="button secondary" id="download" download>
+          <svg class="icon" aria-hidden="true"><use href="#i-save"/></svg><span id="download-text">下载照片</span>
+        </a>
+        <button class="button ghost" id="result-close" type="button">返回</button>
+      </div>
+      <details class="more-help" id="result-help">
+        <summary id="result-help-title">找不到照片？</summary>
+        <p id="result-help-text"></p>
+      </details>
+    </div>
+  </dialog>
+
+  <dialog id="view" aria-label="看大图">
+    <div class="sheet view-sheet">
+      <div class="view-scroll" id="view-scroll">
+        <canvas id="view-canvas" role="img" aria-label="相框大图"></canvas>
+      </div>
+      <div class="actions row">
+        <button class="button secondary" id="view-zoom" type="button" aria-pressed="false">放大看清楚</button>
+        <button class="button primary" id="view-close" type="button">好的</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="help" aria-labelledby="help-title">
+    <div class="sheet">
+      <h2 id="help-title">怎么用</h2>
+      <ol class="how">
+        <li><b>选照片</b>：点下面的「选一张照片」，从相册挑一张。照片只在这台设备上处理，不会上传。</li>
+        <li><b>选主队和款式</b>：点一支球队或一所学校，再选球衣、球票或徽章。</li>
+        <li><b>印上你的字</b>：写名字、号码和口号，可以加上拍照日期。</li>
+        <li id="help-save"><b>保存</b>：点「做好照片」，再按提示存进相册。</li>
+      </ol>
+      <p class="small">队名、校名、昵称和口号都用原文。字体 Anton 和 Graduate 依 SIL Open Font License 使用。</p>
+      <div class="actions"><button class="button primary" id="help-close" type="button">知道了</button></div>
+    </div>
+  </dialog>
+</body>
+</html>

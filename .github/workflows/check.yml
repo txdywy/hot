@@ -9,9 +9,11 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  # Chromium is the engine behind Android Chrome, HarmonyOS browsers and
+  # WeChat on Android.
+  chromium:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -19,3 +21,72 @@ jobs:
           node-version: 22
       - name: Asset versions and script syntax
         run: node tools/check-assets.mjs
+      - name: Install Playwright and the syntax checker
+        run: |
+          npm install --no-save --no-package-lock playwright@1.49.1 acorn@8.14.0
+          npx playwright install --with-deps chromium
+      - name: Syntax older phones understand (iOS 12, older Android browsers)
+        run: node tools/old-syntax.mjs
+      - name: Whole flow on Android, HarmonyOS, iPhone, WeChat and a computer
+        if: always()
+        run: node tools/smoke.mjs
+        env:
+          SHOT_DIR: screenshots/smoke
+      - name: Every screen size, also with large text
+        if: always()
+        run: node tools/layout.mjs
+        env:
+          SHOT_DIR: screenshots/layout
+      - name: Bad files, HEIC, dragging the photo, stuck share sheet, Back button
+        if: always()
+        run: node tools/edges.mjs
+        env:
+          SHOT_DIR: screenshots/edges
+      - name: Keep the screenshots for review
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: chromium-screenshots
+          path: screenshots
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # WebKit is the engine behind iPhone and iPad Safari and iPhone WeChat. Playwright
+  # 1.49's WebKit build and its system libraries match Ubuntu 24.04.
+  webkit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      ENGINE: webkit
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save --no-package-lock playwright@1.49.1
+          npx playwright install --with-deps webkit
+      - name: Whole flow on iPhone Safari, iPhone WeChat and a computer
+        if: always()
+        run: node tools/smoke.mjs
+        env:
+          SHOT_DIR: screenshots/smoke
+      - name: Every screen size, also with large text
+        if: always()
+        run: node tools/layout.mjs
+        env:
+          SHOT_DIR: screenshots/layout
+      - name: Bad files, dragging the photo, stuck share sheet, Back button
+        if: always()
+        run: node tools/edges.mjs
+        env:
+          SHOT_DIR: screenshots/edges
+      - name: Keep the screenshots for review
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: webkit-screenshots
+          path: screenshots
+          retention-days: 14
+          if-no-files-found: ignore
