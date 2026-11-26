@@ -1,42 +1,42 @@
-// Temporary: finds which part of the page makes WebKit with touch report a CSP style error.
-import {serve} from './serve.mjs';
+// Temporary: finds which CSS rule makes WebKit report a CSP style error.
+import {serve, site} from './serve.mjs';
 import {launch} from './browser.mjs';
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
-import {site} from './serve.mjs';
 
 const server = await serve();
 const browser = await launch();
-const html = await readFile(join(site, 'index.html'), 'utf8');
-const csp = html.match(/<meta http-equiv="Content-Security-Policy"[^>]+>/)[0];
-const variants = {
-  full: html,
-  blank: `<!doctype html><html><head>${csp}</head><body><p>hi</p></body></html>`,
-  blankNoCsp: '<!doctype html><html><head></head><body><p>hi</p></body></html>',
-  noDetails: html.replace(/<details[\s\S]*?<\/details>/g, ''),
-  noCheckbox: html.replace(/<input type="checkbox"[^>]*>/, ''),
-  noDialogs: html.replace(/<dialog[\s\S]*?<\/dialog>/g, ''),
-  noSprite: html.replace(/<svg class="sprite"[\s\S]*?<\/svg>/, ''),
-  noInputs: html.replace(/<input [^>]*>/g, ''),
-  noScripts: html.replace(/<script[^>]*><\/script>/g, ''),
-  noCss: html.replace(/<link rel="stylesheet"[^>]*>/, ''),
-  noFile: html.replace(/<input type="file"[^>]*>/, ''),
-  noViewport: html.replace(/<meta name="viewport"[^>]*>/, ''),
-};
-for (const touch of [true, false]) {
-  const lines = [];
-  for (const [name, body] of Object.entries(variants)) {
-    const context = await browser.newContext({viewport: {width: 390, height: 844}, hasTouch: touch});
-    const page = await context.newPage();
-    const errors = [];
-    page.on('console', m => { if (m.type() === 'error') errors.push(m.text().slice(0, 40)); });
-    await page.route('**/', route => route.fulfill({contentType: 'text/html', body}));
-    await page.goto(server.url);
-    await page.waitForTimeout(1500);
-    lines.push(`${name}=${errors.length}`);
-    await context.close();
-  }
-  console.log(`::warning title=diag touch=${touch}::${lines.join(' ')}`);
+const css = await readFile(join(site, 'assets', 'style.css'), 'utf8');
+// Top-level blocks by brace matching (comments stripped).
+const text = css.replace(/\/\*[\s\S]*?\*\//g, '');
+const rules = [];
+let depth = 0, start = 0;
+for (let i = 0; i < text.length; i++) {
+  if (text[i] === '{') depth++;
+  if (text[i] === '}' && --depth === 0) { rules.push(text.slice(start, i + 1).trim()); start = i + 1; }
 }
+async function errors(body, width) {
+  const context = await browser.newContext({viewport: {width, height: 844}});
+  const page = await context.newPage();
+  let n = 0;
+  page.on('console', m => { if (m.type() === 'error' && /stylesheet/.test(m.text())) n++; });
+  await page.route('**/style.css*', route => route.fulfill({contentType: 'text/css', body}));
+  await page.goto(server.url);
+  await page.waitForTimeout(800);
+  await context.close();
+  return n;
+}
+const out = [`rules=${rules.length}`, `all390=${await errors(rules.join('\n'), 390)}`, `all1366=${await errors(rules.join('\n'), 1366)}`];
+let lo = 0, hi = rules.length;
+while (lo < hi) {
+  const mid = (lo + hi) >> 1;
+  if (await errors(rules.slice(0, mid + 1).join('\n'), 390)) hi = mid; else lo = mid + 1;
+}
+out.push(`first=${lo}`);
+if (rules[lo]) {
+  out.push(`alone=${await errors(rules[lo], 390)}`);
+  out.push(`rule=${rules[lo].replace(/\s+/g, ' ').slice(0, 300)}`);
+}
+console.log(`::warning title=diag css::${out.join(' ; ')}`);
 await browser.close();
 server.close();
