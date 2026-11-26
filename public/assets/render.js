@@ -975,7 +975,7 @@ function patch(ctx, team, text, L) {
   ctx.fillText(text.number, cx, cy + r * .5);
 
   // Top left: the team's logo as a big die-cut sticker, or the emblem as a patch.
-  if (logo) sticker(ctx, logo, m * 1.5, m * 1.5, m * 2.7, m, -.12);
+  if (logo) sticker(ctx, logo, m * 1.75, m * 1.6, m * 3.3, m, -.12);
   else {
   ctx.save();
   ctx.translate(m * 1.2, m * 1.35);
