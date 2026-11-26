@@ -1271,8 +1271,9 @@ function layoutPage() {
   let height = 0;
   if (phone) {
     const typing = root.classList.contains('typing');
-    const portion = root.classList.contains('short-phone') ? .6 : typing ? .3 : view < 700 ? .44 : .5;
-    height = Math.round(Math.max(170, Math.min(view * portion, 620)));
+    // Below half the screen, so the middle of the page (where a tapped control scrolls to) stays clear.
+    const portion = root.classList.contains('short-phone') ? .6 : typing ? .3 : view < 700 ? .42 : .46;
+    height = Math.round(Math.max(170, Math.min(view * portion, 600)));
   }
   if (height !== stageHeight) {
     stageHeight = height;
