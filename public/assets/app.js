@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=10';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo} from './render.js?v=10';
-import {venue, kit, trim, drawMotif} from './art.js?v=10';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=10';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=10';
+import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=15';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo} from './render.js?v=15';
+import {venue, kit, trim, drawMotif} from './art.js?v=15';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=15';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=15';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -108,7 +108,10 @@ let fontsReady = false;
 function loadChoices() {
   try {
     const saved = JSON.parse(localStorage.getItem(storeKey) || 'null');
-    if (!saved || typeof saved !== 'object') return;
+    if (!saved || typeof saved !== 'object') {
+      cardLink();
+      return;
+    }
     if (byId.has(saved.team)) {
       state.team = byId.get(saved.team);
       state.group = state.team.group;
@@ -123,6 +126,21 @@ function loadChoices() {
     if (typeof saved.seed === 'number' && saved.seed >= 0 && saved.seed < 4294967296) state.seed = Math.floor(saved.seed);
   } catch (error) {
     // Private browsing or blocked storage: start fresh.
+  }
+  cardLink();
+}
+
+// A link to one card: #card=<number>, with &team=<id> for another team. It opens
+// that exact pull, so a card can be shown again or checked.
+function cardLink() {
+  const link = /^#card=(\d{1,10})(?:&team=([\w-]+))?$/.exec(location.hash || '');
+  if (link && Number(link[1]) < 4294967296) {
+    state.seed = Number(link[1]);
+    state.style = 'card';
+    if (link[2] && byId.has(link[2])) {
+      state.team = byId.get(link[2]);
+      state.group = state.team.group;
+    }
   }
 }
 
