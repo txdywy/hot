@@ -1422,7 +1422,7 @@ function cardFront(ctx, team, text, L, info) {
   roundRect(ctx, area.x, area.y, area.w, area.h, u * .35);
   ctx.stroke();
 
-  // Set logo, top left: HOT CHROME and the season.
+  // Set logo, top left: HOT CHROME and the season (or the photo's date).
   const tagW = u * 5.6;
   const tagX = area.x + u * .5;
   const tagY = area.y + u * .5;
@@ -1436,9 +1436,11 @@ function cardFront(ctx, team, text, L, info) {
   ctx.textBaseline = 'alphabetic';
   fit(ctx, words.set, tagW - u * .6, 400, u * .9, DISPLAY, u * .06);
   ctx.fillText(words.set, u * .35, u * 1.02);
-  fit(ctx, text.season, tagW - u * .6, 800, u * .44, SANS, u * .1);
+  // The photo's date, when the user turned it on, takes the season's place.
+  const tagLine = text.date || text.season;
+  fit(ctx, tagLine, tagW - u * .6, 800, u * .44, SANS, u * .1);
   ctx.globalAlpha = .8;
-  ctx.fillText(text.season, u * .35, u * 1.52);
+  ctx.fillText(tagLine, u * .35, u * 1.52);
   ctx.restore();
 
   // Crest, top right, big; the RC shield under it.
@@ -1748,7 +1750,7 @@ function cardBack(ctx, team, text, L, info) {
   fit(ctx, tierLine, wIn * .68, 800, u * .42, SANS, u * .06);
   ctx.fillText(tierLine, x0, fy + u * 1.05);
   ctx.globalAlpha = .6;
-  const fine = `© ${new Date().getFullYear()} HOT 主场相框 · ${info.insert} · ${text.season}`;
+  const fine = `© ${new Date().getFullYear()} HOT 主场相框 · ${info.insert} · ${text.season}${text.date ? ` · ${text.date}` : ''}`;
   fit(ctx, fine, wIn * .68, 600, u * .36, SANS, u * .03);
   ctx.fillText(fine, x0, fy + u * 1.75);
   ctx.globalAlpha = 1;
