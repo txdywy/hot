@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=14';
-import {isZh} from './teams.js?v=14';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=14';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=15';
+import {isZh} from './teams.js?v=15';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=15';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -4549,7 +4549,7 @@ const backs = {
       ctx.fillStyle = 'rgba(255,255,255,.6)';
       fit(ctx, zh ? info.mem.zh : info.mem.en, ww, 900, u * .38, SANS, u * .14);
       ctx.fillText(zh ? info.mem.zh : info.mem.en, mid, y + wh + u * .7);
-      y += wh + u * 1.4;
+      y += wh + u * 2.1;
     } else {
       authSeal(ctx, mid, y + u * 1.6, u * 1.6, zh, info.seed);
       y += u * 4;
