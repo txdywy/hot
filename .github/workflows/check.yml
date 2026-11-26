@@ -51,22 +51,20 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
-  # WebKit is the engine behind iPhone and iPad Safari and iPhone WeChat. Playwright
-  # 1.49's WebKit build and its system libraries match Ubuntu 24.04.
+  # WebKit is the engine behind iPhone and iPad Safari and iPhone WeChat. It runs in
+  # Playwright's own image, which already holds WebKit and its system libraries, so
+  # the job never waits on a slow Ubuntu package mirror.
   webkit:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.49.1-noble
     env:
       ENGINE: webkit
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-      - name: Install Playwright WebKit
-        run: |
-          npm install --no-save --no-package-lock playwright@1.49.1
-          npx playwright install --with-deps webkit
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock playwright@1.49.1
       - name: Diagnose CSP style error (temporary)
         if: always()
         run: node tools/diag-webkit.mjs
