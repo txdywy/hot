@@ -3552,6 +3552,17 @@ const fronts = {
     const nsize = fit(ctx, text.name, area.h - u * 1, 400, u * 2.1, DISPLAY, u * .08);
     ctx.textAlign = 'left';
     foilText(ctx, text.name, 0, 0, nsize, info.gold ? 'gold' : 'team', mix(volt, '#ffffff', .2));
+    // The role and season run on up the side in the glow colour.
+    font(ctx, 400, nsize, DISPLAY, u * .08);
+    const used = ctx.measureText(text.name).width + u * .8;
+    const tail = `${info.role} · ${seasonYear(text)}`;
+    if (area.h - u * 1.4 - used > u * 3) {
+      ctx.fillStyle = volt;
+      ctx.globalAlpha = .9;
+      fit(ctx, tail, area.h - u * 1.4 - used, 900, u * .62, SANS, u * .18);
+      ctx.fillText(tail, used, -nsize * .08);
+      ctx.globalAlpha = 1;
+    }
     ctx.restore();
     rookieMark(ctx, info.rookie, area.x + u * 2.2, area.y + u * 2.4, u * 2.3, team, words);
     serialStamp(ctx, info, area.x + area.w - u * .6, area.y + u * 1, u, words, 'right');
@@ -3956,6 +3967,67 @@ function backFacts(team, text, zh) {
   ];
 }
 
+// A "did you know" box of trivia, fitted to the room it is given.
+function triviaBox(ctx, facts, x, y, w, h, u, look, title) {
+  if (!facts.length || h < u * 2) return;
+  ctx.fillStyle = look.bg;
+  roundRect(ctx, x, y, w, h, u * .4);
+  ctx.fill();
+  ctx.strokeStyle = look.line;
+  ctx.lineWidth = Math.max(1, u * .08);
+  ctx.stroke();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = look.line;
+  fit(ctx, title, w - u, 900, u * .42, SANS, u * .14);
+  ctx.fillText(title, x + u * .5, y + u * .8);
+  let ty = y + u * 1.45;
+  const lh = u * .62;
+  for (const [label, value] of facts) {
+    if (ty + lh > y + h - u * .2) break;
+    ctx.fillStyle = look.label;
+    font(ctx, 900, u * .4, SANS, u * .06);
+    const lw = Math.min(ctx.measureText(label).width, w * .3);
+    fit(ctx, label, w * .3, 900, u * .4, SANS, u * .06);
+    ctx.fillText(label, x + u * .5, ty);
+    ctx.fillStyle = look.ink;
+    font(ctx, 700, u * .44, SANS, u * .01);
+    const room = Math.max(1, Math.floor((y + h - u * .2 - ty) / lh) + 1);
+    wrapLines(ctx, value, w - u * 1.3 - lw, Math.min(3, room)).forEach((line, k) => ctx.fillText(line, x + u * .8 + lw, ty + k * lh));
+    ty += lh * Math.min(3, wrapLines(ctx, value, w - u * 1.3 - lw, 3).length) + u * .25;
+  }
+}
+
+// An old-style ruled record: labels across the top, the figures under them.
+function recordTable(ctx, cells, x, y, w, h, u, ink, dark, title) {
+  if (h < u * 2.4) return;
+  const th = u * .7;
+  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = ink;
+  fit(ctx, title, w, 900, u * .42, SANS, u * .14);
+  ctx.fillText(title, x, y + u * .5);
+  const ty = y + th;
+  const rowH = Math.min(u * 1.1, (h - th) / 2);
+  ctx.fillStyle = ink;
+  ctx.fillRect(x, ty, w, rowH);
+  const cw = w / cells.length;
+  ctx.textAlign = 'center';
+  cells.forEach(([label, value], k) => {
+    const mx = x + cw * k + cw / 2;
+    ctx.fillStyle = '#f3e9d2';
+    fit(ctx, label, cw * .86, 900, rowH * .42, SANS, u * .04);
+    ctx.fillText(label, mx, ty + rowH * .66);
+    ctx.fillStyle = dark;
+    fit(ctx, String(value), cw * .86, 400, rowH * .7, VARSITY, u * .02);
+    ctx.fillText(String(value), mx, ty + rowH * 1.78);
+    if (k) ctx.fillRect(x + cw * k, ty + rowH, Math.max(1, u * .04), rowH);
+  });
+  ctx.fillStyle = dark;
+  ctx.fillRect(x, ty + rowH * 2, w, Math.max(1, u * .05));
+  ctx.textAlign = 'left';
+}
+
 const backs = {
   classic: backClassic,
 
@@ -4223,8 +4295,10 @@ const backs = {
       ctx.fillText(line, x0 + u * 3, y + rh * .66);
       y += rh;
     });
-    // The slogan in a slanted bar.
+    // The slogan in a slanted bar, and trivia in the room above it.
     const sy = fy - u * 1.6;
+    triviaBox(ctx, info.facts, x0, y + u * .5, wIn, Math.min(u * 4.6, sy - u * .5 - y - u * .5), u,
+      {bg: '#ffffff', line: fill === '#ffffff' ? ink : fill, label: ink, ink: '#1b1b1b'}, words.trivia);
     ctx.save();
     ctx.translate(x0, sy);
     ctx.transform(1, 0, -.2, 1, 0, 0);
@@ -4355,6 +4429,10 @@ const backs = {
     });
     ctx.fillStyle = dark;
     ctx.fillRect(x0, y, wIn, Math.max(1, u * .04));
+    // The ratings as an old ruled record, in what room is left.
+    const cells = info.rating.attrs.concat([['OVR', info.rating.ovr]]);
+    recordTable(ctx, cells, x0, y + u * .5, wIn, Math.min(u * 3, fy - u * 1.3 - y - u * .5), u, fill, dark,
+      zh ? '能力档案' : 'SCOUTING RECORD');
     // The slogan and the fine print, printed in ink straight on the board.
     ctx.fillStyle = fill;
     ctx.textAlign = 'center';
