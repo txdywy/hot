@@ -2184,22 +2184,6 @@ const fronts = {
       }
     });
     photo(ctx, team, info, text, area, u, u * .35);
-    // The city's name in neon behind the skyline.
-    const cityY = area.y + area.h - u * .2;
-    const city = isZh(team) ? team.city : upper(team.city);
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    fit(ctx, city, F.w - u * 2, 400, u * 3.4, DISPLAY, u * .12);
-    ctx.shadowColor = two;
-    ctx.shadowBlur = u * .9;
-    ctx.lineWidth = u * .16;
-    ctx.strokeStyle = two;
-    ctx.strokeText(city, F.x + F.w / 2, cityY + u * 1.4);
-    ctx.shadowBlur = u * .3;
-    ctx.fillStyle = 'rgba(255,255,255,.12)';
-    ctx.fillText(city, F.x + F.w / 2, cityY + u * 1.4);
-    ctx.restore();
     // Buildings, each with lit windows.
     ctx.save();
     roundRect(ctx, F.x, F.y, F.w, F.h, u * .7);
@@ -2208,7 +2192,7 @@ const fronts = {
     let bx = F.x - u * .5;
     while (bx < F.x + F.w) {
       const bw = u * (1.2 + rand() * 2.2);
-      const bh = u * (2 + rand() * rand() * 9);
+      const bh = u * (1.5 + rand() * rand() * 7);
       ctx.fillStyle = mix(fill, '#000000', .78);
       ctx.fillRect(bx, ground - bh, bw - u * .12, bh + u * 5);
       if (rand() < .3) ctx.fillRect(bx + bw * .4, ground - bh - u * 1.1, u * .12, u * 1.1);
@@ -2224,6 +2208,21 @@ const fronts = {
     }
     ctx.fillStyle = '#07070c';
     ctx.fillRect(F.x, ground, F.w, F.h);
+    ctx.restore();
+    // The city's name as a neon sign across the rooftops.
+    const city = isZh(team) ? team.city : upper(team.city);
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    fit(ctx, city, F.w - u * 2, 400, u * 3.4, DISPLAY, u * .12);
+    ctx.shadowColor = two;
+    ctx.shadowBlur = u * .9;
+    ctx.lineWidth = u * .16;
+    ctx.strokeStyle = two;
+    ctx.strokeText(city, F.x + F.w / 2, ground - u * .35);
+    ctx.shadowBlur = u * .3;
+    ctx.fillStyle = 'rgba(255,255,255,.88)';
+    ctx.fillText(city, F.x + F.w / 2, ground - u * .35);
     ctx.restore();
     lightUp(ctx, info, rand, F.x, F.y, F.w, F.h * .5, u, .4);
     // Name and team under the city.
