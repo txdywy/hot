@@ -108,7 +108,10 @@ let fontsReady = false;
 function loadChoices() {
   try {
     const saved = JSON.parse(localStorage.getItem(storeKey) || 'null');
-    if (!saved || typeof saved !== 'object') return;
+    if (!saved || typeof saved !== 'object') {
+      cardLink();
+      return;
+    }
     if (byId.has(saved.team)) {
       state.team = byId.get(saved.team);
       state.group = state.team.group;
@@ -124,8 +127,12 @@ function loadChoices() {
   } catch (error) {
     // Private browsing or blocked storage: start fresh.
   }
-  // A link to one card: #card=<number>, with &team=<id> for another team. It opens
-  // that exact pull, so a card can be shown again or checked.
+  cardLink();
+}
+
+// A link to one card: #card=<number>, with &team=<id> for another team. It opens
+// that exact pull, so a card can be shown again or checked.
+function cardLink() {
   const link = /^#card=(\d{1,10})(?:&team=([\w-]+))?$/.exec(location.hash || '');
   if (link && Number(link[1]) < 4294967296) {
     state.seed = Number(link[1]);
