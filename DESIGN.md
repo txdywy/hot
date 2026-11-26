@@ -12,7 +12,7 @@
 
 两层选择，比拾光的「一层分类 + 39 款」更适合球迷：
 
-1. **先选主队**（5 组，28 个，全部用真实英文名，中文只做小字说明）
+1. **先选主队**（6 组，30 个，全部用真实原文名字，中文只做小字说明）
    - NBA：Los Angeles Lakers、Boston Celtics、Golden State Warriors、Chicago Bulls、Miami Heat、New York Knicks、Dallas Mavericks、San Antonio Spurs
    - NCAA 篮球：Duke Blue Devils、North Carolina Tar Heels、Kentucky Wildcats、Kansas Jayhawks
    - 名校：Stanford Cardinal、Harvard Crimson、Yale Bulldogs、Cal Golden Bears
@@ -21,7 +21,7 @@
 2. **再选款式**（3 种，任何一队都能套）
 3. **印上你的字**：名字、号码、口号，外加拾光已有的「加日期」
 
-28 队 × 3 款 = 84 种组合，代码里只维护一张配色表和三个画法，后面加队几乎零成本。
+30 队 × 3 款 = 90 种组合，代码里只维护一张配色表和三个画法，后面加队几乎零成本。
 
 ## 三个视觉方向
 
