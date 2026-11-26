@@ -1,8 +1,9 @@
 // Draws the three frame styles (jersey, ticket, patch) on a canvas, from the
 // team's colours, its real names, its history (founding year, home, titles,
-// retired numbers) and its emblem, plus the words typed in. A team's logo
-// file is drawn too when one has been added (see logos in teams.js).
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=4';
+// retired numbers, big moments) and its official logo (see logos in teams.js),
+// plus the words typed in. Chinese teams and schools are printed in Chinese.
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=5';
+import {isZh} from './teams.js?v=5';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -11,6 +12,10 @@ const SANS = `system-ui, -apple-system, "Segoe UI", Roboto, ${CJK}, sans-serif`;
 // the same on iPhone, Android, HarmonyOS and computers. Both come in one weight only.
 const DISPLAY = `"HOT Display", "Arial Black", Impact, ${CJK}, sans-serif`;
 const VARSITY = `"HOT Varsity", Rockwell, Georgia, ${CJK}, serif`;
+// Big Chinese words: the phone's own Chinese font at its heaviest, since the display
+// fonts have no Chinese and would fall back to a thin weight.
+const HEAVY = `${CJK}, system-ui, sans-serif`;
+const HAN = /[\u2e80-\u9fff\uf900-\ufaff\uff00-\uffef]/;
 const PAPER = '#f4eee2';
 const TABLE = '#141414';
 
@@ -24,25 +29,73 @@ const onPaper = team => luminance(team.c1) > .6 ? team.c2 : team.c1;
 // The team colour to use as a solid field: the main one unless it is almost white.
 const solid = team => luminance(team.c1) > .75 ? team.c2 : team.c1;
 
+// Words printed on the frames, in English or, for Chinese teams and schools, Chinese.
+const WORDS = {
+  en: {
+    admit: 'ADMIT ONE', est: 'EST.', home: 'HOME', homeGame: 'HOME GAME', titles: 'TITLES',
+    gate: 'GATE', sec: 'SEC', row: 'ROW', seat: 'SEAT', holder: 'HOLDER', date: 'DATE',
+    tonight: 'TONIGHT', history: 'HISTORY', season: 'SEASON', hello: 'HELLO · 我是', no: 'NO.',
+    honours: 'HONOURS', since: 'SINCE',
+  },
+  zh: {
+    admit: '入场券', est: '始于', home: '主场', homeGame: '主场之夜', titles: '冠军',
+    gate: '入口', sec: '看台', row: '排', seat: '座', holder: '持票人', date: '日期',
+    tonight: '今晚', history: '历史时刻', season: '赛季', hello: '你好 · 我是', no: '号',
+    honours: '荣誉', since: '始于',
+  },
+};
+const say = team => WORDS[isZh(team) ? 'zh' : 'en'];
+const upper = text => String(text).toUpperCase();
+
 // "17× NBA CHAMPIONS", or the team's own line when it has no title count.
 export function titleLine(team) {
   if (!team.titles) return '';
   return team.titles.n ? `${team.titles.n}× ${team.titles.label}` : team.titles.label;
 }
 
-function font(ctx, weight, size, family, spacing = 0) {
+// Sets the font. Text with Chinese in it, set in a display face, gets the heavy
+// Chinese face instead.
+function font(ctx, weight, size, family, spacing = 0, text = '') {
+  if (text && (family === DISPLAY || family === VARSITY) && HAN.test(text)) {
+    weight = 900;
+    family = HEAVY;
+    spacing = Math.min(spacing, size * .04);
+  }
   ctx.font = `${weight} ${Math.max(1, Math.round(size))}px ${family}`;
   if ('letterSpacing' in ctx) ctx.letterSpacing = `${Math.round(spacing)}px`;
 }
 
+// Width of the text in the current font. Some browsers leave letter spacing out of
+// measureText, so it is added back when they do.
+let spacingMeasured = null;
+function measure(ctx, text) {
+  const width = ctx.measureText(text).width;
+  if (!('letterSpacing' in ctx)) return width;
+  const spacing = parseFloat(ctx.letterSpacing) || 0;
+  if (!spacing) return width;
+  if (spacingMeasured === null) {
+    const kept = ctx.letterSpacing;
+    ctx.letterSpacing = '0px';
+    const plain = ctx.measureText('MMMM').width;
+    ctx.letterSpacing = '20px';
+    spacingMeasured = ctx.measureText('MMMM').width > plain + 40;
+    ctx.letterSpacing = kept;
+  }
+  return spacingMeasured ? width : width + spacing * Array.from(text).length;
+}
+
 // Shrinks the font until the text fits in maxWidth; returns the size used.
 function fit(ctx, text, maxWidth, weight, size, family, spacing = 0) {
-  font(ctx, weight, size, family, spacing);
-  const width = ctx.measureText(text).width;
-  if (width > maxWidth && width > 0) {
+  font(ctx, weight, size, family, spacing, text);
+  let width = measure(ctx, text);
+  for (let k = 0; k < 4 && width > maxWidth && width > 0 && size > 1; k++) {
+    // Font sizes are whole pixels, so a scaled size can round up: take a pixel off.
     const scale = maxWidth / width;
-    size *= scale;
-    font(ctx, weight, size, family, spacing * scale);
+    const next = Math.min(size * scale, size - 1);
+    spacing *= next / size;
+    size = next;
+    font(ctx, weight, size, family, spacing, text);
+    width = measure(ctx, text);
   }
   return size;
 }
@@ -99,10 +152,14 @@ function upText(ctx, text, x, y, maxLength, weight, size, family, spacing, colou
 function box(style, pw, ph) {
   const m = Math.min(pw, ph) * .075;
   if (style === 'ticket') {
+    // A wide ticket: the photo on the left, the team's file beside it, a stub on the right.
     const o = m * .45;
-    const x = o + m * 1.25;
-    const y = o + m * 1.55;
-    return {m, o, W: x + pw + m + o, H: y + ph + m * 1.55 + m * 3.1 + o, area: {x, y, w: pw, h: ph}};
+    const g = ph * .05;
+    const P = ph * .84;
+    const S = ph * .21;
+    const x = o + g;
+    const y = o + g;
+    return {m, o, g, P, S, W: x + pw + g * .8 + P + g * .7 + S + o, H: y + ph + g + o, area: {x, y, w: pw, h: ph}};
   }
   if (style === 'patch') {
     const s = m * 1.45;
@@ -144,21 +201,139 @@ function drawLogo(ctx, logo, cx, cy, size) {
   ctx.drawImage(logo, cx - w * scale / 2, cy - h * scale / 2, w * scale, h * scale);
 }
 
-// The team's emblem in a round badge: the logo file when there is one, else the
-// drawn motif. ring is the badge colour, ink the emblem colour.
+// Logo copies made once and kept: the logo in one flat colour (for watermarks and
+// masks), and the logo cut out like a sticker with a white edge around it.
+const made = new WeakMap();
+function kept(logo, key, make) {
+  if (!made.has(logo)) made.set(logo, new Map());
+  const box = made.get(logo);
+  if (!box.has(key)) box.set(key, make());
+  return box.get(key);
+}
+
+function flat(logo, colour) {
+  return kept(logo, `flat ${colour}`, () => {
+    const w = logo.naturalWidth || logo.width || 1;
+    const h = logo.naturalHeight || logo.height || 1;
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const x = c.getContext('2d');
+    x.drawImage(logo, 0, 0, w, h);
+    x.globalCompositeOperation = 'source-in';
+    x.fillStyle = colour;
+    x.fillRect(0, 0, w, h);
+    return c;
+  });
+}
+
+// The sticker: the flat white logo drawn in a ring of small steps (that makes the
+// edge), then the logo itself on top.
+function cutOut(logo, edge) {
+  return kept(logo, `sticker ${edge}`, () => {
+    const w = logo.naturalWidth || logo.width || 1;
+    const h = logo.naturalHeight || logo.height || 1;
+    const t = Math.max(w, h) * .05;
+    const pad = Math.ceil(t + 2);
+    const c = document.createElement('canvas');
+    c.width = w + pad * 2;
+    c.height = h + pad * 2;
+    const x = c.getContext('2d');
+    const white = flat(logo, edge);
+    for (let k = 0; k < 24; k++) {
+      const a = k / 24 * TAU;
+      x.drawImage(white, pad + Math.cos(a) * t, pad + Math.sin(a) * t, w, h);
+    }
+    x.drawImage(white, pad, pad, w, h);
+    x.drawImage(logo, pad, pad, w, h);
+    return c;
+  });
+}
+
+// The logo as a die-cut sticker, size being its long side, tilted by `turn`.
+function sticker(ctx, logo, cx, cy, size, m, turn = 0, edge = '#ffffff') {
+  const art = cutOut(logo, edge);
+  const scale = size / Math.max(art.width, art.height);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(turn);
+  shadow(ctx, m, true);
+  ctx.drawImage(art, -art.width * scale / 2, -art.height * scale / 2, art.width * scale, art.height * scale);
+  ctx.restore();
+}
+
+// The logo in one colour, faint, as a watermark.
+function watermark(ctx, logo, cx, cy, size, colour, alpha, turn = 0) {
+  const art = flat(logo, colour);
+  const scale = size / Math.max(art.width, art.height);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(cx, cy);
+  ctx.rotate(turn);
+  ctx.drawImage(art, -art.width * scale / 2, -art.height * scale / 2, art.width * scale, art.height * scale);
+  ctx.restore();
+}
+
+// The logo repeated in rows over an area, like a monogram print.
+function monogram(ctx, logo, x, y, w, h, cell, colour, alpha) {
+  const art = flat(logo, colour);
+  const size = cell * .5;
+  const scale = size / Math.max(art.width, art.height);
+  const dw = art.width * scale;
+  const dh = art.height * scale;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  ctx.globalAlpha = alpha;
+  let row = 0;
+  for (let py = y - cell / 2; py < y + h + cell; py += cell * .8, row++) {
+    for (let px = x - cell + (row % 2) * cell / 2; px < x + w + cell; px += cell) {
+      ctx.drawImage(art, px - dw / 2, py - dh / 2, dw, dh);
+    }
+  }
+  ctx.restore();
+}
+
+// On the photo itself: a huge, faint logo running off one corner (like a mask over
+// the picture) and the full-colour logo as a sticker on the opposite side.
+// corner: 'br' bottom right, 'tr' top right, 'bl', 'tl'. island: where the sticker goes.
+function photoMarks(ctx, logo, area, m, mask, island) {
+  if (!logo) return;
+  if (mask) {
+    const size = Math.max(area.w, area.h) * .72;
+    const right = mask[1] === 'r';
+    const bottom = mask[0] === 'b';
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(area.x, area.y, area.w, area.h);
+    ctx.clip();
+    const cx = right ? area.x + area.w - size * .16 : area.x + size * .16;
+    const cy = bottom ? area.y + area.h - size * .14 : area.y + size * .14;
+    watermark(ctx, logo, cx, cy, size, '#ffffff', .26, right ? -.18 : .18);
+    ctx.restore();
+  }
+  if (island) {
+    const size = Math.min(area.w, area.h) * .3;
+    const right = island[1] === 'r';
+    const bottom = island[0] === 'b';
+    const cx = right ? area.x + area.w - size * .62 : area.x + size * .62;
+    const cy = bottom ? area.y + area.h - size * .62 : area.y + size * .62;
+    sticker(ctx, logo, cx, cy, size, m, right ? .1 : -.1);
+  }
+}
+
+// The team's emblem in a round badge: the logo as a sticker when there is one, else
+// the drawn motif. ring is the badge colour, ink the emblem colour.
 function badge(ctx, team, logo, cx, cy, r, ring, ink, m) {
+  if (logo) {
+    sticker(ctx, logo, cx, cy, r * 2.3, m);
+    return;
+  }
   ctx.fillStyle = ring;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, TAU);
   ctx.fill();
-  if (logo) {
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * .9, 0, TAU);
-    ctx.fill();
-    drawLogo(ctx, logo, cx, cy, r * 1.4);
-    return;
-  }
   ctx.strokeStyle = ink;
   ctx.globalAlpha = .55;
   ctx.lineWidth = Math.max(1, m * .025);
@@ -223,6 +398,8 @@ function collar(ctx, team, W, m) {
 
 function jersey(ctx, team, text, L) {
   const {m, W, H, area} = L;
+  const say_ = say(team);
+  const logo = text.logo;
   kit(ctx, team, 0, 0, W, H, m);
 
   // Side panels with the team's trim (argyle, houndstooth, fiesta stripes, bars).
@@ -238,8 +415,8 @@ function jersey(ctx, team, text, L) {
   const gap = area.x - panel;
   // Small print up the sides: founding year and city on the left, home on the right.
   const sideLength = area.h * .9;
-  upText(ctx, `EST. ${team.est} · ${team.city}`, panel + gap / 2, area.y + area.h / 2, sideLength, 800, m * .24, SANS, m * .08, ink);
-  upText(ctx, `HOME · ${team.home}`, W - panel - gap / 2, area.y + area.h / 2, sideLength, 800, m * .24, SANS, m * .08, ink);
+  upText(ctx, `${say_.est} ${team.est} · ${upper(team.city)}`, panel + gap / 2, area.y + area.h / 2, sideLength, 800, m * .24, SANS, m * .08, ink);
+  upText(ctx, `${say_.home} · ${team.home}`, W - panel - gap / 2, area.y + area.h / 2, sideLength, 800, m * .24, SANS, m * .08, ink);
 
   // Photo with a two-colour trim.
   const edge = team.c2 === team.c1 ? team.c3 : team.c2;
@@ -248,6 +425,7 @@ function jersey(ctx, team, text, L) {
   ctx.fillStyle = edge;
   ctx.fillRect(area.x - m * .1, area.y - m * .1, area.w + m * .2, area.h + m * .2);
   text.drawPhoto(area);
+  if (text.mark) photoMarks(ctx, logo, area, m, 'br', 'bl');
   collar(ctx, team, W, m);
 
   // Striped kits get a solid chest panel and an emblem disc, so the print stays readable.
@@ -261,13 +439,20 @@ function jersey(ctx, team, text, L) {
     ctx.strokeStyle = team.c3;
     ctx.lineWidth = m * .05;
     ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(area.x + m * .55, topY, m * .58, 0, TAU);
-    ctx.fill();
+    if (!logo) {
+      ctx.beginPath();
+      ctx.arc(area.x + m * .55, topY, m * .58, 0, TAU);
+      ctx.fill();
+    }
   }
 
-  // Top corners: the emblem on the left, stars or the title count on the right.
-  drawMotif(ctx, team.motif, area.x + m * .55, topY, m * .95, ink, team.c1, team.accent);
+  // The logo, big and faint, printed across the lower shirt behind the number.
+  const y0 = area.y + area.h;
+  if (logo) watermark(ctx, logo, W / 2, (y0 + H - m * .8) / 2, (H - m * .8 - y0) * 1.15, ink, .16);
+
+  // Top corners: the logo on the left, stars or the title count on the right.
+  if (logo) sticker(ctx, logo, area.x + m * .62, topY, m * 1.75, m, -.08);
+  else drawMotif(ctx, team.motif, area.x + m * .55, topY, m * .95, ink, team.c1, team.accent);
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'right';
   ctx.fillStyle = ink;
@@ -280,7 +465,6 @@ function jersey(ctx, team, text, L) {
   }
   ctx.textBaseline = 'alphabetic';
 
-  const y0 = area.y + area.h;
   ctx.textAlign = 'center';
   // Name across the shoulders, number underneath in tackle twill.
   ctx.fillStyle = ink;
@@ -371,7 +555,7 @@ function guilloche(ctx, x, y, w, h, m, colour) {
 }
 
 // A round holographic sticker with the title count, like the foil on real tickets.
-function foil(ctx, team, cx, cy, r, m) {
+function foil(ctx, team, cx, cy, r, m, words = WORDS.en) {
   shadow(ctx, m, true);
   const grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
   ['#c8f7ff', '#f9d5ff', '#fff3b0', '#c7ffd8', '#bcd4ff', '#ffd1e0'].forEach((colour, k, all) => grad.addColorStop(k / (all.length - 1), colour));
@@ -393,7 +577,7 @@ function foil(ctx, team, cx, cy, r, m) {
   const big = team.titles && team.titles.n ? `${team.titles.n}×` : `${team.est}`;
   fit(ctx, big, r * 1.3, 400, r * .78, DISPLAY);
   ctx.fillText(big, cx, cy - r * .08);
-  const small = team.titles && team.titles.n ? (team.titles.short || 'TITLES') : 'EST.';
+  const small = team.titles && team.titles.n ? (team.titles.short || words.titles) : words.est;
   fit(ctx, small, r * 1.3, 900, r * .2, SANS, r * .04);
   ctx.fillText(small, cx, cy + r * .46);
   ctx.textBaseline = 'alphabetic';
@@ -424,152 +608,226 @@ function stamp(ctx, text1, text2, cx, cy, r, m) {
 }
 
 function ticket(ctx, team, text, L) {
-  const {m, o, W, H, area} = L;
+  const {m, o, W, H, area, P, S} = L;
+  const words = say(team);
+  const logo = text.logo;
+  const u = area.h / 16;
   const ink = onPaper(team);
   const strip = solid(team);
   const stripInk = readable(strip);
+  const cut = W - o - S;
   ctx.fillStyle = TABLE;
   ctx.fillRect(0, 0, W, H);
 
+  // Paper with security print, team-colour bands top and bottom, and a stub in the
+  // team colour printed all over with the logo.
   ctx.save();
-  roundRect(ctx, o, o, W - o * 2, H - o * 2, m * .3);
+  roundRect(ctx, o, o, W - o * 2, H - o * 2, u * .5);
   ctx.clip();
   ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, W, H);
   ctx.globalAlpha = .1;
   guilloche(ctx, o, o, W, H, m, ink);
   ctx.globalAlpha = 1;
-  // Colour strip down the left with the team written sideways, a thin trim beside it.
   ctx.fillStyle = strip;
-  ctx.fillRect(o, o, m * 1.1, H);
-  trim(ctx, team, o + m * 1.1, o, m * .14, H);
+  ctx.fillRect(0, 0, W, o + u * .36);
+  ctx.fillRect(0, H - o - u * .36, W, u * .36 + o);
+  ctx.fillRect(cut, 0, W - cut, H);
+  if (logo) monogram(ctx, logo, cut, 0, W - cut, H, S * .62, stripInk, .14);
   ctx.restore();
 
-  const stripX = o + m * .55;
-  const perforation = area.y + area.h + m * 1.55;
-  const discY = o + m * .78;
-  const r = m * .46;
-  if (text.logo) {
-    ctx.fillStyle = '#ffffff';
+  // The team's file beside the photo.
+  const px = area.x + area.w + (area.x - o) * .8;
+  const top = area.y;
+  if (logo) {
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(stripX, discY, r, 0, TAU);
-    ctx.fill();
-    drawLogo(ctx, text.logo, stripX, discY, r * 1.45);
-  } else {
-    drawMotif(ctx, team.motif, stripX, discY, r * 1.9, stripInk, strip, team.accent);
+    ctx.rect(px - u * .4, top, P + u * .8, area.h);
+    ctx.clip();
+    watermark(ctx, logo, px + P * .86, top + area.h * .78, area.h * .7, ink, .07, -.12);
+    ctx.restore();
   }
-  const stripTop = discY + r + m * .1;
-  const name = team.name.toUpperCase();
-  upText(ctx, name, stripX, (stripTop + perforation) / 2, perforation - stripTop - m * .6, 400, m * .64, DISPLAY, m * .14, stripInk);
-
-  // Header: admit one and the season, the venue and the ticket number.
+  const serial = String(hash(team.id + text.number) % 1000000).padStart(6, '0');
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = ink;
   ctx.textAlign = 'left';
-  const admit = `ADMIT ONE · ${text.season}`;
-  fit(ctx, admit, area.w * .6, 400, m * .44, DISPLAY, m * .05);
-  ctx.fillText(admit, area.x, o + m * .78);
-  ctx.globalAlpha = .75;
-  const venue = `${team.home} · ${team.city}`;
-  fit(ctx, venue, area.w * .62, 800, m * .2, SANS, m * .06);
-  ctx.fillText(venue, area.x, o + m * 1.12);
-  ctx.globalAlpha = 1;
+  const admit = `${words.admit} · ${text.season}`;
+  fit(ctx, admit, P * .7, 400, u * .9, DISPLAY, u * .08);
+  ctx.fillText(admit, px, top + u * .85);
   ctx.textAlign = 'right';
-  const serial = String(hash(team.id + text.number) % 1000000).padStart(6, '0');
-  font(ctx, 800, m * .24, SANS, m * .06);
-  ctx.fillText(`No. ${serial}`, area.x + area.w, o + m * .72);
-  ctx.globalAlpha = .75;
-  fit(ctx, `EST. ${team.est}`, area.w * .3, 800, m * .2, SANS, m * .06);
-  ctx.fillText(`EST. ${team.est}`, area.x + area.w, o + m * 1.12);
-  ctx.globalAlpha = 1;
+  font(ctx, 800, u * .34, SANS, u * .08);
+  ctx.fillText(`No. ${serial}`, px + P, top + u * .78);
+  ctx.fillRect(px, top + u * 1.25, P, Math.max(1, u * .07));
 
-  ctx.fillStyle = ink;
-  ctx.fillRect(area.x - m * .06, area.y - m * .06, area.w + m * .12, area.h + m * .12);
-  text.drawPhoto(area);
-
-  // Rubber stamp on the photo's top-left corner, foil sticker on its bottom-right.
-  stamp(ctx, 'HOME GAME', text.date || team.city, area.x + m * 1.05, area.y + m * 1.05, m * .82, m);
-  foil(ctx, team, area.x + area.w - m * .62, area.y + area.h - m * .5, m * .78, m);
-
-  // Event line under the photo, with nickname and titles.
-  const below = area.y + area.h;
+  // Hero: the logo big, the team name beside it.
+  const hero = u * 4.7;
+  const hx = px + hero / 2;
+  const hy = top + u * 1.55 + hero / 2;
+  if (logo) sticker(ctx, logo, hx, hy, hero, u * .8, -.04);
+  else drawMotif(ctx, team.motif, hx, hy, hero * .95, ink, PAPER, team.accent);
+  const tx = px + hero + u * .5;
+  const tw = P - hero - u * .5;
   ctx.textAlign = 'left';
   ctx.fillStyle = ink;
-  fit(ctx, text.slogan, area.w - m * 1.9, 400, m * .64, DISPLAY, m * .02);
-  ctx.fillText(text.slogan, area.x, below + m * .86);
-  ctx.globalAlpha = .7;
-  const tag = [team.nick.toUpperCase(), titleLine(team)].filter(Boolean).join(' · ');
-  fit(ctx, tag, area.w - m * 1.9, 800, m * .21, SANS, m * .06);
-  ctx.fillText(tag, area.x, below + m * 1.22);
+  fit(ctx, team.short, tw, 400, u * 1.9, DISPLAY, u * .03);
+  ctx.fillText(team.short, tx, top + u * 3.55);
+  ctx.fillStyle = '#1b1b1b';
+  fit(ctx, upper(team.name), tw, 800, u * .44, SANS, u * .06);
+  ctx.fillText(upper(team.name), tx, top + u * 4.3);
+  ctx.globalAlpha = .62;
+  const where = `${upper(team.nick)} · ${upper(team.city)}`;
+  fit(ctx, where, tw, 800, u * .4, SANS, u * .06);
+  ctx.fillText(where, tx, top + u * 4.9);
   ctx.globalAlpha = 1;
-
-  // Tear line with the two half-moon notches.
-  ctx.strokeStyle = 'rgba(0,0,0,.35)';
-  ctx.lineWidth = Math.max(1, m * .035);
-  ctx.setLineDash([m * .12, m * .1]);
-  ctx.beginPath();
-  ctx.moveTo(o + m * .4, perforation);
-  ctx.lineTo(W - o - m * .4, perforation);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = TABLE;
-  for (const x of [o, W - o]) {
-    ctx.beginPath();
-    ctx.arc(x, perforation, m * .32, 0, TAU);
-    ctx.fill();
+  const call = team.chant || team.motto || text.slogan;
+  if (call) {
+    ctx.fillStyle = ink;
+    const said = isZh(team) ? `「${call}」` : `“${call}”`;
+    fit(ctx, said, tw, 400, u * .7, DISPLAY, u * .02);
+    ctx.fillText(said, tx, top + u * 5.85);
   }
 
-  // Stub: gate, section, row, seat, holder and date, with a barcode.
-  const stubTop = perforation + m * .35;
-  const left = area.x;
-  const barWidth = Math.min(m * 2.4, area.w * .3);
-  const fieldsWidth = area.w - barWidth - m * .5;
-  const fields = [['GATE', team.gate || team.letter], ['SEC', team.sec || '101'], ['ROW', team.row || '12'], ['SEAT', text.number]];
-  const step = fieldsWidth / fields.length;
-  fields.forEach(([label, value], k) => {
-    const x = left + step * k;
+  // Three facts in boxes: founded, home, titles.
+  const factTop = top + u * 6.75;
+  const factH = u * 1.8;
+  const titled = team.titles && team.titles.n;
+  const facts = [
+    [words.est, String(team.est)],
+    [words.home, team.homeNick || team.home],
+    [titled ? (team.titles.short || words.titles) : words.honours, titled ? `${team.titles.n}×` : (team.titles ? team.titles.label : '')],
+  ];
+  const widths = [.26, .4, .34];
+  let fx = px;
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = Math.max(1, u * .05);
+  facts.forEach(([label, value], k) => {
+    const fw = P * widths[k];
+    ctx.strokeRect(fx + u * .03, factTop, fw - u * .16, factH);
     ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(0,0,0,.5)';
-    font(ctx, 800, m * .2, SANS, m * .05);
-    ctx.fillText(label, x, stubTop + m * .3);
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    fit(ctx, label, fw - u * .5, 800, u * .3, SANS, u * .06);
+    ctx.fillText(label, fx + u * .25, factTop + u * .52);
     ctx.fillStyle = ink;
-    fit(ctx, value, step - m * .2, 400, m * .66, DISPLAY);
-    ctx.fillText(value, x, stubTop + m * .98);
+    fit(ctx, value || '—', fw - u * .5, 400, u * .82, DISPLAY, u * .02);
+    ctx.fillText(value || '—', fx + u * .25, factTop + u * 1.45);
+    fx += fw;
   });
-  ctx.fillStyle = 'rgba(0,0,0,.5)';
-  font(ctx, 800, m * .2, SANS, m * .05);
-  ctx.textAlign = 'left';
-  ctx.fillText('HOLDER', left, stubTop + m * 1.45);
-  ctx.fillText('DATE', left + fieldsWidth / 2, stubTop + m * 1.45);
+
+  // History: the team's big moments, one line each.
+  const hTop = top + u * 9.25;
   ctx.fillStyle = ink;
-  fit(ctx, text.name, fieldsWidth / 2 - m * .2, 400, m * .52, DISPLAY, m * .04);
-  ctx.fillText(text.name, left, stubTop + m * 2);
-  const when = text.date || 'TONIGHT';
-  fit(ctx, when, fieldsWidth / 2 - m * .1, 400, m * .52, DISPLAY, m * .02);
-  ctx.fillText(when, left + fieldsWidth / 2, stubTop + m * 2);
+  font(ctx, 900, u * .34, SANS, u * .14, words.history);
+  ctx.textAlign = 'left';
+  ctx.fillText(words.history, px, hTop);
+  const headW = ctx.measureText(words.history).width;
+  ctx.fillRect(px + headW + u * .3, hTop - u * .13, P - headW - u * .3, Math.max(1, u * .05));
+  (team.moments || []).slice(0, 3).forEach(([year, line, note], k) => {
+    const y = hTop + u * .98 + k * u * 1.1;
+    ctx.fillStyle = strip === PAPER ? ink : solid(team);
+    fit(ctx, String(year), u * 2.2, 400, u * .82, DISPLAY);
+    ctx.fillText(String(year), px, y + u * .1);
+    ctx.fillStyle = '#1b1b1b';
+    fit(ctx, upper(line), P - u * 2.5, 800, u * .42, SANS, u * .04);
+    ctx.fillText(upper(line), px + u * 2.45, y - u * .18);
+    if (note) {
+      ctx.globalAlpha = .62;
+      fit(ctx, note, P - u * 2.5, 600, u * .34, SANS, u * .02);
+      ctx.fillText(note, px + u * 2.45, y + u * .3);
+      ctx.globalAlpha = 1;
+    }
+  });
   const legends = retiredLine(team);
   if (legends) {
-    ctx.globalAlpha = .6;
-    fit(ctx, legends, fieldsWidth, 800, m * .17, SANS, m * .06);
-    ctx.fillText(legends, left, stubTop + m * 2.42);
+    ctx.fillStyle = ink;
+    ctx.globalAlpha = .8;
+    fit(ctx, legends, P, 800, u * .32, SANS, u * .06);
+    ctx.fillText(legends, px, top + u * 13.5);
     ctx.globalAlpha = 1;
   }
 
-  const bx = area.x + area.w - barWidth;
-  const by = stubTop + m * .1;
-  const bh = m * 1.75;
+  // Holder, seat and date along the bottom of the file.
+  const fTop = top + u * 13.85;
+  ctx.fillStyle = ink;
+  ctx.fillRect(px, fTop, P, Math.max(1, u * .05));
+  const cols = [[words.holder, text.name, .46], [words.seat, text.number, .2], [words.date, text.date || words.tonight, .34]];
+  let cx = px;
+  for (const [label, value, share] of cols) {
+    const cw = P * share;
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    fit(ctx, label, cw - u * .3, 800, u * .28, SANS, u * .06);
+    ctx.fillText(label, cx, fTop + u * .6);
+    ctx.fillStyle = ink;
+    fit(ctx, value, cw - u * .3, 400, u * .98, DISPLAY, u * .02);
+    ctx.fillText(value, cx, fTop + u * 1.85);
+    cx += cw;
+  }
+
+  // The photo, with the slogan on a band across its foot, a rubber stamp and the logo.
+  ctx.fillStyle = ink;
+  ctx.fillRect(area.x - u * .1, area.y - u * .1, area.w + u * .2, area.h + u * .2);
+  text.drawPhoto(area);
+  if (text.mark) photoMarks(ctx, logo, area, m, 'tr', null);
+  const band = u * 1.55;
+  ctx.save();
+  ctx.globalAlpha = .92;
+  ctx.fillStyle = strip;
+  ctx.fillRect(area.x, area.y + area.h - band, area.w, band);
+  ctx.restore();
+  trim(ctx, team, area.x, area.y + area.h - band - u * .14, area.w, u * .14);
+  ctx.fillStyle = stripInk;
+  ctx.textAlign = 'left';
+  fit(ctx, text.slogan, area.w - u * 1.1, 400, u * .95, DISPLAY, u * .03);
+  ctx.fillText(text.slogan, area.x + u * .5, area.y + area.h - band * .3);
+  stamp(ctx, words.homeGame, text.date || upper(team.city), area.x + m * 1.05, area.y + m * 1.05, m * .82, m);
+  if (text.mark && logo) {
+    const size = Math.min(area.w, area.h) * .3;
+    sticker(ctx, logo, area.x + area.w - size * .62, area.y + area.h - band - size * .55, size, m, .1);
+  }
+
+  // Tear line between the ticket and the stub, with the two half-moon notches.
+  ctx.strokeStyle = 'rgba(0,0,0,.4)';
+  ctx.lineWidth = Math.max(1, u * .06);
+  ctx.setLineDash([u * .2, u * .16]);
+  ctx.beginPath();
+  ctx.moveTo(cut, o + u * .5);
+  ctx.lineTo(cut, H - o - u * .5);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = TABLE;
+  for (const y of [o, H - o]) {
+    ctx.beginPath();
+    ctx.arc(cut, y, u * .42, 0, TAU);
+    ctx.fill();
+  }
+
+  // Stub: the foil sticker, the game up the middle, the seat and a barcode.
+  const sx = cut + S / 2;
+  foil(ctx, team, sx, area.y + S * .42, S * .34, m, words);
+  upText(ctx, `${words.homeGame} · ${team.short}`, sx, area.y + area.h * .44, area.h * .4, 400, S * .26, DISPLAY, S * .02, stripInk);
+  ctx.fillStyle = stripInk;
+  ctx.textAlign = 'center';
+  ctx.globalAlpha = .8;
+  fit(ctx, words.seat, S * .7, 800, S * .1, SANS, S * .02);
+  ctx.fillText(words.seat, sx, area.y + area.h * .68);
+  ctx.globalAlpha = 1;
+  fit(ctx, text.number, S * .8, 400, S * .4, DISPLAY);
+  ctx.fillText(text.number, sx, area.y + area.h * .8);
+  const bx = cut + S * .14;
+  const bw = S * .72;
+  const by = area.y + area.h * .84;
+  const bh = area.h * .16 - u * .1;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(bx - S * .04, by - S * .04, bw + S * .08, bh + S * .08);
   let seed = hash(team.id + text.name + text.number);
   ctx.fillStyle = '#1b1b1b';
-  for (let x = bx; x < bx + barWidth;) {
+  for (let y = by; y < by + bh;) {
     seed = Math.imul(seed ^ (seed >>> 13), 1274126177) >>> 0;
-    const w = m * (.025 + (seed % 4) * .022);
-    if (x + w > bx + barWidth) break;
-    ctx.fillRect(x, by, w, bh);
-    x += w + m * (.03 + ((seed >>> 4) % 3) * .02);
+    const h = u * (.03 + (seed % 4) * .03);
+    if (y + h > by + bh) break;
+    ctx.fillRect(bx, y, bw, h);
+    y += h + u * (.04 + ((seed >>> 4) % 3) * .03);
   }
-  ctx.textAlign = 'center';
-  font(ctx, 700, m * .2, SANS, m * .08);
-  ctx.fillText(serial, bx + barWidth / 2, by + bh + m * .32);
+  ctx.textAlign = 'left';
 }
 
 // ---------- Style C: patch (letterman jacket) ----------
@@ -598,7 +856,10 @@ function patch(ctx, team, text, L) {
   const trimColour = luminance(team.c2) < .04 || team.c2 === felt ? team.c3 : team.c2;
   const cream = '#f1e7d0';
   const words = readable(felt);
+  const say_ = say(team);
+  const logo = text.logo;
   wool(ctx, felt, W, H, m);
+  if (logo) monogram(ctx, logo, 0, 0, W, H, m * 1.7, words, .09);
   // Leather sleeves down both sides, with a seam line.
   const sleeve = m * .62;
   for (const x of [0, W - sleeve]) {
@@ -635,6 +896,7 @@ function patch(ctx, team, text, L) {
   ctx.fillRect(area.x - m * .16, area.y - m * .16, area.w + m * .32, area.h + m * .32);
   shadow(ctx, m, false);
   text.drawPhoto(area);
+  if (text.mark) photoMarks(ctx, logo, area, m, 'tr', 'bl');
 
   // Felt pennant hanging over the photo's top edge, with the founding year.
   ctx.save();
@@ -654,7 +916,7 @@ function patch(ctx, team, text, L) {
   ctx.fillStyle = readable(trimColour);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const pennant = `EST. ${team.est}`;
+  const pennant = `${say_.est} ${team.est}`;
   fit(ctx, pennant, pw * .7, 400, m * .44, VARSITY, m * .04);
   ctx.fillText(pennant, 0, m * .04);
   ctx.restore();
@@ -677,8 +939,8 @@ function patch(ctx, team, text, L) {
   ctx.restore();
   ctx.textAlign = 'center';
   ctx.fillStyle = words;
-  font(ctx, 900, m * .2, SANS, m * .06);
-  ctx.fillText('HELLO · 我是', 0, -m * .34);
+  fit(ctx, say_.hello, tagW - m * .2, 900, m * .2, SANS, m * .06);
+  ctx.fillText(say_.hello, 0, -m * .34);
   ctx.fillStyle = '#111111';
   fit(ctx, text.name, tagW - m * .3, 400, m * .58, DISPLAY, m * .02);
   ctx.fillText(text.name, 0, m * .44);
@@ -708,11 +970,13 @@ function patch(ctx, team, text, L) {
   ctx.textAlign = 'center';
   ctx.fillStyle = words;
   font(ctx, 900, m * .17, SANS, m * .06);
-  ctx.fillText('NO.', cx, cy - r * .3);
+  ctx.fillText(say_.no, cx, cy - r * .3);
   fit(ctx, text.number, r * 1.15, 400, m * .9, DISPLAY);
   ctx.fillText(text.number, cx, cy + r * .5);
 
-  // Top left: the team's emblem as an embroidered patch.
+  // Top left: the team's logo as a big die-cut sticker, or the emblem as a patch.
+  if (logo) sticker(ctx, logo, m * 1.85, m * 1.85, m * 3.2, m, -.12);
+  else {
   ctx.save();
   ctx.translate(m * 1.2, m * 1.35);
   ctx.rotate(-.16);
@@ -723,8 +987,9 @@ function patch(ctx, team, text, L) {
   ctx.fill();
   shadow(ctx, m, false);
   const emblemInk = words === '#ffffff' ? (team.c2 !== felt && luminance(team.c2) > .1 ? team.c2 : '#ffffff') : '#111111';
-  badge(ctx, team, text.logo, 0, 0, m * .86, felt, emblemInk, m);
+  badge(ctx, team, null, 0, 0, m * .86, felt, emblemInk, m);
   ctx.restore();
+  }
 
   // A championship patch over the photo's right edge: titles in a shield.
   if (team.titles && team.titles.n) {
@@ -751,8 +1016,9 @@ function patch(ctx, team, text, L) {
     ctx.textAlign = 'center';
     fit(ctx, `${team.titles.n}×`, sw * .8, 400, m * .66, DISPLAY);
     ctx.fillText(`${team.titles.n}×`, 0, sw * .12);
-    fit(ctx, team.titles.short || 'TITLES', sw * .8, 900, m * .16, SANS, m * .03);
-    ctx.fillText(team.titles.short || 'TITLES', 0, sw * .38);
+    const won = team.titles.short || say_.titles;
+    fit(ctx, won, sw * .8, 900, m * .16, SANS, m * .03);
+    ctx.fillText(won, 0, sw * .38);
     ctx.restore();
   }
 
@@ -776,7 +1042,7 @@ function patch(ctx, team, text, L) {
 
   // Chenille varsity letter, bottom left.
   const letter = team.letter;
-  font(ctx, 400, m * 2.3, VARSITY);
+  font(ctx, 400, m * 2.3, VARSITY, 0, letter);
   const letterWidth = ctx.measureText(letter).width;
   const letterX = m * .9 + letterWidth / 2;
   ctx.save();
@@ -804,7 +1070,7 @@ function patch(ctx, team, text, L) {
   ctx.fillStyle = words;
   fit(ctx, team.short, textWidth, 400, m * 1.02, DISPLAY, m * .02);
   ctx.fillText(team.short, textLeft, y0 + m * 1.3);
-  const line1 = `${team.nick.toUpperCase()} · ${text.date || team.city}`;
+  const line1 = `${upper(team.nick)} · ${text.date || upper(team.city)}`;
   fit(ctx, line1, textWidth, 800, m * .28, SANS, m * .08);
   ctx.globalAlpha = .88;
   ctx.fillText(line1, textLeft, y0 + m * 1.84);
@@ -821,9 +1087,10 @@ const painters = {jersey, ticket, patch};
 export function seasonText(team, now = new Date()) {
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
-  if (team.season === 'year') return `${year} SEASON`;
+  const word = say(team).season;
+  if (team.season === 'year') return `${year} ${word}`;
   const start = month >= 8 ? year : year - 1;
-  return `${start}-${String(start + 1).slice(2)} SEASON`;
+  return `${start}-${String(start + 1).slice(2)} ${word}`;
 }
 
 // Paints the whole picture into `canvas`. `text` holds name, number, slogan and
@@ -836,6 +1103,7 @@ export function paint(canvas, source, team, style, text, L, look = {}) {
   ctx.imageSmoothingQuality = 'high';
   const words = Object.assign({season: seasonText(team)}, text, {
     logo: look.logo || null,
+    mark: look.mark !== false,
     drawPhoto(area) {
       if (!source) {
         ctx.fillStyle = '#2a2622';

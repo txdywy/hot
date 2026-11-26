@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos} from './teams.js?v=4';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine} from './render.js?v=4';
-import {venue, kit, trim, drawMotif} from './art.js?v=4';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=4';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=4';
+import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=5';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine} from './render.js?v=5';
+import {venue, kit, trim, drawMotif} from './art.js?v=5';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=5';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=5';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -33,6 +33,7 @@ const nameInput = $('name');
 const numberInput = $('number');
 const sloganInput = $('slogan');
 const dateInput = $('date');
+const markInput = $('mark');
 
 const ratios = [['original', '原图'], ['3:4', '3:4'], ['1:1', '1:1'], ['9:16', '9:16']];
 const maxImportSize = 50 * 1024 * 1024;
@@ -69,6 +70,7 @@ const state = {
   number: '',
   slogan: '',
   date: false,
+  mark: true,
 };
 // image is full size for saving; the smaller copies keep redraws fast.
 let image = null;
@@ -111,6 +113,7 @@ function loadChoices() {
     if (typeof saved.number === 'string' && /^\d{0,2}$/.test(saved.number)) state.number = saved.number;
     if (typeof saved.slogan === 'string') state.slogan = saved.slogan.slice(0, 24);
     state.date = saved.date === true;
+    state.mark = saved.mark !== false;
   } catch (error) {
     // Private browsing or blocked storage: start fresh.
   }
@@ -123,7 +126,7 @@ function storeChoices() {
     try {
       localStorage.setItem(storeKey, JSON.stringify({
         team: state.team.id, style: state.style, ratio: state.ratio,
-        name: state.name, number: state.number, slogan: state.slogan, date: state.date,
+        name: state.name, number: state.number, slogan: state.slogan, date: state.date, mark: state.mark,
       }));
     } catch (error) {
       // Nothing to do: the choices simply are not remembered.
@@ -152,6 +155,7 @@ function words() {
 // ---------- Logos ----------
 
 const logoImages = new Map();
+const logoWaits = new Map();
 function logoUrl(id) {
   return logos[id] ? `./assets/logos/${logos[id]}?v=1` : '';
 }
@@ -161,13 +165,24 @@ function logoFor(team) {
   if (!logoImages.has(team.id)) {
     const logo = new Image();
     logoImages.set(team.id, null);
-    logo.onload = () => {
-      logoImages.set(team.id, logo);
-      requestRender(true);
-    };
+    logoWaits.set(team.id, new Promise(resolve => {
+      logo.onload = () => {
+        logoImages.set(team.id, logo);
+        requestRender(true);
+        resolve();
+      };
+      logo.onerror = resolve;
+    }));
     logo.src = logoUrl(team.id);
   }
   return logoImages.get(team.id);
+}
+// Waits (a few seconds at most) for the team's logo, so a saved picture has it.
+function logoReady(team) {
+  logoFor(team);
+  const wait = logoWaits.get(team.id);
+  if (!wait) return Promise.resolve();
+  return Promise.race([wait, new Promise(resolve => setTimeout(resolve, 4000))]);
 }
 
 // ---------- Drawing ----------
@@ -179,7 +194,7 @@ function windowShape(source) {
 }
 
 function look() {
-  return {x: state.x, y: state.y, logo: logoFor(state.team)};
+  return {x: state.x, y: state.y, logo: logoFor(state.team), mark: state.mark};
 }
 
 let frame = 0;
@@ -343,7 +358,7 @@ function drawTeams() {
   const cards = document.createDocumentFragment();
   for (const team of teams.filter(item => item.group === state.group)) {
     const logo = logos[team.id] ? `<img src="${escape(logoUrl(team.id))}" alt="" loading="lazy" decoding="async">` : '';
-    const card = makeButton('team', `<span class="swatch"><canvas aria-hidden="true"></canvas>${logo}</span><b>${escape(team.short)}</b><small>${escape(team.cn)}</small>`,
+    const card = makeButton('team', `<span class="swatch"><canvas aria-hidden="true"></canvas>${logo}</span><b>${escape(team.short)}</b><small>${escape(isZh(team) ? team.nick : team.cn)}</small>`,
       `${team.name}，${team.cn}`);
     card.dataset.team = team.id;
     card.title = team.name;
@@ -401,10 +416,11 @@ function drawDossier() {
   const home = team.homeNick ? `${team.home} · ${team.homeNick}` : team.home;
   const moments = (team.moments || []).map(([year, en, cn]) =>
     `<li><b>${escape(year)}</b><span>${escape(en)}<small>${escape(cn)}</small></span></li>`).join('');
-  const extra = [team.motto ? `MOTTO · ${team.motto}` : '', team.mascot ? `MASCOT · ${team.mascot}` : '']
+  const zh = isZh(team);
+  const extra = [team.motto ? `${zh ? '校训' : 'MOTTO'} · ${team.motto}` : '', team.mascot ? `${zh ? '吉祥物' : 'MASCOT'} · ${team.mascot}` : '']
     .filter(Boolean).map(line => `<p class="d-line">${escape(line)}</p>`).join('');
-  box.innerHTML = `<header><span class="d-badge"><canvas aria-hidden="true"></canvas></span><div><b>${escape(team.name)}</b><small>${escape(team.cn)} · ${escape(team.nick)}</small></div></header>`
-    + `<dl class="d-facts">${fact('EST.', String(team.est))}${fact('HOME', home)}${fact('TITLES', titleLine(team))}</dl>`
+  box.innerHTML = `<header><span class="d-badge${logos[team.id] ? ' has-logo' : ''}"><canvas aria-hidden="true"></canvas>${logos[team.id] ? `<img src="${escape(logoUrl(team.id))}" alt="">` : ''}</span><div><b>${escape(team.name)}</b><small>${escape(zh ? team.city : team.cn)} · ${escape(team.nick)}</small></div></header>`
+    + `<dl class="d-facts">${fact(zh ? '始于' : 'EST.', String(team.est))}${fact(zh ? '主场' : 'HOME', home)}${fact(zh ? '荣誉' : 'TITLES', titleLine(team))}</dl>`
     + (team.chant ? `<p class="d-chant">${escape(team.chant)}</p>` : '')
     + (moments ? `<ol class="d-moments">${moments}</ol>` : '')
     + `<p class="d-line">${escape(retiredLine(team))}</p>${extra}`
@@ -417,7 +433,7 @@ function drawDossier() {
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
   kit(ctx, team, 0, 0, size, size, size / 6);
-  drawMotif(ctx, team.motif, size / 2, size / 2, size * .74, team.ink, team.c1, team.accent);
+  if (!logos[team.id]) drawMotif(ctx, team.motif, size / 2, size / 2, size * .74, team.ink, team.c1, team.accent);
 }
 
 function drawStyles() {
@@ -535,6 +551,10 @@ numberInput.addEventListener('input', () => {
 sloganInput.addEventListener('input', () => {
   state.slogan = sloganInput.value;
   syncPressed($('slogans'), 'slogan', state.slogan.trim() || state.team.slogan);
+  changed();
+});
+markInput.addEventListener('change', () => {
+  state.mark = markInput.checked;
   changed();
 });
 dateInput.addEventListener('change', () => {
@@ -1063,7 +1083,7 @@ async function exportPhoto() {
   const version = importVersion;
   const canvas = document.createElement('canvas');
   try {
-    await fontsForSaving();
+    await Promise.all([fontsForSaving(), logoReady(state.team)]);
     // Painting the full-size photo blocks the page for a moment, so show 正在制作… first.
     await nextPaint();
     if (version !== importVersion) return;
@@ -1383,6 +1403,7 @@ sloganInput.value = state.slogan;
 numberInput.placeholder = state.team.number;
 sloganInput.placeholder = state.team.slogan;
 dateInput.checked = state.date;
+markInput.checked = state.mark;
 drawGroups();
 drawTeams();
 drawStyles();
