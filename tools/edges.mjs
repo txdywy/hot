@@ -220,6 +220,26 @@ async function problemShown(page) {
   await context.close();
 }
 
+// 7. Offline: after one visit the page opens with no connection, every module included.
+if (engine === 'chromium') {
+  const label = 'offline';
+  const {context, page} = await open(browser, server.url, phones.android, r.problems, label);
+  await until(page, () => navigator.serviceWorker && navigator.serviceWorker.controller, null, 10000, 'the service worker').catch(() => {});
+  // A second visit lets the worker keep everything the fresh page names.
+  await page.reload();
+  await ready(page);
+  await page.waitForTimeout(1000);
+  const cached = await page.evaluate(async () => (await (await caches.open('hot')).keys()).map(request => request.url.replace(location.origin, '')));
+  for (const name of ['app.js', 'teams.js', 'render.js', 'photo-date.js', 'dialog.js', 'style.css', 'anton.woff2', 'graduate.woff2']) {
+    r.check(cached.some(url => url.includes(name)), `${label}: ${name} is not kept for offline use`);
+  }
+  await context.setOffline(true);
+  await page.reload();
+  await until(page, () => window.hotAppReady === true, null, 10000).catch(() => {});
+  r.check(await page.evaluate(() => window.hotAppReady === true), `${label}: the page does not start without a connection`);
+  await context.close();
+}
+
 await browser.close();
 server.close();
 r.finish();
