@@ -1,7 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos} from './teams.js?v=2';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces} from './render.js?v=2';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=2';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=2';
+import {groups, teams, styles, slogans, byId, logos} from './teams.js?v=3';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine} from './render.js?v=3';
+import {venue, kit, trim, drawMotif} from './art.js?v=3';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=3';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=3';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -213,7 +214,73 @@ function render() {
   const styleName = styles.find(item => item[0] === state.style)[1];
   preview.setAttribute('aria-label', `${own ? '你的照片' : '示例照片'}，${state.team.name}，${styleName}款式`);
   updateDrag();
+  drawVenue();
+  paintSwatches();
   if (thumbsDirty) drawThumbs();
+}
+
+// ---------- The home floor behind the preview ----------
+
+const venueCanvas = $('venue');
+let venueKey = '';
+function drawVenue() {
+  const team = state.team;
+  const w = stage.clientWidth;
+  const h = stage.clientHeight;
+  if (!w || !h) return;
+  const scale = Math.min(1.5, Math.max(1, window.devicePixelRatio || 1));
+  const key = `${team.id} ${w} ${h} ${scale} ${document.fonts ? document.fonts.status : ''}`;
+  if (key === venueKey) return;
+  venueKey = key;
+  const W = Math.round(w * scale);
+  const H = Math.round(h * scale);
+  venueCanvas.width = W;
+  venueCanvas.height = H;
+  const ctx = venueCanvas.getContext('2d');
+  // The floor fills the whole stage, seen from above, with the lights dimmed.
+  venue(ctx, team, W, H);
+  const shade = ctx.createRadialGradient(W / 2, H * .45, Math.min(W, H) * .2, W / 2, H * .5, Math.max(W, H) * .75);
+  shade.addColorStop(0, 'rgba(8,8,8,.42)');
+  shade.addColorStop(1, 'rgba(8,8,8,.86)');
+  ctx.fillStyle = shade;
+  ctx.fillRect(0, 0, W, H);
+  // A wash of the team colour from the top, like arena lights on the floor.
+  const wash = ctx.createLinearGradient(0, 0, 0, H);
+  const glow = luminance(team.c1) < .02 ? team.c2 : team.c1;
+  const n = parseInt(glow.slice(1), 16);
+  wash.addColorStop(0, `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},.5)`);
+  wash.addColorStop(.6, `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},0)`);
+  ctx.fillStyle = wash;
+  ctx.fillRect(0, 0, W, H);
+  // The team's name painted huge across the floor, and its emblem at centre court.
+  const u = Math.min(W, H) / 100;
+  ctx.save();
+  ctx.globalAlpha = .1;
+  drawMotif(ctx, team.motif, W / 2, H / 2, Math.min(W, H) * .9, '#ffffff', 'rgba(0,0,0,0)', '#ffffff');
+  ctx.restore();
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255,255,255,.07)';
+  ctx.font = `400 ${Math.round(Math.min(H * .34, W * 1.5 / Math.max(4, team.short.length)))}px "HOT Display", Impact, sans-serif`;
+  ctx.fillText(team.short, W / 2, H * .5);
+  ctx.restore();
+  // Small print down both sides: founding year and home on the left, titles on the right.
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  ctx.font = `800 ${Math.round(Math.max(10 * scale, u * 3.2))}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  const side = (text, x, turn) => {
+    ctx.save();
+    ctx.translate(x, H / 2);
+    ctx.rotate(turn);
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+  };
+  side(`EST. ${team.est} · ${team.home}`, u * 5, -Math.PI / 2);
+  side(titleLine(team), W - u * 5, Math.PI / 2);
+  ctx.restore();
 }
 
 function drawThumbs() {
@@ -276,7 +343,7 @@ function drawTeams() {
   const cards = document.createDocumentFragment();
   for (const team of teams.filter(item => item.group === state.group)) {
     const logo = logos[team.id] ? `<img src="${escape(logoUrl(team.id))}" alt="" loading="lazy" decoding="async">` : '';
-    const card = makeButton('team', `<span class="swatch">${logo}</span><b>${escape(team.short)}</b><small>${escape(team.cn)}</small>`,
+    const card = makeButton('team', `<span class="swatch"><canvas aria-hidden="true"></canvas>${logo}</span><b>${escape(team.short)}</b><small>${escape(team.cn)}</small>`,
       `${team.name}，${team.cn}`);
     card.dataset.team = team.id;
     card.title = team.name;
@@ -289,6 +356,68 @@ function drawTeams() {
   }
   box.textContent = '';
   box.append(cards);
+  paintSwatches();
+}
+
+// Each team card shows a piece of its shirt: the kit pattern, trim and emblem.
+function paintSwatches() {
+  const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+  for (const card of $('teams').children) {
+    const team = byId.get(card.dataset.team);
+    const canvas = card.querySelector('canvas');
+    const w = Math.round((canvas.parentElement.clientWidth || 100) * scale);
+    const h = Math.round((canvas.parentElement.clientHeight || 48) * scale);
+    if (canvas.width === w && canvas.height === h && canvas.dataset.team === team.id) continue;
+    canvas.width = w;
+    canvas.height = h;
+    canvas.dataset.team = team.id;
+    const ctx = canvas.getContext('2d');
+    const m = h / 5;
+    kit(ctx, team, 0, 0, w, h, m);
+    trim(ctx, team, 0, h - m * .9, w, m * .9);
+    if (team.stars) {
+      ctx.fillStyle = team.starColour || team.ink;
+      for (let k = 0; k < team.stars; k++) {
+        const x = w - m * .7 - k * m * .9;
+        const y = m * .75;
+        ctx.beginPath();
+        for (let p = 0; p < 10; p++) {
+          const a = p * Math.PI / 5 - Math.PI / 2;
+          const r = p % 2 ? m * .16 : m * .38;
+          ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+        }
+        ctx.fill();
+      }
+    }
+    if (!logos[team.id]) drawMotif(ctx, team.motif, w / 2, h * .44, h * .7, team.ink, team.c1, team.accent);
+  }
+}
+
+// The team's file: founding year, home, titles, legends, chant and big moments.
+function drawDossier() {
+  const team = state.team;
+  const box = $('dossier');
+  const fact = (label, value) => value ? `<div><dt>${escape(label)}</dt><dd>${escape(value)}</dd></div>` : '';
+  const home = team.homeNick ? `${team.home} · ${team.homeNick}` : team.home;
+  const moments = (team.moments || []).map(([year, en, cn]) =>
+    `<li><b>${escape(year)}</b><span>${escape(en)}<small>${escape(cn)}</small></span></li>`).join('');
+  const extra = [team.motto ? `MOTTO · ${team.motto}` : '', team.mascot ? `MASCOT · ${team.mascot}` : '']
+    .filter(Boolean).map(line => `<p class="d-line">${escape(line)}</p>`).join('');
+  box.innerHTML = `<header><span class="d-badge"><canvas aria-hidden="true"></canvas></span><div><b>${escape(team.name)}</b><small>${escape(team.cn)} · ${escape(team.nick)}</small></div></header>`
+    + `<dl class="d-facts">${fact('EST.', String(team.est))}${fact('HOME', home)}${fact('TITLES', titleLine(team))}</dl>`
+    + (team.chant ? `<p class="d-chant">${escape(team.chant)}</p>` : '')
+    + (moments ? `<ol class="d-moments">${moments}</ol>` : '')
+    + `<p class="d-line">${escape(retiredLine(team))}</p>${extra}`
+    + (team.story ? `<p class="d-story">${escape(team.story)}</p>` : '');
+  box.style.setProperty('--d1', team.c1);
+  box.style.setProperty('--d2', team.c2);
+  const canvas = box.querySelector('canvas');
+  const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+  const size = Math.round(52 * scale);
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  kit(ctx, team, 0, 0, size, size, size / 6);
+  drawMotif(ctx, team.motif, size / 2, size / 2, size * .74, team.ink, team.c1, team.accent);
 }
 
 function drawStyles() {
@@ -337,6 +466,7 @@ function pickTeam(team) {
   sloganInput.placeholder = team.slogan;
   syncPressed($('teams'), 'team', team.id);
   theme();
+  drawDossier();
   drawSlogans();
   changed();
 }
@@ -1140,6 +1270,7 @@ function layoutPage() {
   let height = 0;
   if (phone) {
     const typing = root.classList.contains('typing');
+    // Below half the screen, so the middle of the page (where a tapped control scrolls to) stays clear.
     const portion = root.classList.contains('short-phone') ? .6 : typing ? .3 : view < 700 ? .4 : .44;
     height = Math.round(Math.max(170, Math.min(view * portion, 560)));
   }
@@ -1258,6 +1389,7 @@ drawStyles();
 drawRatios();
 drawSlogans();
 theme();
+drawDossier();
 updateDateNote();
 updateBar();
 setImage(demoPhoto());

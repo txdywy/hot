@@ -2,7 +2,9 @@
 
 把主队的颜色、你的名字和号码印在照片上。一个免费的中文照片相框工具，面向爱体育、爱潮流的年轻人。
 
-- 5 组 28 个主题：NBA、NCAA 篮球、名校、NCAA 橄榄球、欧洲足球。队名、校名、昵称和口号都用真实英文原文（如 Michigan Wolverines、ANN ARBOR, MI、GO BLUE），中文只做小字说明。
+- 6 组 30 个主题：NBA、NCAA 篮球、名校、NCAA 橄榄球、欧洲足球、中超（北京国安、2026 中超冠军大连英博）。队名、校名、昵称和口号都用真实原文（如 Michigan Wolverines、ANN ARBOR, MI、GO BLUE；中超队用中文口号），中文只做小字说明。
+- 每队都有考据：建队年份、主场、冠军数、退役号码或传奇球员、助威口号、名场面，画进相框，也列在「主队档案」里。每队有自己的纹章图案（三叶草、金门大桥、千鸟格帽、埃菲尔铁塔、工体等）和球衣纹样（米兰红黑条、巴黎 Hechter 中线、拜仁菱格、北卡菱格袜纹等）。
+- 手机上预览区铺满主队的主场地板或球场。
 - 3 种款式并列，任何主题都能套：球衣（背后印名字和号码）、球票（撕票线和存根）、徽章（潮牌贴纸和刺绣字母）。
 - 可以写名字、号码、口号；「加日期」印上照片的拍摄日期，没有拍摄日期就印今天。
 - 照片比例：原图、3:4、1:1、9:16，裁剪后可以拖动照片调整位置。
@@ -32,7 +34,8 @@ python3 -m http.server 4173 --bind 127.0.0.1 --directory public
 ## 文件
 
 - `public/index.html`：页面
-- `public/assets/teams.js`：主题分组，每队英文名、昵称、配色、默认号码和口号；`logos` 列出各队的 logo 文件
+- `public/assets/teams.js`：主题分组，每队名字、昵称、配色、默认号码和口号，以及档案（est、home、titles、retired、chant、moments 等）和画法（motif、kit、trim、floor）；`logos` 列出各队的 logo 文件
+- `public/assets/art.js`：各队纹章图案、球衣纹样、袖边和主场地板的画法
 - `public/assets/render.js`：三种款式的 Canvas 画法
 - `public/assets/app.js`：页面交互、保存流程、手机适配
 - `public/assets/dialog.js`：弹窗和返回键（来自拾光相框）

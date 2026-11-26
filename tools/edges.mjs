@@ -231,7 +231,7 @@ if (engine === 'chromium') {
   await ready(page);
   await page.waitForTimeout(1000);
   const cached = await page.evaluate(async () => (await (await caches.open('hot')).keys()).map(request => request.url.replace(location.origin, '')));
-  for (const name of ['app.js', 'teams.js', 'render.js', 'photo-date.js', 'dialog.js', 'style.css', 'anton.woff2', 'graduate.woff2']) {
+  for (const name of ['app.js', 'teams.js', 'render.js', 'art.js', 'photo-date.js', 'dialog.js', 'style.css', 'anton.woff2', 'graduate.woff2']) {
     r.check(cached.some(url => url.includes(name)), `${label}: ${name} is not kept for offline use`);
   }
   await context.setOffline(true);
