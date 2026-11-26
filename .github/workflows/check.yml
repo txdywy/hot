@@ -67,6 +67,9 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright@1.49.1
           npx playwright install --with-deps webkit
+      - name: Diagnose CSP style error (temporary)
+        if: always()
+        run: node tools/diag-webkit.mjs
       - name: Whole flow on iPhone Safari, iPhone WeChat and a computer
         if: always()
         run: node tools/smoke.mjs
