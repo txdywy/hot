@@ -1,5 +1,5 @@
 // Teams and schools by their real English names, nicknames and chants.
-// Chinese only appears as a small note (cn). No logo images are used.
+// Chinese only appears as a small note (cn).
 // name = full name, short = the word across the chest, city = home city,
 // nick = nickname or mascot, letter = varsity letter on the patch style.
 // c1 = main colour, c2 = second colour, c3 = trim, ink = text on c1.
@@ -62,3 +62,8 @@ export const slogans = [
 ];
 
 export const byId = new Map(teams.map(item => [item.id, item]));
+
+// Official logos in assets/logos/, by team id: {lakers: 'lakers.svg'}. A team without
+// an entry is drawn with its colours and names only. Raise the ?v= in app.js's
+// logoUrl when a logo file changes.
+export const logos = {};

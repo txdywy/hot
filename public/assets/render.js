@@ -1,25 +1,30 @@
-// Draws the three frame styles (jersey, ticket, patch) on a canvas.
-// Everything is drawn from colours, numbers and text: no logo images.
+// Draws the three frame styles (jersey, ticket, patch) on a canvas, from the
+// team's colours, its real names and the words typed in. A team's logo is drawn
+// too when its image has been added (see logos in teams.js).
 const TAU = Math.PI * 2;
-const SANS = 'system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif';
-const BLOCK = '"Arial Black", "Helvetica Neue", Impact, system-ui, -apple-system, sans-serif';
-const SLAB = 'Rockwell, "Roboto Slab", Georgia, "Times New Roman", serif';
+const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
+const SANS = `system-ui, -apple-system, "Segoe UI", Roboto, ${CJK}, sans-serif`;
+// Anton and Graduate are shipped with the page (assets/fonts), so the big type looks
+// the same on iPhone, Android, HarmonyOS and computers. Both come in one weight only.
+const DISPLAY = `"HOT Display", "Arial Black", Impact, ${CJK}, sans-serif`;
+const VARSITY = `"HOT Varsity", Rockwell, Georgia, ${CJK}, serif`;
 const PAPER = '#f4eee2';
 const TABLE = '#141414';
+
+export const fontFaces = ['400 20px "HOT Display"', '400 20px "HOT Varsity"'];
 
 export function luminance(hex) {
   const n = parseInt(hex.slice(1), 16);
   const [r, g, b] = [n >> 16, (n >> 8) & 255, n & 255].map(v => {
     v /= 255;
-    return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+    return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4);
   });
   return .2126 * r + .7152 * g + .0722 * b;
 }
 
+const readable = colour => luminance(colour) > .45 ? '#111111' : '#ffffff';
 // The team colour that reads best on light paper.
-function onPaper(team) {
-  return luminance(team.c1) > .6 ? team.c2 : team.c1;
-}
+const onPaper = team => luminance(team.c1) > .6 ? team.c2 : team.c1;
 
 function font(ctx, weight, size, family, spacing = 0) {
   ctx.font = `${weight} ${Math.max(1, Math.round(size))}px ${family}`;
@@ -30,14 +35,16 @@ function font(ctx, weight, size, family, spacing = 0) {
 function fit(ctx, text, maxWidth, weight, size, family, spacing = 0) {
   font(ctx, weight, size, family, spacing);
   const width = ctx.measureText(text).width;
-  if (width > maxWidth) {
-    size *= maxWidth / width;
-    font(ctx, weight, size, family, spacing * maxWidth / width);
+  if (width > maxWidth && width > 0) {
+    const scale = maxWidth / width;
+    size *= scale;
+    font(ctx, weight, size, family, spacing * scale);
   }
   return size;
 }
 
 function roundRect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
@@ -53,7 +60,7 @@ function hash(text) {
   return h >>> 0;
 }
 
-// Where the photo goes, for a photo of pw × ph, and the size of the whole picture.
+// Where the photo goes, for a photo window of pw × ph, and the size of the whole picture.
 function box(style, pw, ph) {
   const m = Math.min(pw, ph) * .075;
   if (style === 'ticket') {
@@ -69,14 +76,28 @@ function box(style, pw, ph) {
   return {m, W: pw + m * 2, H: ph + m * 3.9, area: {x: m, y: m, w: pw, h: ph}};
 }
 
-// Picks the photo size so the whole picture's long edge is at most `limit`.
-export function layout(style, imageWidth, imageHeight, limit) {
-  const unit = box(style, imageWidth, imageHeight);
-  const scale = limit / Math.max(unit.W, unit.H);
-  const result = box(style, imageWidth * scale, imageHeight * scale);
-  result.W = Math.round(result.W);
-  result.H = Math.round(result.H);
+// Sizes the picture for a photo window shaped width × height: its long edge is at
+// most `edge` and it holds at most `pixels` pixels (iPhones refuse larger canvases).
+export function layout(style, width, height, edge, pixels = Infinity) {
+  const unit = box(style, width, height);
+  const scale = Math.min(edge / Math.max(unit.W, unit.H), Math.sqrt(pixels / (unit.W * unit.H)));
+  const result = box(style, width * scale, height * scale);
+  result.W = Math.max(1, Math.floor(result.W));
+  result.H = Math.max(1, Math.floor(result.H));
   return result;
+}
+
+// The part of the photo that fills the window: the whole photo when the shapes
+// match, otherwise a cut whose position x, y (0 to 1) can be moved by dragging.
+export function crop(source, area, x = .5, y = .5) {
+  const sw = source.width;
+  const sh = source.height;
+  const want = area.w / area.h;
+  let w = sw;
+  let h = sh;
+  if (sw / sh > want) w = sh * want;
+  else h = sw / want;
+  return {sx: (sw - w) * x, sy: (sh - h) * y, sw: w, sh: h};
 }
 
 function meshPattern(ctx, m, dark) {
@@ -91,8 +112,17 @@ function meshPattern(ctx, m, dark) {
   return ctx.createPattern(tile, 'repeat');
 }
 
+// Draws the logo inside a square of `size` centred on (cx, cy), keeping its shape.
+function drawLogo(ctx, logo, cx, cy, size) {
+  const w = logo.naturalWidth || logo.width || 1;
+  const h = logo.naturalHeight || logo.height || 1;
+  const scale = size / Math.max(w, h);
+  ctx.drawImage(logo, cx - w * scale / 2, cy - h * scale / 2, w * scale, h * scale);
+}
+
 function jersey(ctx, team, text, L) {
-  const {m, W, H, area} = L;
+  const {m, W, area} = L;
+  const H = L.H;
   const dark = luminance(team.c1) < .3;
   ctx.fillStyle = team.c1;
   ctx.fillRect(0, 0, W, H);
@@ -113,7 +143,7 @@ function jersey(ctx, team, text, L) {
   ctx.fillRect(area.x - m * .1, area.y - m * .1, area.w + m * .2, area.h + m * .2);
   text.drawPhoto(area);
 
-  // V-neck collar sitting over the top edge.
+  // V-neck collar over the top edge.
   ctx.lineJoin = 'miter';
   ctx.strokeStyle = team.c2;
   ctx.lineWidth = m * .26;
@@ -131,43 +161,53 @@ function jersey(ctx, team, text, L) {
   ctx.textBaseline = 'alphabetic';
   // Name across the shoulders, number underneath.
   ctx.fillStyle = team.ink;
-  fit(ctx, text.name, W * .56, 900, m * .58, BLOCK, m * .14);
-  ctx.fillText(text.name, W / 2, y0 + m * .88);
+  fit(ctx, text.name, W * .5, 400, m * .66, DISPLAY, m * .12);
+  ctx.fillText(text.name, W / 2, y0 + m * .9);
 
   const outline = team.ink === team.c2 ? team.c3 : team.c2;
-  fit(ctx, text.number, W * .4, 900, m * 1.75, BLOCK, m * .02);
+  fit(ctx, text.number, W * .34, 400, m * 1.72, DISPLAY, m * .03);
   ctx.lineJoin = 'round';
   ctx.strokeStyle = outline;
-  ctx.lineWidth = m * .2;
-  ctx.strokeText(text.number, W / 2, y0 + m * 2.7);
+  ctx.lineWidth = m * .18;
+  ctx.strokeText(text.number, W / 2, y0 + m * 2.66);
   ctx.fillStyle = team.ink;
-  ctx.fillText(text.number, W / 2, y0 + m * 2.7);
-  const numberHalf = ctx.measureText(text.number).width / 2 + m * .35;
+  ctx.fillText(text.number, W / 2, y0 + m * 2.66);
+  const numberHalf = Math.max(ctx.measureText(text.number).width / 2, m * .5) + m * .45;
 
-  // City on the left, slogan or date on the right.
-  const side = W / 2 - numberHalf - m * .7;
+  // Team on the left (with its logo when there is one), slogan and date on the right.
+  let left = m * .7;
+  const side = W / 2 - numberHalf - left;
+  if (text.logo) {
+    const size = Math.min(m * 1.15, side * .4);
+    drawLogo(ctx, text.logo, left + size / 2, y0 + m * 1.66, size);
+    left += size + m * .25;
+  }
+  const leftWidth = W / 2 - numberHalf - left;
   ctx.textAlign = 'left';
   ctx.fillStyle = team.ink;
-  fit(ctx, team.short, side, 900, m * .46, BLOCK, m * .03);
-  ctx.fillText(team.short, m * .7, y0 + m * 1.85);
+  fit(ctx, team.short, leftWidth, 400, m * .56, DISPLAY, m * .02);
+  ctx.fillText(team.short, left, y0 + m * 1.86);
   ctx.globalAlpha = .8;
-  fit(ctx, team.city, side, 800, m * .24, SANS, m * .06);
-  ctx.fillText(team.city, m * .7, y0 + m * 2.3);
+  fit(ctx, team.city, leftWidth, 800, m * .24, SANS, m * .06);
+  ctx.fillText(team.city, left, y0 + m * 2.3);
   ctx.globalAlpha = 1;
 
   ctx.textAlign = 'right';
   const right = W - m * .7;
   if (text.date) {
-    fit(ctx, text.date, side, 900, m * .3, SANS, m * .03);
-    ctx.fillText(text.date, right, y0 + m * 1.6);
+    fit(ctx, text.date, side, 800, m * .28, SANS, m * .04);
+    ctx.globalAlpha = .85;
+    ctx.fillText(text.date, right, y0 + m * 1.52);
+    ctx.globalAlpha = 1;
   }
-  fit(ctx, text.slogan, side, 900, m * .36, SANS);
-  ctx.fillText(text.slogan, right, y0 + m * (text.date ? 2.15 : 1.95));
+  fit(ctx, text.slogan, side, 400, m * .48, DISPLAY, m * .02);
+  ctx.fillText(text.slogan, right, y0 + m * (text.date ? 2.12 : 1.98));
 }
 
 function ticket(ctx, team, text, L) {
   const {m, o, W, H, area} = L;
   const ink = onPaper(team);
+  const strip = team.c1 === '#f6f6f2' ? team.c2 : team.c1;
   ctx.fillStyle = TABLE;
   ctx.fillRect(0, 0, W, H);
 
@@ -185,22 +225,34 @@ function ticket(ctx, team, text, L) {
     ctx.lineTo(x + H, 0);
     ctx.stroke();
   }
-  // Colour strip down the left with the city written sideways.
-  ctx.fillStyle = team.c1 === '#f6f6f2' ? team.c2 : team.c1;
-  ctx.fillRect(o, o, m * 1.25 - m * .15, H);
+  // Colour strip down the left with the team written sideways.
+  ctx.fillStyle = strip;
+  ctx.fillRect(o, o, m * 1.1, H);
   ctx.restore();
 
-  const stripX = o + (m * 1.1) / 2;
+  const stripX = o + m * .55;
   const perforation = area.y + area.h + m * .95;
+  let stripTop = o;
+  if (text.logo) {
+    // The logo sits on a white disc at the top of the strip.
+    const r = m * .46;
+    const cy = o + m * .72;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(stripX, cy, r, 0, TAU);
+    ctx.fill();
+    drawLogo(ctx, text.logo, stripX, cy, r * 1.45);
+    stripTop = cy + r;
+  }
   ctx.save();
-  ctx.translate(stripX, (o + perforation) / 2);
+  ctx.translate(stripX, (stripTop + perforation) / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = team.c1 === '#f6f6f2' ? '#ffffff' : team.ink;
-  const strip = team.name.toUpperCase();
-  fit(ctx, strip, perforation - o - m, 900, m * .52, BLOCK, m * .16);
-  ctx.fillText(strip, 0, 0);
+  const name = team.name.toUpperCase();
+  fit(ctx, name, perforation - stripTop - m * .9, 400, m * .64, DISPLAY, m * .14);
+  ctx.fillText(name, 0, m * .04);
   ctx.restore();
 
   ctx.textBaseline = 'alphabetic';
@@ -212,15 +264,13 @@ function ticket(ctx, team, text, L) {
   const serial = String(hash(team.id + text.number) % 1000000).padStart(6, '0');
   ctx.fillText(`No. ${serial}`, area.x + area.w, o + m * .68);
 
-  ctx.fillStyle = ink;
   ctx.fillRect(area.x - m * .05, area.y - m * .05, area.w + m * .1, area.h + m * .1);
   text.drawPhoto(area);
 
   // Event line under the photo.
-  ctx.fillStyle = ink;
   ctx.textAlign = 'left';
-  fit(ctx, text.slogan, area.w * .68, 900, m * .5, SANS);
-  ctx.fillText(text.slogan, area.x, area.y + area.h + m * .72);
+  fit(ctx, text.slogan, area.w * .66, 400, m * .6, DISPLAY, m * .02);
+  ctx.fillText(text.slogan, area.x, area.y + area.h + m * .74);
   ctx.textAlign = 'right';
   const tag = `${team.city} · ${team.cn}`;
   fit(ctx, tag, area.w * .3, 700, m * .26, SANS);
@@ -258,8 +308,8 @@ function ticket(ctx, team, text, L) {
     font(ctx, 800, m * .2, SANS, m * .05);
     ctx.fillText(label, x, stubTop + m * .3);
     ctx.fillStyle = ink;
-    fit(ctx, value, step - m * .2, 900, m * .62, BLOCK);
-    ctx.fillText(value, x, stubTop + m * .95);
+    fit(ctx, value, step - m * .2, 400, m * .66, DISPLAY);
+    ctx.fillText(value, x, stubTop + m * .98);
   });
   ctx.fillStyle = 'rgba(0,0,0,.5)';
   font(ctx, 800, m * .2, SANS, m * .05);
@@ -267,11 +317,11 @@ function ticket(ctx, team, text, L) {
   ctx.fillText('HOLDER', left, stubTop + m * 1.45);
   ctx.fillText('DATE', left + fieldsWidth / 2, stubTop + m * 1.45);
   ctx.fillStyle = ink;
-  fit(ctx, text.name, fieldsWidth / 2 - m * .2, 900, m * .46, BLOCK, m * .04);
-  ctx.fillText(text.name, left, stubTop + m * 1.98);
-  const when = text.date || '今夜 TONIGHT';
-  fit(ctx, when, fieldsWidth / 2 - m * .1, 900, m * .46, SANS);
-  ctx.fillText(when, left + fieldsWidth / 2, stubTop + m * 1.98);
+  fit(ctx, text.name, fieldsWidth / 2 - m * .2, 400, m * .52, DISPLAY, m * .04);
+  ctx.fillText(text.name, left, stubTop + m * 2);
+  const when = text.date || 'TONIGHT';
+  fit(ctx, when, fieldsWidth / 2 - m * .1, 400, m * .52, DISPLAY, m * .02);
+  ctx.fillText(when, left + fieldsWidth / 2, stubTop + m * 2);
 
   const bx = area.x + area.w - barWidth;
   const by = stubTop + m * .1;
@@ -354,12 +404,12 @@ function patch(ctx, team, text, L) {
   ctx.fillRect(-tagW / 2, -m * .62, tagW, m * .42);
   ctx.restore();
   ctx.textAlign = 'center';
-  ctx.fillStyle = luminance(felt) > .6 ? '#111111' : '#ffffff';
+  ctx.fillStyle = readable(felt);
   font(ctx, 900, m * .2, SANS, m * .06);
   ctx.fillText('HELLO · 我是', 0, -m * .34);
   ctx.fillStyle = '#111111';
-  fit(ctx, text.name, tagW - m * .3, 900, m * .52, BLOCK);
-  ctx.fillText(text.name, 0, m * .42);
+  fit(ctx, text.name, tagW - m * .3, 400, m * .58, DISPLAY, m * .02);
+  ctx.fillText(text.name, 0, m * .44);
   ctx.restore();
 
   // Round embroidered number patch, top right.
@@ -384,50 +434,59 @@ function patch(ctx, team, text, L) {
   ctx.stroke();
   ctx.setLineDash([]);
   ctx.textAlign = 'center';
-  ctx.fillStyle = luminance(felt) > .45 ? '#111111' : '#ffffff';
+  ctx.fillStyle = readable(felt);
   font(ctx, 900, m * .17, SANS, m * .06);
-  ctx.fillText('NO.', cx, cy - r * .32);
-  fit(ctx, text.number, r * 1.2, 900, m * .82, BLOCK);
-  ctx.fillText(text.number, cx, cy + r * .42);
+  ctx.fillText('NO.', cx, cy - r * .3);
+  fit(ctx, text.number, r * 1.15, 400, m * .9, DISPLAY);
+  ctx.fillText(text.number, cx, cy + r * .5);
 
-  // Starburst sticker, top left.
+  // Top left: the team's logo as a round sticker, or a HOT starburst.
   ctx.save();
   ctx.translate(m * 1.1, m * 1.2);
   ctx.rotate(-.2);
   shadow(ctx, m, true);
-  starburst(ctx, 0, 0, m * .92, 12, '#ffe14d');
-  shadow(ctx, m, false);
-  ctx.fillStyle = '#111111';
-  ctx.textAlign = 'center';
-  font(ctx, 900, m * .42, BLOCK);
-  ctx.fillText('HOT', 0, m * .15);
+  if (text.logo) {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, m * .92, 0, TAU);
+    ctx.fill();
+    shadow(ctx, m, false);
+    drawLogo(ctx, text.logo, 0, 0, m * 1.36);
+  } else {
+    starburst(ctx, 0, 0, m * .92, 12, '#ffe14d');
+    shadow(ctx, m, false);
+    ctx.fillStyle = '#111111';
+    ctx.textAlign = 'center';
+    font(ctx, 400, m * .56, DISPLAY, m * .02);
+    ctx.fillText('HOT', 0, m * .2);
+  }
   ctx.restore();
 
   // Slogan sticker over the photo's bottom-right corner.
   ctx.save();
-  fit(ctx, text.slogan, Math.min(area.w * .55, m * 6), 900, m * .4, SANS);
-  const sw = ctx.measureText(text.slogan).width + m * .6;
+  fit(ctx, text.slogan, Math.min(area.w * .55, m * 6), 400, m * .48, DISPLAY, m * .02);
+  const sw = ctx.measureText(text.slogan).width + m * .7;
   ctx.translate(area.x + area.w - sw / 2 + m * .2, area.y + area.h - m * .1);
   ctx.rotate(.06);
   shadow(ctx, m, true);
-  roundRect(ctx, -sw / 2, -m * .4, sw, m * .8, m * .4);
+  roundRect(ctx, -sw / 2, -m * .42, sw, m * .84, m * .42);
   ctx.fillStyle = trim;
   ctx.fill();
   shadow(ctx, m, false);
-  ctx.fillStyle = luminance(trim) > .45 ? '#111111' : '#ffffff';
+  ctx.fillStyle = readable(trim);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(text.slogan, 0, m * .02);
+  ctx.fillText(text.slogan, 0, m * .03);
   ctx.restore();
   ctx.textBaseline = 'alphabetic';
 
   // Chenille varsity letter, bottom left.
   const letter = team.letter;
-  font(ctx, 900, m * 2.3, SLAB);
+  font(ctx, 400, m * 2.3, VARSITY);
   const letterWidth = ctx.measureText(letter).width;
-  const letterX = m * .75 + letterWidth / 2;
+  const letterX = m * .8 + letterWidth / 2;
   ctx.save();
-  ctx.translate(letterX, H - m * .7);
+  ctx.translate(letterX, H - m * .62);
   ctx.rotate(-.12);
   ctx.textAlign = 'center';
   ctx.lineJoin = 'round';
@@ -443,43 +502,50 @@ function patch(ctx, team, text, L) {
   ctx.fillText(letter, 0, 0);
   ctx.restore();
 
-  // City across the bottom.
+  // Team across the bottom.
   const y0 = area.y + area.h + m * .16;
-  const textLeft = letterX + letterWidth / 2 + m * .55;
+  const textLeft = letterX + letterWidth / 2 + m * .6;
   const textWidth = W - textLeft - m * .6;
   ctx.textAlign = 'left';
   ctx.fillStyle = '#ffffff';
-  fit(ctx, team.short, textWidth, 900, m * .82, BLOCK, m * .02);
-  ctx.fillText(team.short, textLeft, y0 + m * 1.32);
-  ctx.strokeStyle = felt === '#f6f6f2' ? team.c2 : felt;
-  ctx.lineWidth = Math.max(1, m * .035);
+  fit(ctx, team.short, textWidth, 400, m * 1.02, DISPLAY, m * .02);
+  ctx.fillText(team.short, textLeft, y0 + m * 1.34);
   const line = `${team.nick.toUpperCase()} · ${text.date || team.city}`;
-  fit(ctx, line, textWidth, 900, m * .36, BLOCK, m * .08);
+  fit(ctx, line, textWidth, 800, m * .3, SANS, m * .08);
   ctx.fillStyle = luminance(felt) < .5 ? '#ffffff' : felt;
   ctx.globalAlpha = .85;
-  ctx.fillText(line, textLeft, y0 + m * 1.95);
+  ctx.fillText(line, textLeft, y0 + m * 1.94);
   ctx.globalAlpha = 1;
 }
 
 const painters = {jersey, ticket, patch};
 
-// Fills `area` with the image (already cropped to the same ratio).
-export function paint(canvas, image, team, style, text, L) {
+// Paints the whole picture into `canvas`. `text` holds name, number, slogan and
+// date; `look` holds the photo position (x, y) and the logo image, if any.
+export function paint(canvas, source, team, style, text, L, look = {}) {
   canvas.width = L.W;
   canvas.height = L.H;
   const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  const words = {
-    ...text,
+  const words = Object.assign({}, text, {
+    logo: look.logo || null,
     drawPhoto(area) {
-      ctx.drawImage(image, area.x, area.y, area.w, area.h);
+      if (!source) {
+        ctx.fillStyle = '#2a2622';
+        ctx.fillRect(area.x, area.y, area.w, area.h);
+        return;
+      }
+      const cut = crop(source, area, look.x, look.y);
+      ctx.drawImage(source, cut.sx, cut.sy, cut.sw, cut.sh, area.x, area.y, area.w, area.h);
     },
-  };
+  });
   painters[style](ctx, team, words, L);
   if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+  ctx.textAlign = 'left';
 }
 
-// A stand-in photo (night game, lights on) until the user picks their own.
+// A stand-in photo (night game, lights on) until someone picks their own.
 export function demoPhoto(width = 1200, height = 1500) {
   const c = document.createElement('canvas');
   c.width = width;
