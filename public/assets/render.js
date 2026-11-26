@@ -2,8 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=9';
-import {isZh} from './teams.js?v=9';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=10';
+import {isZh} from './teams.js?v=10';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=10';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -1097,33 +1098,88 @@ function patch(ctx, team, text, L) {
 
 // ---------- Style D: trading card (front and back) ----------
 //
-// Like a real player card: a foil border whose finish is the card's rarity (base,
-// silver, team colour /199, gold /10, black 1/1), the photo as the player, the crest
-// in the corner, a nameplate, a rookie badge and, on the rarer pulls, a serial number,
-// an autograph and a jersey patch. The back is the team's file: card number, three
-// facts, a highlights table, legends and one piece of trivia. Which rarity, which
-// facts and which highlights come out is drawn from `seed`, so a new seed is a new pull.
+// Like a real player card, and every pull different. A seed draws, on its own:
+// - the parallel: a foil finish (Prizm rays, Refractor, Hyper, Mojo, Shimmer, Cracked
+//   Ice, Disco, Wave, X-Fractor, Snakeskin, Tiger, Atomic, Scope, Camo, Lava) in a
+//   colour with its print run (silver, team /199, red /149 … gold /10, black 1/1),
+//   or one of the chase cards (Superfractor 1/1, Black Finite 1/1, Gold Vinyl /5);
+// - the front design: chrome frame, full bleed, premium patch-auto, comic burst,
+//   city skyline or stained glass;
+// - the memorabilia: a jersey swatch, number patch, logo patch, laundry tag,
+//   sneaker leather, a piece of the game ball or two at once, in a window that can be
+//   a square, a circle, a shield or the shape of the shirt number;
+// - the autograph: ink on the card or a signed sticker, in one of five inks, at
+//   times with an inscription;
+// - how the card is shown: front and back side by side, fanned, in a graded slab or
+//   in a magnetic holder.
+// The back is the team's file: card number, three facts, a highlights table, legends
+// and trivia, also drawn from the seed. The photo is the player.
 
-// A small seeded random generator (mulberry32): the same seed gives the same card.
-function seeded(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-// Rarity tiers: weight out of 100, print run (0 = not numbered), auto and patch odds.
-const TIERS = [
-  {id: 'base', w: 36, run: 0, en: 'BASE', zh: '普卡', auto: .15, patch: .1},
-  {id: 'silver', w: 28, run: 0, en: 'SILVER', zh: '银折', auto: .25, patch: .2},
-  {id: 'team', w: 20, run: 199, en: 'TEAM COLOR', zh: '队色折', auto: .45, patch: .4},
-  {id: 'gold', w: 11, run: 10, en: 'GOLD', zh: '金折', auto: 1, patch: 1},
-  {id: 'black', w: 5, run: 1, en: 'BLACK', zh: '黑金', auto: 1, patch: 1},
+// The colours of the parallels, rarest last. a: main, b: dark, c: light.
+const COLOURS = [
+  {id: 'silver', w: 34, run: 0, en: 'SILVER', zh: '银', a: '#dfe4ea', b: '#8a949f', c: '#ffffff'},
+  {id: 'team', w: 18, run: 199, en: 'TEAM COLOR', zh: '队色'},
+  {id: 'red', w: 11, run: 149, en: 'RED', zh: '红', a: '#d7263d', b: '#6e0b17', c: '#ff8a98'},
+  {id: 'blue', w: 10, run: 99, en: 'BLUE', zh: '蓝', a: '#1f6feb', b: '#0a2559', c: '#8cc2ff'},
+  {id: 'green', w: 7, run: 75, en: 'GREEN', zh: '绿', a: '#16a34a', b: '#06401c', c: '#86efac'},
+  {id: 'orange', w: 5, run: 49, en: 'ORANGE', zh: '橙', a: '#ff7a1a', b: '#7a2e00', c: '#ffc48a'},
+  {id: 'pink', w: 5, run: 35, en: 'PINK', zh: '粉', a: '#ff5fb0', b: '#7a1048', c: '#ffc2e2'},
+  {id: 'purple', w: 4, run: 25, en: 'PURPLE', zh: '紫', a: '#8b3dff', b: '#2e0d63', c: '#d2b3ff'},
+  {id: 'gold', w: 3, run: 10, en: 'GOLD', zh: '金', a: '#e9c25a', b: '#7a5a12', c: '#fff1b8'},
+  {id: 'black', w: 1.2, run: 1, en: 'BLACK', zh: '黑', a: '#2a2a2a', b: '#050505', c: '#9a9a9a'},
 ];
+const FINISHES = [
+  {id: 'prizm', w: 20, en: 'PRIZM', zh: '折射'},
+  {id: 'refractor', w: 10, en: 'REFRACTOR', zh: '彩虹折射'},
+  {id: 'hyper', w: 8, en: 'HYPER', zh: '斜纹镭射'},
+  {id: 'mojo', w: 8, en: 'MOJO', zh: '旋涡镭射'},
+  {id: 'shimmer', w: 7, en: 'SHIMMER', zh: '流光'},
+  {id: 'ice', w: 7, en: 'CRACKED ICE', zh: '碎冰'},
+  {id: 'disco', w: 7, en: 'DISCO', zh: '迪斯科圆点'},
+  {id: 'wave', w: 7, en: 'WAVE', zh: '波浪'},
+  {id: 'xfractor', w: 6, en: 'X-FRACTOR', zh: '方格折射'},
+  {id: 'snake', w: 5, en: 'SNAKESKIN', zh: '蛇皮纹'},
+  {id: 'tiger', w: 5, en: 'TIGER STRIPE', zh: '虎纹'},
+  {id: 'atomic', w: 5, en: 'ATOMIC', zh: '原子星点'},
+  {id: 'scope', w: 4, en: 'SCOPE', zh: '同心圆'},
+  {id: 'camo', w: 3, en: 'CAMO', zh: '迷彩'},
+  {id: 'lava', w: 3, en: 'LAVA', zh: '熔岩'},
+];
+// The chase cards, each a whole parallel of its own; w out of 100 pulls.
+const CHASE = [
+  {id: 'super', w: .7, run: 1, finish: 'super', colour: 'gold', en: 'SUPERFRACTOR', zh: '超级折射'},
+  {id: 'finite', w: .9, run: 1, finish: 'prizm', colour: 'black', en: 'BLACK FINITE', zh: '黑色终极'},
+  {id: 'vinyl', w: 1.2, run: 5, finish: 'vinyl', colour: 'gold', en: 'GOLD VINYL', zh: '金色黑胶'},
+];
+// Front designs, each a set name of its own.
+const DESIGNS = [
+  {id: 'chrome', w: 30, en: 'HOT CHROME', zh: 'HOT 主场'},
+  {id: 'full', w: 20, en: 'HOT SELECT', zh: '主场精选'},
+  {id: 'skyline', w: 13, en: 'HOT DOWNTOWN', zh: '主场城市'},
+  {id: 'comic', w: 11, en: 'HOT BOOM', zh: '主场爆裂'},
+  {id: 'stained', w: 11, en: 'HOT STAINED GLASS', zh: '主场彩窗'},
+  {id: 'premium', w: 15, en: 'HOT TREASURES', zh: '主场珍藏'},
+];
+const SHOWS = [{id: 'side', w: 40}, {id: 'fan', w: 22}, {id: 'slab', w: 22}, {id: 'holder', w: 16}];
+// Memorabilia: weights for ordinary and rare pulls.
+const RELICS = [
+  {id: 'jersey', w: 26, rare: 12, en: 'GAME-WORN JERSEY', zh: '球衣碎片', school: '校服碎片'},
+  {id: 'number', w: 16, rare: 14, en: 'NUMBER PATCH', zh: '号码补丁'},
+  {id: 'logo', w: 13, rare: 18, en: 'LOGO PATCH', zh: '队徽补丁', school: '校徽补丁'},
+  {id: 'tag', w: 6, rare: 14, en: 'LAUNDRY TAG', zh: '球衣洗标', school: '校服洗标'},
+  {id: 'sneaker', w: 14, rare: 14, en: 'SNEAKER', zh: '球鞋物料'},
+  {id: 'ball', w: 10, rare: 8, en: 'GAME BALL', zh: '比赛用球'},
+  {id: 'dual', w: 12, rare: 16, en: 'DUAL RELIC', zh: '双物料'},
+];
+const WINDOWS = ['rect', 'round', 'circle', 'shield', 'number'];
+const INKS = [
+  {id: 'blue', ink: '#1e4fd8', w: 34},
+  {id: 'black', ink: '#111111', w: 22},
+  {id: 'silver', ink: '#e8edf2', w: 18},
+  {id: 'gold', ink: '#f2cf6b', w: 14},
+  {id: 'red', ink: '#d11a2a', w: 12},
+];
+const GRADES = [['10', 'GEM MT', 30], ['9.5', 'MINT+', 18], ['9', 'MINT', 30], ['8.5', 'NM-MT+', 12], ['8', 'NM-MT', 10]];
 
 // Positions and insert-set names, by group.
 const ROLES = {
@@ -1148,55 +1204,130 @@ const INSERTS = {
   cnu: ['校园传奇', '新生登场', '学霸系列', '荣誉校友'],
   hs: ['校园传奇', '新生登场', '学霸系列', '百年名校'],
 };
+// The big word on the comic design.
+const BURSTS = {
+  hoops: ['BOOM!', 'SLAM!', 'SWISH!', 'CLUTCH!', 'WHAM!'],
+  college: ['BOOM!', 'SLAM!', 'SWISH!', 'BUZZER!'],
+  cba: ['暴扣！', '绝杀！', '燃！', '砰！', '三分！'],
+  gridiron: ['TOUCHDOWN!', 'BOOM!', 'SACK!', 'POW!'],
+  football: ['GOAL!', 'GOLAZO!', 'BOOM!', 'WHAM!'],
+  csl: ['进球！', '世界波！', '燃！', '砰！'],
+  campus: ['BOOM!', 'A+!', 'WOW!', 'POW!'],
+  cnu: ['燃！', '冲！', '满分！', '学霸！'],
+  hs: ['燃！', '冲！', '满分！', '学霸！', '砰！'],
+};
+const SPORT = {hoops: 'hoop', college: 'hoop', cba: 'hoop', gridiron: 'gridiron', football: 'soccer', csl: 'soccer'};
+const SCHOOLS = ['campus', 'cnu', 'hs'];
 
 const CARD_WORDS = {
   en: {
-    set: 'HOT CHROME', rookie: 'ROOKIE', card: 'CARD', highlights: 'HIGHLIGHTS', year: 'YEAR',
+    rookie: 'ROOKIE', card: 'CARD', highlights: 'HIGHLIGHTS', year: 'YEAR',
     total: 'ALL-TIME', legends: 'LEGENDS', trivia: 'DID YOU KNOW?', oneOfOne: 'ONE OF ONE',
-    patch: 'PATCH', auto: 'CERTIFIED AUTOGRAPH', parallel: 'PARALLEL',
+    auto: 'CERTIFIED AUTOGRAPH', parallel: 'PARALLEL', signed: 'AUTO', grading: 'HOT GRADING',
     motto: 'MOTTO', mascot: 'MASCOT', aka: 'A.K.A.', chant: 'CHANT', home: 'HOME', story: 'STORY · 故事',
+    authentic: 'AUTHENTIC', size: 'SIZE', fabric: '100% POLYESTER', care: 'MACHINE WASH COLD',
   },
   zh: {
-    set: 'HOT 主场', rookie: '新秀', card: '卡号', highlights: '历史时刻', year: '年份',
+    rookie: '新秀', card: '卡号', highlights: '历史时刻', year: '年份',
     total: '荣誉', legends: '传奇', trivia: '你知道吗？', oneOfOne: '全球唯一',
-    patch: '球衣碎片', auto: '亲笔签名', parallel: '版本',
+    auto: '亲笔签名', parallel: '版本', signed: '签字', grading: 'HOT 评级',
     motto: '校训', mascot: '吉祥物', aka: '别称', chant: '助威', home: '主场', story: '一句话',
+    authentic: '正品', size: '尺码', fabric: '100% 聚酯纤维', care: '冷水机洗',
   },
 };
+
+function weighted(rand, list, key = 'w') {
+  let total = 0;
+  list.forEach(item => {
+    total += item[key];
+  });
+  let roll = rand() * total;
+  for (const item of list) {
+    if (roll < item[key]) return item;
+    roll -= item[key];
+  }
+  return list[list.length - 1];
+}
 
 // What a given pull holds. app.js shows its label beside the reroll button.
 export function cardInfo(team, seed) {
   const rand = seeded(hash(team.id) ^ Math.imul((seed >>> 0) || 1, 2654435761));
   const pick = list => list[Math.floor(rand() * list.length) % list.length];
-  let roll = rand() * 100;
-  let tier = TIERS[0];
-  for (const item of TIERS) {
-    if (roll < item.w) {
-      tier = item;
-      break;
-    }
-    roll -= item.w;
-  }
   const zh = isZh(team);
-  const serial = tier.run > 1 ? Math.floor(rand() * tier.run) + 1 : tier.run;
-  const width = String(tier.run).length;
-  const serialText = tier.run ? `${String(serial).padStart(width, '0')}/${tier.run}` : '';
-  const auto = rand() < tier.auto;
-  const patch = rand() < tier.patch;
+  const school = SCHOOLS.indexOf(team.group) >= 0;
+
+  // The parallel.
+  let finish = null;
+  let colour = null;
+  let chase = null;
+  const roll = rand() * 100;
+  if (roll < 2.8) chase = weighted(rand, CHASE);
+  else if (roll >= 26) {
+    finish = weighted(rand, FINISHES);
+    colour = weighted(rand, COLOURS);
+  }
+  if (chase) {
+    finish = {id: chase.finish};
+    colour = COLOURS.find(item => item.id === chase.colour);
+  }
+  const run = chase ? chase.run : colour ? colour.run : 0;
+  const rarity = !finish ? 'base' : run === 1 ? 'one' : run && run <= 10 ? 'rare' : run ? 'numbered' : 'chrome';
+  const gold = chase || (colour && (colour.id === 'gold' || colour.id === 'black'));
+  let name;
+  let nameZh;
+  if (chase) {
+    name = chase.en;
+    nameZh = chase.zh;
+  } else if (!finish) {
+    name = 'BASE';
+    nameZh = '普卡';
+  } else {
+    name = `${colour.id === 'silver' ? '' : `${colour.en} `}${finish.en}`;
+    nameZh = colour.id === 'team' ? `队色${finish.zh}` : `${colour.zh}色${finish.zh}`;
+  }
+  const serial = run > 1 ? Math.floor(rand() * run) + 1 : run;
+  const serialText = run ? `${String(serial).padStart(String(run).length, '0')}/${run}` : '';
+
+  // Hits: an autograph and a piece of memorabilia, likelier on the rarer pulls.
+  const odds = {base: [.12, .12], chrome: [.22, .25], numbered: [.42, .48], rare: [.85, .85], one: [1, 1]}[rarity];
+  const auto = rand() < odds[0] ? {
+    style: rand() < .45 ? 'sticker' : 'ink',
+    ink: weighted(rand, INKS).ink,
+    inscription: rand() < .4 ? pick(zh ? ['加油！', '#{n}', '冠军', `${team.short}永远`] : ['#{n}', 'RC', `GO ${upper(team.short)}!`, `EST. ${team.est}`]) : '',
+  } : null;
+  let mem = null;
+  if (rand() < odds[1]) {
+    const choices = RELICS.filter(item => item.id !== 'ball' || SPORT[team.group]);
+    const kind = weighted(rand, choices, rarity === 'rare' || rarity === 'one' ? 'rare' : 'w');
+    const shapes = kind.id === 'jersey' || kind.id === 'number' ? WINDOWS : WINDOWS.slice(0, 4);
+    mem = {
+      id: kind.id,
+      en: kind.en,
+      zh: school && kind.school ? kind.school : kind.zh,
+      window: kind.id === 'tag' || kind.id === 'dual' ? 'rect' : pick(shapes),
+    };
+  }
+
+  // The design and how the card is shown.
+  const design = auto && mem && rand() < .55 ? DESIGNS[DESIGNS.length - 1] : weighted(rand, DESIGNS);
+  const show = weighted(rand, SHOWS).id;
+  const grade = weighted(rand, GRADES.map(([n, word, w]) => ({n, word, w})));
+
   const cardNo = Math.floor(rand() * 300) + 1;
   const role = pick(ROLES[team.group] || ROLES.hoops);
   const insert = pick(INSERTS[team.group] || INSERTS.hoops);
+  const burst = pick(BURSTS[team.group] || BURSTS.hoops);
   // Two of the big moments, kept in year order.
   const moments = (team.moments || []).slice();
   while (moments.length > 2) moments.splice(Math.floor(rand() * moments.length), 1);
   // Up to three legends, in the team's own order.
   const legends = (team.retired || []).slice();
   while (legends.length > 3) legends.splice(Math.floor(rand() * legends.length), 1);
-  // One piece of trivia.
+  // Two pieces of trivia.
   const w = CARD_WORDS[zh ? 'zh' : 'en'];
-  const school = team.group === 'cnu' || team.group === 'hs';
+  const school2 = team.group === 'cnu' || team.group === 'hs';
   const trivia = [
-    team.motto ? [zh && !school ? '格言' : w.motto, team.motto] : null,
+    team.motto ? [zh && !school2 ? '格言' : w.motto, team.motto] : null,
     team.mascot ? [w.mascot, team.mascot] : null,
     team.nicknames && team.nicknames.length > 1 ? [w.aka, team.nicknames.join(' · ')] : null,
     team.chant ? [w.chant, team.chant] : null,
@@ -1205,16 +1336,92 @@ export function cardInfo(team, seed) {
   ].filter(Boolean);
   const facts = [];
   while (trivia.length && facts.length < 2) facts.push(trivia.splice(Math.floor(rand() * trivia.length), 1)[0]);
-  const name = zh ? tier.zh : tier.en;
-  const label = [tier.zh, serialText, auto ? '签字' : '', patch ? '球衣碎片' : ''].filter(Boolean).join(' · ');
-  return {tier, name, serial: serialText, auto, patch, cardNo, role, insert, moments, legends, facts, label};
+  const designZh = design.id === 'chrome' ? '' : {full: '全幅', skyline: '城市', comic: '漫画', stained: '彩窗', premium: '珍藏'}[design.id];
+  const label = [
+    nameZh, serialText, designZh ? `${designZh}版式` : '', auto ? '签字' : '', mem ? mem.zh : '',
+    show === 'slab' ? `评级 ${grade.n}` : '',
+  ].filter(Boolean).join(' · ');
+  return {
+    tier: {id: rarity}, rarity, gold: Boolean(gold), finish: finish ? finish.id : '', colour: colour ? colour.id : '',
+    name: zh ? nameZh : name, run, serial: serialText, auto, mem, design: design.id,
+    set: zh ? design.zh : design.en, show, grade, cardNo, role, insert, burst, moments, legends, facts, label,
+    seed: hash(`${team.id} ${seed}`),
+  };
+}
+
+// The foil colours of a pull: the parallel's own, or the team's.
+function palette(team, info) {
+  if (info.colour === 'team') {
+    const a = solid(team);
+    const other = [team.c2, team.c3, team.accent].find(c => c && c !== a && Math.abs(luminance(c) - luminance(a)) > .1) || '#ffffff';
+    return {a, b: mix(a, '#000000', .55), c: mix(other, '#ffffff', .35)};
+  }
+  const colour = COLOURS.find(item => item.id === info.colour) || COLOURS[0];
+  return {a: colour.a, b: colour.b, c: colour.c};
+}
+
+// The finish over a rectangle, painted once and kept.
+function foilFill(ctx, team, info, x, y, w, h, salt = 0) {
+  if (!info.finish) return;
+  const scale = Math.min(1, 900 / Math.max(w, h));
+  const art = foilCanvas(info.finish, w * scale, h * scale, info.seed + salt, palette(team, info));
+  ctx.drawImage(art, x, y, w, h);
+}
+
+// The foil over a photo: strong at the edges, clear in the middle where the
+// player is, as on a real parallel where the player is cut out.
+function foilOnPhoto(ctx, team, info, area, strength = .5) {
+  if (!info.finish) return;
+  const scale = Math.min(1, 520 / Math.max(area.w, area.h));
+  const w = Math.max(1, Math.round(area.w * scale));
+  const h = Math.max(1, Math.round(area.h * scale));
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const x = c.getContext('2d');
+  x.drawImage(foilCanvas(info.finish, w, h, info.seed + 7, palette(team, info)), 0, 0, w, h);
+  x.globalCompositeOperation = 'destination-out';
+  const g = x.createRadialGradient(w / 2, h * .46, 0, w / 2, h * .46, Math.max(w, h) * .6);
+  g.addColorStop(0, 'rgba(0,0,0,1)');
+  g.addColorStop(.55, 'rgba(0,0,0,1)');
+  g.addColorStop(1, 'rgba(0,0,0,.1)');
+  x.fillStyle = g;
+  x.fillRect(0, 0, w, h);
+  ctx.save();
+  ctx.globalAlpha = strength;
+  ctx.globalCompositeOperation = info.colour === 'black' ? 'screen' : 'overlay';
+  ctx.drawImage(c, area.x, area.y, area.w, area.h);
+  ctx.globalAlpha = strength * .5;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(c, area.x, area.y, area.w, area.h);
+  ctx.restore();
+}
+
+// Light on the chrome: a rainbow sheen, a streak and glints on the rarer pulls.
+// over: how much of it falls on the photo, less where the photo is under it.
+function lightUp(ctx, info, rand, x, y, w, h, u, over = 1) {
+  if (info.rarity === 'base') return;
+  ctx.save();
+  ctx.globalCompositeOperation = 'overlay';
+  holo(ctx, x, y, w, h, (info.finish === 'refractor' || info.colour === 'silver' ? .5 : .28) * over, .9 + rand() * .6);
+  ctx.globalCompositeOperation = 'source-over';
+  const g = ctx.createLinearGradient(x, y, x + w, y + h);
+  const at = .2 + rand() * .5;
+  g.addColorStop(at - .08, 'rgba(255,255,255,0)');
+  g.addColorStop(at, `rgba(255,255,255,${.22 * over})`);
+  g.addColorStop(at + .08, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, w, h);
+  ctx.restore();
+  const count = {chrome: 4, numbered: 7, rare: 12, one: 18}[info.rarity] || 0;
+  sparkles(ctx, rand, x, y, w, h, count, u * .55, info.gold ? '#fff1b8' : '#ffffff');
 }
 
 // Splits text into at most maxLines lines of maxWidth, Chinese character by
 // character and other text word by word, with … when it runs out of room. The first
 // line can be shorter (firstWidth), for text that starts after a label.
 function wrapLines(ctx, text, maxWidth, maxLines, firstWidth = maxWidth) {
-  const tokens = String(text).match(/[⺀-鿿豈-﫿＀-￯]|[^\s⺀-鿿豈-﫿＀-￯]+|\s+/g) || [];
+  const tokens = String(text).match(/[⺀-鿿豈-﫿＀-￯]|[^\s⺀-鿿豈-﫿＀-￯]+|\s+/g) || [];
   const lines = [];
   let line = '';
   let k = 0;
@@ -1235,49 +1442,6 @@ function wrapLines(ctx, text, maxWidth, maxLines, firstWidth = maxWidth) {
     lines[maxLines - 1] = `${last}…`;
   }
   return lines;
-}
-
-// The foil for the border, by rarity.
-function foilFill(ctx, team, tier, x, y, w, h) {
-  const g = ctx.createLinearGradient(x, y, x + w, y + h);
-  const stops = {
-    base: ['#fbfaf6', '#efede6', '#fbfaf6'],
-    silver: ['#eef1f4', '#9ea7b1', '#fbfcfd', '#8a949f', '#e3e8ee', '#a9b2bc'],
-    gold: ['#7a5a12', '#f7d774', '#b8891f', '#fff1b8', '#8f6a14', '#e8c35a'],
-    black: ['#0b0b0b', '#2b2b2b', '#050505', '#262626', '#0b0b0b'],
-  }[tier.id] || [team.c1, team.c2 === team.c1 ? team.c3 : team.c2, team.c1, team.c3, team.c1];
-  stops.forEach((colour, k) => g.addColorStop(k / (stops.length - 1), colour));
-  ctx.fillStyle = g;
-  ctx.fillRect(x, y, w, h);
-}
-
-// Prism lines fanning out from below the card, and a rainbow sheen for chrome.
-function prism(ctx, tier, x, y, w, h, rand) {
-  if (tier.id === 'base') return;
-  ctx.save();
-  const cx = x + w * (.3 + rand() * .4);
-  const cy = y + h * 1.15;
-  const rays = 46;
-  for (let k = 0; k < rays; k++) {
-    const a0 = Math.PI + k / rays * Math.PI;
-    const a1 = a0 + Math.PI / rays * .55;
-    ctx.globalAlpha = k % 2 ? .16 : .06;
-    ctx.fillStyle = tier.id === 'black' ? '#d9b45a' : '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + Math.cos(a0) * h * 3, cy + Math.sin(a0) * h * 3);
-    ctx.lineTo(cx + Math.cos(a1) * h * 3, cy + Math.sin(a1) * h * 3);
-    ctx.closePath();
-    ctx.fill();
-  }
-  if (tier.id === 'silver' || tier.id === 'team') {
-    const g = ctx.createLinearGradient(x, y + h, x + w, y);
-    ['#ff4d6d', '#ffb84d', '#fff04d', '#4dff88', '#4dc3ff', '#9b6bff', '#ff4dd2'].forEach((c, k, all) => g.addColorStop(k / (all.length - 1), c));
-    ctx.globalAlpha = tier.id === 'silver' ? .22 : .12;
-    ctx.fillStyle = g;
-    ctx.fillRect(x, y, w, h);
-  }
-  ctx.restore();
 }
 
 // The RC shield.
@@ -1306,49 +1470,369 @@ function rookieBadge(ctx, cx, cy, s, colour, ink, word) {
   ctx.restore();
 }
 
-// A swatch of the team's shirt with stitching round it, in a window.
-function swatch(ctx, team, x, y, w, h, u, word, number) {
+// The crest: the logo as a sticker, or the drawn emblem in a disc.
+function crestMark(ctx, team, logo, cx, cy, size, u, turn = .06) {
+  if (logo) {
+    sticker(ctx, logo, cx, cy, size, u * 1.2, turn);
+    return;
+  }
   shadow(ctx, u, true);
-  roundRect(ctx, x - u * .18, y - u * .18, w + u * .36, h + u * .36 + u * .7, u * .3);
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = team.c1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * .42, 0, TAU);
   ctx.fill();
   shadow(ctx, u, false);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = Math.max(1, size * .04);
+  ctx.stroke();
+  drawMotif(ctx, team.motif, cx, cy, size * .7, team.ink, team.c1, team.accent);
+}
+
+// The set's name and the season (or the photo's date) on a slanted tab.
+function setTag(ctx, x, y, u, set, line, gold) {
+  const tagW = u * 5.8;
   ctx.save();
-  roundRect(ctx, x, y, w, h, u * .2);
-  ctx.clip();
-  kit(ctx, team, x - w * .5, y - h * .5, w * 2, h * 2, u * 1.4);
-  trim(ctx, team, x, y + h * .62, w, h * .16);
-  // A piece of the shirt number, cut off by the window like a real patch.
-  if (number) {
-    ctx.font = `400 ${Math.round(h * 1.5)}px ${DISPLAY}`;
-    ctx.textAlign = 'left';
+  ctx.translate(x, y);
+  ctx.transform(1, 0, -.18, 1, 0, 0);
+  ctx.fillStyle = 'rgba(0,0,0,.78)';
+  ctx.fillRect(0, 0, tagW, u * 1.75);
+  ctx.fillStyle = gold ? '#f2cf6b' : '#ffffff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  fit(ctx, set, tagW - u * .6, 400, u * .9, DISPLAY, u * .06);
+  ctx.fillText(set, u * .35, u * 1.02);
+  fit(ctx, line, tagW - u * .6, 800, u * .44, SANS, u * .1);
+  ctx.globalAlpha = .8;
+  ctx.fillText(line, u * .35, u * 1.52);
+  ctx.restore();
+}
+
+// The serial number on a foil stamp; returns its height.
+function serialStamp(ctx, info, x, y, u, words, align = 'left') {
+  if (!info.run) return 0;
+  const text = info.run === 1 ? `${info.serial} · ${words.oneOfOne}` : info.serial;
+  font(ctx, 400, u * 1.05, DISPLAY, u * .06, text);
+  const sw = measure(ctx, text) + u;
+  const sx = align === 'right' ? x - sw : x;
+  ctx.fillStyle = info.colour === 'black' ? '#0b0b0b' : 'rgba(0,0,0,.72)';
+  roundRect(ctx, sx, y, sw, u * 1.4, u * .25);
+  ctx.fill();
+  const g = ctx.createLinearGradient(sx, y, sx + sw, y + u * 1.4);
+  g.addColorStop(0, '#b8891f');
+  g.addColorStop(.5, '#fff1b8');
+  g.addColorStop(1, '#c99b2c');
+  ctx.fillStyle = info.gold || info.rarity === 'rare' ? g : '#ffffff';
+  ctx.textAlign = 'left';
+  ctx.fillText(text, sx + u * .5, y + u * 1.08);
+  return u * 1.4;
+}
+
+// ----- Memorabilia -----
+
+// Each material fills x, y, w, h on ctx.
+const materials = {
+  jersey(ctx, team, x, y, w, h) {
+    const u = Math.min(w, h) / 6;
+    kit(ctx, team, x - w * .5, y - h * .5, w * 2, h * 2, u * 1.4);
+    trim(ctx, team, x, y + h * .66, w, h * .14);
+    // The mesh: rows of little holes.
+    ctx.fillStyle = luminance(team.c1) > .5 ? 'rgba(0,0,0,.18)' : 'rgba(0,0,0,.3)';
+    const s = Math.max(2, u * .32);
+    for (let py = y, row = 0; py < y + h; py += s, row++) {
+      for (let px = x + (row % 2) * s / 2; px < x + w; px += s) {
+        ctx.beginPath();
+        ctx.arc(px, py, s * .18, 0, TAU);
+        ctx.fill();
+      }
+    }
+  },
+  number(ctx, team, x, y, w, h, number) {
+    materials.jersey(ctx, team, x, y, w, h);
+    const n = number || '0';
+    // Part of the number, as if cut from the shirt: big, but kept in the window.
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
+    fit(ctx, n, w * .92, 400, h * 1.15, DISPLAY);
+    const nx = x + w / 2;
+    const ny = y + h * .96;
     ctx.lineJoin = 'round';
     ctx.strokeStyle = team.c3 === team.c1 ? team.c2 : team.c3;
     ctx.lineWidth = h * .08;
-    ctx.strokeText(number, x + w * .42, y + h * 1.05);
+    ctx.strokeText(n, nx, ny);
     ctx.fillStyle = team.ink === team.c1 ? team.c2 : team.ink;
-    ctx.fillText(number, x + w * .42, y + h * 1.05);
+    ctx.fillText(n, nx, ny);
+    // Tackle-twill stitching along the number's edge.
+    ctx.setLineDash([h * .03, h * .03]);
+    ctx.lineWidth = Math.max(1, h * .012);
+    ctx.strokeStyle = 'rgba(255,255,255,.7)';
+    ctx.strokeText(n, nx, ny);
+    ctx.setLineDash([]);
+  },
+  logo(ctx, team, x, y, w, h, number, logo) {
+    ctx.fillStyle = team.c1;
+    ctx.fillRect(x, y, w, h);
+    const s = Math.min(w, h) * .82;
+    if (logo) {
+      const scale = s / Math.max(logo.width, logo.height);
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,.5)';
+      ctx.shadowBlur = s * .04;
+      ctx.shadowOffsetY = s * .02;
+      ctx.drawImage(logo, x + w / 2 - logo.width * scale / 2, y + h / 2 - logo.height * scale / 2, logo.width * scale, logo.height * scale);
+      ctx.restore();
+    } else drawMotif(ctx, team.motif, x + w / 2, y + h / 2, s, team.ink, team.c1, team.accent);
+    // Embroidery: fine diagonal thread lines over the patch.
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.lineWidth = Math.max(1, s * .006);
+    for (let k = -h; k < w; k += Math.max(2, s * .02)) {
+      ctx.beginPath();
+      ctx.moveTo(x + k, y + h);
+      ctx.lineTo(x + k + h, y);
+      ctx.stroke();
+    }
+  },
+  tag(ctx, team, x, y, w, h, number, logo, words) {
+    ctx.fillStyle = '#f6f4ee';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = 'rgba(0,0,0,.05)';
+    for (let k = 0; k < w; k += Math.max(2, w / 90)) ctx.fillRect(x + k, y, 1, h);
+    const u = h / 10;
+    ctx.fillStyle = '#1b1b1b';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    const lines = [
+      [words.authentic, 900, u * 1.3],
+      [upper(team.short), 800, u * .95],
+      [`${words.size} ${40 + ((number || '').length * 4) % 16}`, 700, u * .9],
+      [words.fabric, 600, u * .7],
+      [words.care, 600, u * .62],
+    ];
+    let ly = y + u * 1.8;
+    lines.forEach(([line, weight, size]) => {
+      fit(ctx, line, w * .86, weight, size, SANS, size * .08);
+      ctx.fillText(line, x + w / 2, ly);
+      ly += size * 1.45;
+    });
+    // Care symbols: tub, triangle, square with circle, iron.
+    const s = u * .9;
+    const sy = y + h - u * 1.7;
+    ctx.strokeStyle = '#1b1b1b';
+    ctx.lineWidth = Math.max(1, u * .1);
+    [0, 1, 2, 3].forEach(k => {
+      const sx = x + w / 2 + (k - 1.5) * s * 1.6;
+      ctx.beginPath();
+      if (k === 0) {
+        ctx.moveTo(sx - s / 2, sy - s / 3);
+        ctx.lineTo(sx - s * .35, sy + s / 3);
+        ctx.lineTo(sx + s * .35, sy + s / 3);
+        ctx.lineTo(sx + s / 2, sy - s / 3);
+      } else if (k === 1) {
+        ctx.moveTo(sx, sy - s / 2.4);
+        ctx.lineTo(sx + s / 2, sy + s / 3);
+        ctx.lineTo(sx - s / 2, sy + s / 3);
+        ctx.closePath();
+      } else if (k === 2) {
+        ctx.rect(sx - s / 2.5, sy - s / 2.5, s / 1.25, s / 1.25);
+        ctx.moveTo(sx + s / 4, sy);
+        ctx.arc(sx, sy, s / 4, 0, TAU);
+      } else {
+        ctx.moveTo(sx - s / 2, sy + s / 3);
+        ctx.lineTo(sx + s / 2, sy + s / 3);
+        ctx.lineTo(sx + s / 3, sy - s / 4);
+        ctx.lineTo(sx - s / 4, sy - s / 4);
+        ctx.closePath();
+      }
+      ctx.stroke();
+    });
+  },
+  sneaker(ctx, team, x, y, w, h) {
+    const white = luminance(team.c1) < .5;
+    const base = white ? '#f2f0ea' : team.c1;
+    const panel = white ? solid(team) : '#f2f0ea';
+    const g = ctx.createLinearGradient(x, y, x, y + h);
+    g.addColorStop(0, mix(base, '#ffffff', .25));
+    g.addColorStop(1, mix(base, '#000000', .18));
+    ctx.fillStyle = g;
+    ctx.fillRect(x, y, w, h);
+    // A curved overlay panel, stitched along its edge.
+    ctx.fillStyle = panel;
+    ctx.beginPath();
+    ctx.moveTo(x - w * .1, y + h * .8);
+    ctx.quadraticCurveTo(x + w * .45, y + h * .25, x + w * 1.1, y + h * .3);
+    ctx.lineTo(x + w * 1.1, y + h * .52);
+    ctx.quadraticCurveTo(x + w * .5, y + h * .5, x - w * .1, y + h * 1.05);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = luminance(panel) > .5 ? 'rgba(0,0,0,.45)' : 'rgba(255,255,255,.6)';
+    ctx.lineWidth = Math.max(1, h * .012);
+    ctx.setLineDash([h * .035, h * .025]);
+    ctx.beginPath();
+    ctx.moveTo(x - w * .1, y + h * .84);
+    ctx.quadraticCurveTo(x + w * .45, y + h * .3, x + w * 1.1, y + h * .35);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Perforations on the toe box.
+    ctx.fillStyle = 'rgba(0,0,0,.32)';
+    const s = Math.max(3, h * .07);
+    for (let py = y + s; py < y + h * .42; py += s) {
+      for (let px = x + s + ((py / s) % 2) * s / 2; px < x + w * .62; px += s) {
+        ctx.beginPath();
+        ctx.arc(px, py, s * .16, 0, TAU);
+        ctx.fill();
+      }
+    }
+    // Leather grain.
+    ctx.fillStyle = 'rgba(0,0,0,.06)';
+    for (let k = 0; k < 160; k++) {
+      ctx.fillRect(x + ((k * 97) % 100) / 100 * w, y + ((k * 61) % 100) / 100 * h, Math.max(1, h * .012), Math.max(1, h * .012));
+    }
+  },
+  ball(ctx, team, x, y, w, h) {
+    const sport = SPORT[team.group] || 'hoop';
+    const u = Math.min(w, h);
+    if (sport === 'soccer') {
+      ctx.fillStyle = '#f5f5f2';
+      ctx.fillRect(x, y, w, h);
+      const r = u * .22;
+      ctx.lineWidth = Math.max(1, u * .02);
+      for (let py = y, row = 0; py < y + h + r; py += r * 1.5, row++) {
+        for (let px = x + (row % 2) * r * .87; px < x + w + r; px += r * 1.74) {
+          ctx.beginPath();
+          for (let k = 0; k < 6; k++) ctx.lineTo(px + Math.cos(k * TAU / 6 + Math.PI / 6) * r, py + Math.sin(k * TAU / 6 + Math.PI / 6) * r);
+          ctx.closePath();
+          ctx.fillStyle = (row + Math.round(px / r)) % 3 ? '#f5f5f2' : '#1b1b1b';
+          ctx.fill();
+          ctx.strokeStyle = '#9a9a9a';
+          ctx.stroke();
+        }
+      }
+      return;
+    }
+    ctx.fillStyle = sport === 'gridiron' ? '#7b3f1d' : '#d9692b';
+    ctx.fillRect(x, y, w, h);
+    // Pebbled leather.
+    ctx.fillStyle = 'rgba(0,0,0,.16)';
+    const s = Math.max(2, u * .035);
+    for (let py = y, row = 0; py < y + h; py += s, row++) {
+      for (let px = x + (row % 2) * s / 2; px < x + w; px += s) ctx.fillRect(px, py, s * .4, s * .4);
+    }
+    if (sport === 'gridiron') {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x + w * .46, y, w * .08, h);
+      for (let py = y + h * .08; py < y + h; py += h * .14) ctx.fillRect(x + w * .36, py, w * .28, h * .045);
+    } else {
+      ctx.strokeStyle = '#1b1b1b';
+      ctx.lineWidth = Math.max(1, u * .045);
+      ctx.beginPath();
+      ctx.moveTo(x + w * .5, y);
+      ctx.lineTo(x + w * .5, y + h);
+      ctx.moveTo(x, y + h * .5);
+      ctx.lineTo(x + w, y + h * .5);
+      ctx.moveTo(x - w * .1, y + h * .1);
+      ctx.quadraticCurveTo(x + w * .45, y + h * .5, x - w * .1, y + h * .9);
+      ctx.moveTo(x + w * 1.1, y + h * .1);
+      ctx.quadraticCurveTo(x + w * .55, y + h * .5, x + w * 1.1, y + h * .9);
+      ctx.stroke();
+    }
+  },
+};
+
+function windowPath(ctx, shape, x, y, w, h) {
+  if (shape === 'circle') {
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h / 2, Math.min(w, h) / 2, Math.min(w, h) / 2, 0, 0, TAU);
+  } else if (shape === 'round') roundRect(ctx, x, y, w, h, Math.min(w, h) * .28);
+  else if (shape === 'shield') {
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w, y + h * .55);
+    ctx.quadraticCurveTo(x + w, y + h * .88, x + w / 2, y + h);
+    ctx.quadraticCurveTo(x, y + h * .88, x, y + h * .55);
+    ctx.closePath();
+  } else roundRect(ctx, x, y, w, h, Math.min(w, h) * .06);
+}
+
+// One relic in its window, on a white mount, with its name under it.
+function relicWindow(ctx, team, kind, shape, x, y, w, h, u, text, words) {
+  const draw = (c, X, Y, W, H) => materials[kind](c, team, X, Y, W, H, text.number, text.logo, words);
+  if (shape === 'number') {
+    // A window cut in the shape of the shirt number.
+    const number = text.number || '0';
+    const scale = Math.min(1, 600 / Math.max(w, h));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(w * scale));
+    c.height = Math.max(1, Math.round(h * scale));
+    const t = c.getContext('2d');
+    draw(t, 0, 0, c.width, c.height);
+    t.globalCompositeOperation = 'destination-in';
+    t.textAlign = 'center';
+    t.textBaseline = 'alphabetic';
+    fit(t, number, c.width * .96, 400, c.height * 1.12, DISPLAY);
+    t.fillText(number, c.width / 2, c.height * .95);
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.6)';
+    ctx.shadowBlur = u * .3;
+    ctx.drawImage(c, x, y, w, h);
+    ctx.restore();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    fit(ctx, number, w * .96, 400, h * 1.12, DISPLAY);
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(1, u * .14);
+    ctx.strokeStyle = '#ffffff';
+    ctx.strokeText(number, x + w / 2, y + h * .95);
+    return;
   }
-  // Fabric weave.
-  ctx.globalAlpha = .12;
-  ctx.fillStyle = '#000000';
-  for (let k = 0; k < w; k += Math.max(1, u * .12)) ctx.fillRect(x + k, y, Math.max(1, u * .04), h);
+  ctx.save();
+  windowPath(ctx, shape, x, y, w, h);
+  ctx.clip();
+  draw(ctx, x, y, w, h);
+  // The window's bevel: a shadow along the top-left inner edge.
+  const g = ctx.createLinearGradient(x, y, x + w * .2, y + h * .2);
+  g.addColorStop(0, 'rgba(0,0,0,.35)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, w, h);
   ctx.restore();
-  ctx.strokeStyle = 'rgba(0,0,0,.35)';
-  ctx.lineWidth = Math.max(1, u * .06);
-  ctx.setLineDash([u * .18, u * .12]);
-  roundRect(ctx, x + u * .16, y + u * .16, w - u * .32, h - u * .32, u * .12);
+  windowPath(ctx, shape, x, y, w, h);
+  ctx.strokeStyle = 'rgba(255,255,255,.95)';
+  ctx.lineWidth = Math.max(1, u * .16);
   ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = '#111111';
+  windowPath(ctx, shape, x, y, w, h);
+  ctx.strokeStyle = 'rgba(0,0,0,.35)';
+  ctx.lineWidth = Math.max(1, u * .05);
+  ctx.stroke();
+}
+
+// The memorabilia of a pull, mounted at x, y, w × h (the label below it).
+function relic(ctx, team, info, x, y, w, h, u, text, words, mount = true) {
+  const mem = info.mem;
+  if (!mem) return;
+  if (mount) {
+    shadow(ctx, u, true);
+    roundRect(ctx, x - u * .3, y - u * .3, w + u * .6, h + u * 1.3, u * .35);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    shadow(ctx, u, false);
+  }
+  if (mem.id === 'dual') {
+    const gap = u * .3;
+    const half = (w - gap) / 2;
+    relicWindow(ctx, team, 'jersey', 'rect', x, y, half, h, u, text, words);
+    relicWindow(ctx, team, 'sneaker', 'rect', x + half + gap, y, half, h, u, text, words);
+  } else relicWindow(ctx, team, mem.id, mem.window, x, y, w, h, u, text, words);
+  const zh = isZh(team);
+  ctx.fillStyle = mount ? '#111111' : '#ffffff';
   ctx.textAlign = 'center';
-  fit(ctx, word, w, 900, u * .38, SANS, u * .06);
-  ctx.fillText(word, x + w / 2, y + h + u * .5);
+  ctx.textBaseline = 'alphabetic';
+  const word = zh ? mem.zh : mem.en;
+  fit(ctx, word, w, 900, u * .4, SANS, u * .06);
+  ctx.fillText(word, x + w / 2, y + h + u * .7);
 }
 
 // The autograph: the name as a quick signature with a flourish under it.
-function autograph(ctx, name, x, y, maxWidth, u, ink) {
+function signature(ctx, name, x, y, maxWidth, u, ink) {
   const signed = HAN.test(name) ? name : name.toLowerCase().replace(/(^|\s)\S/g, s => s.toUpperCase());
   ctx.save();
   ctx.translate(x, y);
@@ -1358,7 +1842,7 @@ function autograph(ctx, name, x, y, maxWidth, u, ink) {
   ctx.textBaseline = 'alphabetic';
   fit(ctx, signed, maxWidth, 400, u * 1.6, `"Snell Roundhand", "Segoe Script", "Brush Script MT", "Kaiti SC", "STKaiti", KaiTi, cursive`);
   const width = measure(ctx, signed);
-  ctx.shadowColor = ink === '#ffffff' ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.85)';
+  ctx.shadowColor = luminance(ink) > .5 ? 'rgba(0,0,0,.6)' : 'rgba(255,255,255,.85)';
   ctx.shadowBlur = u * .25;
   ctx.fillStyle = ink;
   ctx.fillText(signed, 0, 0);
@@ -1370,101 +1854,80 @@ function autograph(ctx, name, x, y, maxWidth, u, ink) {
   ctx.bezierCurveTo(width * .3, u * .95, width * .7, -u * .1, width + u * .5, u * .25);
   ctx.stroke();
   ctx.restore();
+  return width;
 }
 
-function cardFront(ctx, team, text, L, info) {
-  const {front: F, b, area} = L;
-  const u = F.w / 20;
-  const tier = info.tier;
-  const logo = text.logo;
-  const words = CARD_WORDS[isZh(team) ? 'zh' : 'en'];
-  const rand = seeded(hash(team.id + info.cardNo) ^ text.seed);
-  const r = u * .7;
-
-  // The card, its shadow and the foil border.
-  shadow(ctx, u * 2, true);
-  roundRect(ctx, F.x, F.y, F.w, F.h, r);
-  ctx.fillStyle = '#000000';
-  ctx.fill();
-  shadow(ctx, u, false);
-  ctx.save();
-  roundRect(ctx, F.x, F.y, F.w, F.h, r);
-  ctx.clip();
-  foilFill(ctx, team, tier, F.x, F.y, F.w, F.h);
-  prism(ctx, tier, F.x, F.y, F.w, F.h, rand);
-  ctx.restore();
-
-  // The photo, with the crest faint over one corner when marks are on.
-  ctx.save();
-  roundRect(ctx, area.x, area.y, area.w, area.h, u * .35);
-  ctx.clip();
-  text.drawPhoto(area);
-  if (text.mark) photoMarks(ctx, logo, area, u * 1.5, 'tr', null);
-  // A soft shine across the photo on the chrome pulls.
-  if (tier.id !== 'base') {
-    const g = ctx.createLinearGradient(area.x, area.y, area.x + area.w, area.y + area.h);
-    g.addColorStop(.25, 'rgba(255,255,255,0)');
-    g.addColorStop(.42, 'rgba(255,255,255,.16)');
-    g.addColorStop(.5, 'rgba(255,255,255,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(area.x, area.y, area.w, area.h);
-  }
-  // Darker foot so the nameplate reads.
-  const foot = ctx.createLinearGradient(0, area.y + area.h * .55, 0, area.y + area.h);
-  foot.addColorStop(0, 'rgba(0,0,0,0)');
-  foot.addColorStop(1, 'rgba(0,0,0,.55)');
-  ctx.fillStyle = foot;
-  ctx.fillRect(area.x, area.y + area.h * .55, area.w, area.h * .45);
-  ctx.restore();
-  const edgeLine = tier.id === 'base' ? solid(team) : tier.id === 'black' ? '#d9b45a' : 'rgba(255,255,255,.85)';
-  ctx.strokeStyle = edgeLine;
-  ctx.lineWidth = Math.max(1, u * .14);
-  roundRect(ctx, area.x, area.y, area.w, area.h, u * .35);
-  ctx.stroke();
-
-  // Set logo, top left: HOT CHROME and the season (or the photo's date).
-  const tagW = u * 5.6;
-  const tagX = area.x + u * .5;
-  const tagY = area.y + u * .5;
-  ctx.save();
-  ctx.translate(tagX, tagY);
-  ctx.transform(1, 0, -.18, 1, 0, 0);
-  ctx.fillStyle = 'rgba(0,0,0,.78)';
-  ctx.fillRect(0, 0, tagW, u * 1.75);
-  ctx.fillStyle = tier.id === 'gold' || tier.id === 'black' ? '#f2cf6b' : '#ffffff';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  fit(ctx, words.set, tagW - u * .6, 400, u * .9, DISPLAY, u * .06);
-  ctx.fillText(words.set, u * .35, u * 1.02);
-  // The photo's date, when the user turned it on, takes the season's place.
-  const tagLine = text.date || text.season;
-  fit(ctx, tagLine, tagW - u * .6, 800, u * .44, SANS, u * .1);
-  ctx.globalAlpha = .8;
-  ctx.fillText(tagLine, u * .35, u * 1.52);
-  ctx.restore();
-
-  // Crest, top right, big; the RC shield under it.
-  const crest = u * 5.2;
-  const ccx = area.x + area.w - crest * .5 - u * .2;
-  const ccy = area.y + crest * .5 + u * .2;
-  if (logo) sticker(ctx, logo, ccx, ccy, crest, u * 1.2, .06);
-  else {
-    ctx.fillStyle = team.c1;
-    ctx.beginPath();
-    ctx.arc(ccx, ccy, crest * .42, 0, TAU);
+// The pull's autograph across x, y (the baseline), as ink or on a sticker.
+function autograph(ctx, info, text, words, x, y, maxWidth, u) {
+  const auto = info.auto;
+  if (!auto) return;
+  const inscription = auto.inscription.replace('{n}', text.number || '');
+  if (auto.style === 'sticker') {
+    const w = Math.min(maxWidth, u * 11);
+    const h = u * 3.2;
+    const sy = y - h * .75;
+    shadow(ctx, u, true);
+    roundRect(ctx, x, sy, w, h, u * .3);
+    ctx.fillStyle = '#fbfbf8';
     ctx.fill();
-    drawMotif(ctx, team.motif, ccx, ccy, crest * .7, team.ink, team.c1, team.accent);
+    shadow(ctx, u, false);
+    const g = ctx.createLinearGradient(x, sy, x + w, sy + h);
+    g.addColorStop(0, 'rgba(255,255,255,0)');
+    g.addColorStop(.5, 'rgba(200,215,235,.35)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.25)';
+    ctx.lineWidth = Math.max(1, u * .05);
+    ctx.beginPath();
+    ctx.moveTo(x + u * .5, sy + h * .72);
+    ctx.lineTo(x + w - u * .5, sy + h * .72);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(0,0,0,.5)';
+    ctx.textAlign = 'left';
+    fit(ctx, words.auto, w - u, 800, u * .3, SANS, u * .06);
+    ctx.fillText(words.auto, x + u * .5, sy + h - u * .3);
+    const ink = luminance(auto.ink) > .6 ? '#1e4fd8' : auto.ink;
+    signature(ctx, text.name, x + u * .7, sy + h * .62, w - u * 1.8, u * .85, ink);
+    if (inscription) {
+      ctx.fillStyle = ink;
+      ctx.textAlign = 'right';
+      fit(ctx, inscription, w * .4, 400, u * .7, `"Snell Roundhand", "Segoe Script", "Kaiti SC", KaiTi, cursive`);
+      ctx.fillText(inscription, x + w - u * .4, sy + h * .38);
+    }
+    ctx.textAlign = 'left';
+    return;
   }
-  rookieBadge(ctx, ccx, ccy + crest * .5 + u * 1.5, u * 2.3, solid(team), readable(solid(team)), words.rookie);
+  const width = signature(ctx, text.name, x, y, maxWidth * .8, u, auto.ink);
+  if (inscription) {
+    ctx.save();
+    ctx.translate(x + Math.min(width, maxWidth * .8) * .55, y + u * 1.2);
+    ctx.rotate(-.12);
+    ctx.fillStyle = auto.ink;
+    ctx.shadowColor = luminance(auto.ink) > .5 ? 'rgba(0,0,0,.6)' : 'rgba(255,255,255,.85)';
+    ctx.shadowBlur = u * .2;
+    ctx.textAlign = 'left';
+    fit(ctx, inscription, maxWidth * .45, 400, u * .9, `"Snell Roundhand", "Segoe Script", "Kaiti SC", KaiTi, cursive`);
+    ctx.fillText(inscription, 0, 0);
+    ctx.restore();
+  }
+}
 
-  // Nameplate across the foot of the photo.
+// The colour that stands out on the team colour.
+function second(team, fill) {
+  return [team.c2, team.c3, team.accent].find(c => c && c !== fill && Math.abs(luminance(c) - luminance(fill)) > .12) || '#ffffff';
+}
+
+// The slanted nameplate across the foot of the card, with the insert's name and
+// the number in a disc.
+function nameplate(ctx, team, info, text, F, area, u) {
   const plateH = u * 4.6;
   const plateY = area.y + area.h - plateH - u * .3;
   const plateX = F.x;
   const plateW = F.w * .8;
   const fill = solid(team);
   const ink = readable(fill);
-  const second = [team.c2, team.c3, team.accent].find(c => c !== fill && Math.abs(luminance(c) - luminance(fill)) > .12) || '#ffffff';
+  const two = second(team, fill);
   shadow(ctx, u, true);
   ctx.beginPath();
   ctx.moveTo(plateX, plateY);
@@ -1475,7 +1938,16 @@ function cardFront(ctx, team, text, L, info) {
   ctx.fillStyle = fill;
   ctx.fill();
   shadow(ctx, u, false);
-  ctx.fillStyle = second;
+  // The foil runs through the plate on the parallels.
+  if (info.finish) {
+    ctx.save();
+    ctx.clip();
+    ctx.globalAlpha = .35;
+    ctx.globalCompositeOperation = 'overlay';
+    foilFill(ctx, team, info, plateX, plateY, plateW, plateH, 3);
+    ctx.restore();
+  }
+  ctx.fillStyle = two;
   ctx.beginPath();
   ctx.moveTo(plateX, plateY - u * .78);
   ctx.lineTo(plateX + plateW * .66, plateY - u * .78);
@@ -1483,9 +1955,9 @@ function cardFront(ctx, team, text, L, info) {
   ctx.lineTo(plateX, plateY);
   ctx.closePath();
   ctx.fill();
-  // Insert name on the accent stripe.
-  ctx.fillStyle = readable(second);
+  ctx.fillStyle = readable(two);
   ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
   fit(ctx, info.insert, plateW * .54, 900, u * .52, SANS, u * .12);
   ctx.fillText(info.insert, area.x + u * .3, plateY - u * .2);
   ctx.fillStyle = ink;
@@ -1497,13 +1969,14 @@ function cardFront(ctx, team, text, L, info) {
   ctx.globalAlpha = .9;
   ctx.fillText(line, area.x + u * .3, plateY + u * 3.6);
   ctx.globalAlpha = 1;
+  numberDisc(ctx, team, text, area.x + area.w - u * 2.45, plateY + plateH / 2, u * 2.05, u);
+  return plateY;
+}
 
-  // Number disc, bottom right.
-  const dr = u * 2.05;
-  const dx = area.x + area.w - dr - u * .4;
-  const dy = plateY + plateH / 2;
+function numberDisc(ctx, team, text, dx, dy, dr, u) {
+  const fill = solid(team);
   shadow(ctx, u, true);
-  ctx.fillStyle = second;
+  ctx.fillStyle = second(team, fill);
   ctx.beginPath();
   ctx.arc(dx, dy, dr, 0, TAU);
   ctx.fill();
@@ -1512,41 +1985,580 @@ function cardFront(ctx, team, text, L, info) {
   ctx.beginPath();
   ctx.arc(dx, dy, dr * .84, 0, TAU);
   ctx.fill();
-  ctx.fillStyle = ink;
+  ctx.fillStyle = readable(fill);
   ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
   fit(ctx, text.number, dr * 1.3, 400, dr * 1.05, DISPLAY);
   ctx.fillText(text.number, dx, dy + dr * .36);
+}
 
-  // Patch window above the number, autograph across the lower photo.
-  if (info.patch) {
-    const pw = u * 4.4;
-    const ph = u * 3.2;
-    swatch(ctx, team, area.x + area.w - pw - u * .55, plateY - ph - u * 2.1, pw, ph, u, words.patch, text.number);
-  }
-  if (info.auto) {
-    const ink2 = tier.id === 'black' ? '#f2cf6b' : tier.id === 'gold' ? '#ffffff' : '#1e4fd8';
-    autograph(ctx, text.name, area.x + u * 1.2, plateY - u * 1.2, area.w * (info.patch ? .5 : .66), u, ink2);
-  }
+// The card's body, its shadow and a clip to its shape.
+function cardBody(ctx, F, r, u, paint) {
+  shadow(ctx, u * 2, true);
+  roundRect(ctx, F.x, F.y, F.w, F.h, r);
+  ctx.fillStyle = '#000000';
+  ctx.fill();
+  shadow(ctx, u, false);
+  ctx.save();
+  roundRect(ctx, F.x, F.y, F.w, F.h, r);
+  ctx.clip();
+  paint();
+  ctx.restore();
+}
 
-  // Serial stamp, bottom left above the nameplate, foil on the numbered pulls.
-  if (tier.run) {
-    const stamp = tier.run === 1 ? `${info.serial} · ${words.oneOfOne}` : info.serial;
-    font(ctx, 400, u * 1.05, DISPLAY, u * .06, stamp);
-    const sw = measure(ctx, stamp) + u * 1;
-    const sy = info.auto ? plateY - u * 3.9 : plateY - u * 2;
-    const sx = area.x + u * .4;
-    ctx.fillStyle = tier.id === 'black' ? '#0b0b0b' : 'rgba(0,0,0,.72)';
-    roundRect(ctx, sx, sy, sw, u * 1.4, u * .25);
-    ctx.fill();
-    const g = ctx.createLinearGradient(sx, sy, sx + sw, sy + u * 1.4);
-    g.addColorStop(0, '#b8891f');
-    g.addColorStop(.5, '#fff1b8');
-    g.addColorStop(1, '#c99b2c');
-    ctx.fillStyle = tier.id === 'team' ? '#ffffff' : g;
+// The photo in area, the foil around the player, a darker foot.
+function photo(ctx, team, info, text, area, u, r, corner = 'tr', clipPath = null) {
+  ctx.save();
+  if (clipPath) clipPath();
+  else roundRect(ctx, area.x, area.y, area.w, area.h, r);
+  ctx.clip();
+  text.drawPhoto(area);
+  foilOnPhoto(ctx, team, info, area);
+  if (text.mark) photoMarks(ctx, text.logo, area, u * 1.5, corner, null);
+  const foot = ctx.createLinearGradient(0, area.y + area.h * .55, 0, area.y + area.h);
+  foot.addColorStop(0, 'rgba(0,0,0,0)');
+  foot.addColorStop(1, 'rgba(0,0,0,.55)');
+  ctx.fillStyle = foot;
+  ctx.fillRect(area.x, area.y + area.h * .55, area.w, area.h * .45);
+  ctx.restore();
+}
+
+// The paper or foil a card is printed on.
+function stock(ctx, team, info, x, y, w, h) {
+  if (!info.finish) {
+    const g = ctx.createLinearGradient(x, y, x + w, y + h);
+    g.addColorStop(0, '#fbfaf6');
+    g.addColorStop(.5, '#efede6');
+    g.addColorStop(1, '#fbfaf6');
+    ctx.fillStyle = g;
+    ctx.fillRect(x, y, w, h);
+    return;
+  }
+  foilFill(ctx, team, info, x, y, w, h);
+}
+
+// ----- Front designs -----
+// Each draws the front in L.front, with the photo in L.area.
+
+const fronts = {
+  // Chrome: the foil as a frame round the photo, a slanted nameplate.
+  chrome(ctx, team, text, L, info, words, rand) {
+    const F = L.front;
+    const area = L.area;
+    const u = F.w / 20;
+    cardBody(ctx, F, u * .7, u, () => {
+      stock(ctx, team, info, F.x, F.y, F.w, F.h);
+      lightUp(ctx, info, rand, F.x, F.y, F.w, F.h, u);
+    });
+    photo(ctx, team, info, text, area, u, u * .35);
+    ctx.strokeStyle = !info.finish ? solid(team) : info.gold ? '#d9b45a' : 'rgba(255,255,255,.85)';
+    ctx.lineWidth = Math.max(1, u * .14);
+    roundRect(ctx, area.x, area.y, area.w, area.h, u * .35);
+    ctx.stroke();
+    setTag(ctx, area.x + u * .5, area.y + u * .5, u, info.set, text.date || text.season, info.gold);
+    const plateY = nameplate(ctx, team, info, text, F, area, u);
+    if (info.mem) {
+      const pw = u * 4.6;
+      const ph = info.mem.id === 'tag' ? u * 5 : u * 3.4;
+      relic(ctx, team, info, area.x + area.w - pw - u * .55, plateY - ph - u * 2.1, pw, ph, u, text, words);
+    }
+    autograph(ctx, info, text, words, area.x + u * 1.2, plateY - u * 1.6, area.w * (info.mem ? .52 : .7), u);
+    serialStamp(ctx, info, area.x + u * .4, info.auto ? plateY - u * 5.9 : plateY - u * 2.2, u, words);
+    const crest = u * 5.2;
+    const ccx = area.x + area.w - crest * .5 - u * .2;
+    const ccy = area.y + crest * .5 + u * .2;
+    crestMark(ctx, team, text.logo, ccx, ccy, crest, u);
+    rookieBadge(ctx, ccx, ccy + crest * .5 + u * 1.5, u * 2.3, solid(team), readable(solid(team)), words.rookie);
+  },
+
+  // Full bleed: the photo to the edges, a thin foil line inside, the name running
+  // up the side.
+  full(ctx, team, text, L, info, words, rand) {
+    const F = L.front;
+    const area = L.area;
+    const u = F.w / 20;
+    const fill = solid(team);
+    cardBody(ctx, F, u * .7, u, () => {
+      text.drawPhoto(area);
+      foilOnPhoto(ctx, team, info, area, .55);
+      if (text.mark) photoMarks(ctx, text.logo, area, u * 1.5, 'br', null);
+      // Team colour rising from the foot and down the left side.
+      const g = ctx.createLinearGradient(0, F.y + F.h * .5, 0, F.y + F.h);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,.7)');
+      ctx.fillStyle = g;
+      ctx.fillRect(F.x, F.y, F.w, F.h);
+      ctx.fillStyle = fill;
+      ctx.globalAlpha = .88;
+      ctx.beginPath();
+      ctx.moveTo(F.x, F.y);
+      ctx.lineTo(F.x + u * 4.2, F.y);
+      ctx.lineTo(F.x + u * 3, F.y + F.h);
+      ctx.lineTo(F.x, F.y + F.h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      // The inner foil line.
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(F.x + u * .45, F.y + u * .45, F.w - u * .9, F.h - u * .9);
+      ctx.rect(F.x + u * .75, F.y + u * .75, F.w - u * 1.5, F.h - u * 1.5);
+      ctx.clip('evenodd');
+      if (info.finish) foilFill(ctx, team, info, F.x, F.y, F.w, F.h, 5);
+      else {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(F.x, F.y, F.w, F.h);
+      }
+      ctx.restore();
+      lightUp(ctx, info, rand, F.x, F.y, F.w, F.h, u, .3);
+    });
+    // The name up the left side.
+    ctx.save();
+    ctx.translate(F.x + u * 2.35, F.y + F.h - u * 1.4);
+    ctx.rotate(-Math.PI / 2);
     ctx.textAlign = 'left';
-    ctx.fillText(stamp, sx + u * .5, sy + u * 1.08);
-  }
-  ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = readable(fill);
+    fit(ctx, text.name, F.h * .62, 400, u * 2.6, DISPLAY, u * .08);
+    ctx.fillText(text.name, 0, 0);
+    const nameW = measure(ctx, text.name);
+    fit(ctx, `${team.short} · ${info.role}`, F.h - nameW - u * 4, 800, u * .6, SANS, u * .12);
+    ctx.globalAlpha = .85;
+    ctx.fillText(`${team.short} · ${info.role}`, nameW + u * .6, u * .2);
+    ctx.restore();
+    // The number, huge and outlined, at the top.
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    fit(ctx, text.number, F.w * .5, 400, u * 6, DISPLAY);
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = u * .22;
+    ctx.strokeStyle = second(team, fill);
+    ctx.strokeText(text.number, F.x + u * 4.6, F.y + u * 6.4);
+    ctx.globalAlpha = .3;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(text.number, F.x + u * 4.6, F.y + u * 6.4);
+    ctx.restore();
+    // The insert's name across the foot, the set and the season.
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    fit(ctx, info.insert, F.w * .55, 900, u * .62, SANS, u * .18);
+    ctx.fillText(info.insert, F.x + u * 4.4, F.y + F.h - u * 2.1);
+    ctx.globalAlpha = .75;
+    fit(ctx, `${info.set} · ${text.date || text.season}`, F.w * .55, 800, u * .42, SANS, u * .1);
+    ctx.fillText(`${info.set} · ${text.date || text.season}`, F.x + u * 4.4, F.y + F.h - u * 1.3);
+    ctx.globalAlpha = 1;
+    const footY = F.y + F.h - u * 3.2;
+    if (info.mem) {
+      const pw = u * 5;
+      const ph = info.mem.id === 'tag' ? u * 5.4 : u * 3.6;
+      relic(ctx, team, info, F.x + F.w - pw - u * 1.2, footY - ph - u * 2.6, pw, ph, u, text, words);
+    }
+    autograph(ctx, info, text, words, F.x + u * 4.6, footY - u * .9, F.w * .6, u);
+    serialStamp(ctx, info, F.x + F.w - u * 1, F.y + u * 6.4, u, words, 'right');
+    const crest = u * 4.8;
+    crestMark(ctx, team, text.logo, F.x + F.w - crest * .5 - u * .9, F.y + crest * .5 + u * .9, crest, u);
+    rookieBadge(ctx, F.x + F.w - u * 2.4, F.y + F.h - u * 2.4, u * 2.1, fill, readable(fill), words.rookie);
+  },
+
+  // City skyline: the photo above the team's city at night, its name in lights.
+  skyline(ctx, team, text, L, info, words, rand) {
+    const F = L.front;
+    const area = L.area;
+    const u = F.w / 20;
+    const fill = solid(team);
+    const two = second(team, fill);
+    cardBody(ctx, F, u * .7, u, () => {
+      const sky = ctx.createLinearGradient(0, F.y, 0, F.y + F.h);
+      sky.addColorStop(0, mix(fill, '#000000', .5));
+      sky.addColorStop(.6, mix(fill, '#1a0d2e', .35));
+      sky.addColorStop(1, '#07070c');
+      ctx.fillStyle = sky;
+      ctx.fillRect(F.x, F.y, F.w, F.h);
+      if (info.finish) {
+        ctx.globalAlpha = .55;
+        ctx.globalCompositeOperation = 'overlay';
+        foilFill(ctx, team, info, F.x, F.y, F.w, F.h);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+      }
+    });
+    photo(ctx, team, info, text, area, u, u * .35);
+    // Buildings, each with lit windows.
+    ctx.save();
+    roundRect(ctx, F.x, F.y, F.w, F.h, u * .7);
+    ctx.clip();
+    const ground = F.y + F.h - u * 4.4;
+    let bx = F.x - u * .5;
+    while (bx < F.x + F.w) {
+      const bw = u * (1.2 + rand() * 2.2);
+      const bh = u * (1.5 + rand() * rand() * 7);
+      ctx.fillStyle = mix(fill, '#000000', .78);
+      ctx.fillRect(bx, ground - bh, bw - u * .12, bh + u * 5);
+      if (rand() < .3) ctx.fillRect(bx + bw * .4, ground - bh - u * 1.1, u * .12, u * 1.1);
+      ctx.fillStyle = rand() < .5 ? '#ffe6a3' : two;
+      for (let wy = ground - bh + u * .45; wy < ground - u * .3; wy += u * .6) {
+        for (let wx = bx + u * .3; wx < bx + bw - u * .4; wx += u * .5) {
+          ctx.globalAlpha = rand() < .55 ? .85 : .12;
+          ctx.fillRect(wx, wy, u * .2, u * .28);
+        }
+      }
+      ctx.globalAlpha = 1;
+      bx += bw;
+    }
+    ctx.fillStyle = '#07070c';
+    ctx.fillRect(F.x, ground, F.w, F.h);
+    ctx.restore();
+    // The city's name as a neon sign across the rooftops.
+    const city = isZh(team) ? team.city : upper(team.city);
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    fit(ctx, city, F.w - u * 2, 400, u * 3.4, DISPLAY, u * .12);
+    ctx.shadowColor = two;
+    ctx.shadowBlur = u * .9;
+    ctx.lineWidth = u * .16;
+    ctx.strokeStyle = two;
+    ctx.strokeText(city, F.x + F.w / 2, ground - u * .35);
+    ctx.shadowBlur = u * .3;
+    ctx.fillStyle = 'rgba(255,255,255,.88)';
+    ctx.fillText(city, F.x + F.w / 2, ground - u * .35);
+    ctx.restore();
+    lightUp(ctx, info, rand, F.x, F.y, F.w, F.h * .5, u, .4);
+    // Name and team under the city.
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    fit(ctx, text.name, F.w * .62, 400, u * 2.2, DISPLAY, u * .05);
+    ctx.fillText(text.name, F.x + u * 1, F.y + F.h - u * 1.9);
+    ctx.fillStyle = two;
+    fit(ctx, `${info.insert} · ${team.short} · ${info.role}`, F.w * .66, 800, u * .5, SANS, u * .1);
+    ctx.fillText(`${info.insert} · ${team.short} · ${info.role}`, F.x + u * 1, F.y + F.h - u * .95);
+    numberDisc(ctx, team, text, F.x + F.w - u * 2.5, F.y + F.h - u * 2.3, u * 1.75, u);
+    setTag(ctx, area.x + u * .5, area.y + u * .5, u, info.set, text.date || text.season, info.gold);
+    if (info.mem) {
+      const pw = u * 4.4;
+      const ph = info.mem.id === 'tag' ? u * 4.8 : u * 3.2;
+      relic(ctx, team, info, area.x + area.w - pw - u * .5, area.y + area.h - ph - u * 4.6, pw, ph, u, text, words);
+    }
+    autograph(ctx, info, text, words, area.x + u * 1, area.y + area.h - u * 4.4, area.w * (info.mem ? .52 : .7), u);
+    serialStamp(ctx, info, area.x + u * .5, area.y + u * 2.6, u, words);
+    const crest = u * 4.6;
+    crestMark(ctx, team, text.logo, area.x + area.w - crest * .5 - u * .2, area.y + crest * .5 + u * .2, crest, u);
+  },
+
+  // Comic: the photo bursts out of a starburst over halftone dots, with a big word.
+  comic(ctx, team, text, L, info, words, rand) {
+    const F = L.front;
+    const area = L.area;
+    const u = F.w / 20;
+    const fill = solid(team);
+    const two = second(team, fill);
+    const cx = area.x + area.w / 2;
+    const cy = area.y + area.h / 2;
+    const points = 18;
+    const spikes = [];
+    for (let k = 0; k < points * 2; k++) {
+      const a = k / (points * 2) * TAU;
+      const r = k % 2 ? .5 : .62 + rand() * .1;
+      spikes.push([cx + Math.cos(a) * area.w * r, cy + Math.sin(a) * area.h * r]);
+    }
+    const burst = () => {
+      ctx.beginPath();
+      spikes.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.closePath();
+    };
+    cardBody(ctx, F, u * .7, u, () => {
+      ctx.fillStyle = two;
+      ctx.fillRect(F.x, F.y, F.w, F.h);
+      if (info.finish) {
+        ctx.globalAlpha = .7;
+        foilFill(ctx, team, info, F.x, F.y, F.w, F.h);
+        ctx.globalAlpha = 1;
+      }
+      // Speed lines from the middle.
+      ctx.fillStyle = 'rgba(0,0,0,.22)';
+      for (let k = 0; k < 40; k++) {
+        const a = k / 40 * TAU + rand() * .05;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * F.h * 1.5, cy + Math.sin(a) * F.h * 1.5);
+        ctx.lineTo(cx + Math.cos(a + .03) * F.h * 1.5, cy + Math.sin(a + .03) * F.h * 1.5);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // Halftone dots, bigger toward the foot.
+      ctx.fillStyle = fill;
+      const s = u * .7;
+      for (let py = F.y, row = 0; py < F.y + F.h; py += s, row++) {
+        for (let px = F.x + (row % 2) * s / 2; px < F.x + F.w; px += s) {
+          const r = s * .38 * Math.max(0, (py - F.y) / F.h - .15);
+          if (r < .5) continue;
+          ctx.beginPath();
+          ctx.arc(px, py, r, 0, TAU);
+          ctx.fill();
+        }
+      }
+      // The burst's thick black edge, then the photo inside it.
+      burst();
+      ctx.lineJoin = 'miter';
+      ctx.lineWidth = u * .9;
+      ctx.strokeStyle = '#111111';
+      ctx.stroke();
+      ctx.lineWidth = u * .35;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+      photo(ctx, team, info, text, area, u, 0, 'bl', burst);
+      lightUp(ctx, info, rand, F.x, F.y, F.w, F.h, u, .45);
+    });
+    // The big word.
+    ctx.save();
+    ctx.translate(F.x + u * 1.2, F.y + u * 4);
+    ctx.rotate(-.16);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    fit(ctx, info.burst, F.w * .7, 400, u * 3.6, DISPLAY, u * .06);
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = u * .9;
+    ctx.strokeStyle = '#111111';
+    ctx.strokeText(info.burst, 0, 0);
+    ctx.fillStyle = '#ffe14d';
+    ctx.fillText(info.burst, 0, 0);
+    ctx.lineWidth = u * .12;
+    ctx.strokeStyle = '#d11a2a';
+    ctx.strokeText(info.burst, u * .08, -u * .08);
+    ctx.restore();
+    // The name in a caption box.
+    const boxY = F.y + F.h - u * 4.4;
+    ctx.save();
+    ctx.translate(F.x + u * .9, boxY);
+    ctx.rotate(-.04);
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(u * .25, u * .25, F.w * .7, u * 3.2);
+    ctx.fillStyle = '#fffbe8';
+    ctx.fillRect(0, 0, F.w * .7, u * 3.2);
+    ctx.lineWidth = u * .2;
+    ctx.strokeStyle = '#111111';
+    ctx.strokeRect(0, 0, F.w * .7, u * 3.2);
+    ctx.fillStyle = '#111111';
+    ctx.textAlign = 'left';
+    fit(ctx, text.name, F.w * .64, 400, u * 1.9, DISPLAY, u * .05);
+    ctx.fillText(text.name, u * .5, u * 1.95);
+    fit(ctx, `${team.short} · ${info.role} · ${info.set}`, F.w * .64, 800, u * .46, SANS, u * .08);
+    ctx.fillText(`${team.short} · ${info.role} · ${info.set}`, u * .5, u * 2.75);
+    ctx.restore();
+    // The number in a star.
+    const sx = F.x + F.w - u * 3;
+    const sy = F.y + F.h - u * 3.2;
+    star(ctx, sx + u * .2, sy + u * .2, u * 2.8, '#111111');
+    star(ctx, sx, sy, u * 2.8, fill);
+    ctx.fillStyle = readable(fill);
+    ctx.textAlign = 'center';
+    fit(ctx, text.number, u * 2.2, 400, u * 1.6, DISPLAY);
+    ctx.fillText(text.number, sx, sy + u * .6);
+    if (info.mem) {
+      const pw = u * 4.4;
+      const ph = info.mem.id === 'tag' ? u * 4.8 : u * 3.2;
+      relic(ctx, team, info, F.x + F.w - pw - u * 1.1, boxY - ph - u * 4.2, pw, ph, u, text, words);
+    }
+    autograph(ctx, info, text, words, F.x + u * 1.6, boxY - u * 1.2, F.w * (info.mem ? .5 : .66), u);
+    serialStamp(ctx, info, F.x + u * 1.2, F.y + u * 5.2, u, words);
+    const crest = u * 4.4;
+    crestMark(ctx, team, text.logo, F.x + F.w - crest * .5 - u * .8, F.y + crest * .5 + u * .8, crest, u, -.08);
+  },
+
+  // Stained glass: shards of coloured glass round an arched window.
+  stained(ctx, team, text, L, info, words, rand) {
+    const F = L.front;
+    const area = L.area;
+    const u = F.w / 20;
+    const fill = solid(team);
+    const p = info.finish ? palette(team, info) : {a: fill, b: mix(fill, '#000000', .5), c: second(team, fill)};
+    const glass = [p.a, p.b, p.c, team.c1, team.c2, team.c3, team.accent].filter(Boolean);
+    const arch = () => {
+      const r = area.w / 2;
+      ctx.beginPath();
+      ctx.moveTo(area.x, area.y + area.h);
+      ctx.lineTo(area.x, area.y + r);
+      ctx.arc(area.x + r, area.y + r, r, Math.PI, 0);
+      ctx.lineTo(area.x + area.w, area.y + area.h);
+      ctx.closePath();
+    };
+    cardBody(ctx, F, u * .7, u, () => {
+      ctx.fillStyle = '#16120e';
+      ctx.fillRect(F.x, F.y, F.w, F.h);
+      shards(F.x, F.y, F.w, F.h, rand, 64).forEach((poly, k) => {
+        const g = ctx.createLinearGradient(poly[0][0], poly[0][1], poly[poly.length >> 1][0], poly[poly.length >> 1][1]);
+        const colour = glass[k % glass.length];
+        g.addColorStop(0, mix(colour, '#ffffff', .35));
+        g.addColorStop(1, colour);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        poly.forEach((q, n) => (n ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])));
+        ctx.closePath();
+        ctx.fill();
+        ctx.lineWidth = u * .28;
+        ctx.strokeStyle = '#16120e';
+        ctx.stroke();
+      });
+      if (info.finish) {
+        ctx.globalAlpha = .4;
+        ctx.globalCompositeOperation = 'overlay';
+        foilFill(ctx, team, info, F.x, F.y, F.w, F.h);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+      }
+      lightUp(ctx, info, rand, F.x, F.y, F.w, F.h, u);
+    });
+    // The window: the photo in an arch with a heavy lead and gold frame.
+    photo(ctx, team, info, text, area, u, 0, 'tr', arch);
+    arch();
+    ctx.lineWidth = u * .7;
+    ctx.strokeStyle = '#16120e';
+    ctx.stroke();
+    arch();
+    ctx.lineWidth = u * .22;
+    ctx.strokeStyle = '#e2bf5d';
+    ctx.stroke();
+    // A banner under the arch with the name.
+    const by = area.y + area.h + u * .3;
+    ctx.fillStyle = '#16120e';
+    ctx.fillRect(F.x + u * .6, by, F.w - u * 1.2, F.y + F.h - by - u * .6);
+    ctx.strokeStyle = '#e2bf5d';
+    ctx.lineWidth = u * .12;
+    ctx.strokeRect(F.x + u * .9, by + u * .3, F.w - u * 1.8, F.y + F.h - by - u * 1.2);
+    ctx.fillStyle = '#f6e7b8';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    const mid = F.x + F.w / 2;
+    fit(ctx, text.name, F.w - u * 7, 400, u * 1.8, DISPLAY, u * .08);
+    ctx.fillText(text.name, mid, by + u * 2.2);
+    fit(ctx, `${info.set} · ${team.short} · ${info.role}`, F.w - u * 7, 800, u * .44, SANS, u * .12);
+    ctx.globalAlpha = .85;
+    ctx.fillText(`${info.set} · ${team.short} · ${info.role}`, mid, by + u * 3.05);
+    ctx.globalAlpha = 1;
+    numberDisc(ctx, team, text, F.x + F.w - u * 2.6, by + u * 1.8, u * 1.45, u);
+    if (info.mem) {
+      const pw = u * 4.2;
+      const ph = info.mem.id === 'tag' ? u * 4.6 : u * 3;
+      relic(ctx, team, info, area.x + area.w - pw - u * .4, area.y + area.h - ph - u * 1.6, pw, ph, u, text, words);
+    }
+    autograph(ctx, info, text, words, area.x + u * .9, area.y + area.h - u * 1.2, area.w * (info.mem ? .5 : .7), u);
+    serialStamp(ctx, info, area.x + u * .3, area.y + area.w * .5 + u * 1, u, words);
+    const crest = u * 4.2;
+    crestMark(ctx, team, text.logo, mid, area.y - u * .1, crest, u, 0);
+    setTag(ctx, F.x + u * .8, F.y + u * .8, u * .8, info.set, text.date || text.season, true);
+  },
+
+  // Premium: a thick dark board with gold stamping, a small photo window and a big
+  // window for the memorabilia beside the signature.
+  premium(ctx, team, text, L, info, words, rand) {
+    const F = L.front;
+    const area = L.area;
+    const u = F.w / 20;
+    const fill = solid(team);
+    const dark = mix(fill, '#000000', .72);
+    const goldInk = ctx.createLinearGradient(F.x, F.y, F.x + F.w, F.y + F.h);
+    ['#8f6a14', '#f7d774', '#b8891f', '#fff1b8', '#8f6a14'].forEach((c, k) => goldInk.addColorStop(k / 4, c));
+    cardBody(ctx, F, u * .7, u, () => {
+      const g = ctx.createRadialGradient(F.x + F.w / 2, F.y + F.h * .4, 0, F.x + F.w / 2, F.y + F.h * .4, F.h * .8);
+      g.addColorStop(0, mix(dark, '#ffffff', .08));
+      g.addColorStop(1, mix(dark, '#000000', .5));
+      ctx.fillStyle = g;
+      ctx.fillRect(F.x, F.y, F.w, F.h);
+      // Leather grain.
+      ctx.fillStyle = 'rgba(255,255,255,.035)';
+      for (let k = 0; k < 900; k++) ctx.fillRect(F.x + rand() * F.w, F.y + rand() * F.h, u * .08, u * .08);
+      if (text.logo) watermark(ctx, text.logo, F.x + F.w * .5, F.y + F.h * .72, F.w * .9, '#ffffff', .05, -.1);
+      // The parallel's foil as a thick frame.
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(F.x, F.y, F.w, F.h);
+      ctx.rect(F.x + u * .7, F.y + u * .7, F.w - u * 1.4, F.h - u * 1.4);
+      ctx.clip('evenodd');
+      if (info.finish) foilFill(ctx, team, info, F.x, F.y, F.w, F.h);
+      else {
+        ctx.fillStyle = goldInk;
+        ctx.fillRect(F.x, F.y, F.w, F.h);
+      }
+      ctx.restore();
+      ctx.strokeStyle = goldInk;
+      ctx.lineWidth = Math.max(1, u * .08);
+      ctx.strokeRect(F.x + u * .95, F.y + u * .95, F.w - u * 1.9, F.h - u * 1.9);
+      lightUp(ctx, info, rand, F.x, F.y, F.w, F.h, u);
+    });
+    // Gold-stamped set name and serial.
+    ctx.fillStyle = goldInk;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    fit(ctx, info.set, F.w * .55, 400, u * 1.05, DISPLAY, u * .14);
+    ctx.fillText(info.set, F.x + u * 1.5, F.y + u * 2.4);
+    if (info.run) {
+      ctx.textAlign = 'right';
+      fit(ctx, info.serial, F.w * .3, 400, u * 1.05, DISPLAY, u * .06);
+      ctx.fillText(info.serial, F.x + F.w - u * 1.5, F.y + u * 2.4);
+    }
+    photo(ctx, team, info, text, area, u, u * .3, 'tr');
+    ctx.strokeStyle = goldInk;
+    ctx.lineWidth = u * .18;
+    roundRect(ctx, area.x, area.y, area.w, area.h, u * .3);
+    ctx.stroke();
+    const crest = u * 3.8;
+    crestMark(ctx, team, text.logo, area.x + area.w - crest * .45, area.y + area.h - crest * .3, crest, u, .08);
+    // Below the photo: the relic on the left, the signature on the right.
+    const lowY = area.y + area.h + u * 1;
+    const lowH = F.y + F.h - u * 3.7 - lowY;
+    if (info.mem) {
+      const pw = u * 6.6;
+      relic(ctx, team, info, F.x + u * 1.6, lowY, pw, lowH - u * 1, u, text, words, false);
+      ctx.strokeStyle = goldInk;
+      ctx.lineWidth = u * .1;
+      ctx.strokeRect(F.x + u * 1.35, lowY - u * .25, pw + u * .5, lowH - u * .5);
+    } else {
+      ctx.fillStyle = goldInk;
+      ctx.textAlign = 'center';
+      fit(ctx, text.number, u * 6, 400, lowH * .8, DISPLAY);
+      ctx.fillText(text.number, F.x + u * 4.9, lowY + lowH * .78);
+    }
+    const sx = F.x + u * 9;
+    if (info.auto) {
+      ctx.strokeStyle = 'rgba(255,255,255,.35)';
+      ctx.lineWidth = Math.max(1, u * .05);
+      ctx.beginPath();
+      ctx.moveTo(sx, lowY + lowH * .72);
+      ctx.lineTo(F.x + F.w - u * 1.5, lowY + lowH * .72);
+      ctx.stroke();
+      autograph(ctx, info, text, words, sx + u * .2, lowY + lowH * .62, F.w - u * 10.5, u * .95);
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,.75)';
+      ctx.textAlign = 'left';
+      fit(ctx, info.insert, F.w - u * 10.5, 900, u * .55, SANS, u * .14);
+      ctx.fillText(info.insert, sx, lowY + lowH * .5);
+    }
+    // Name across the foot, in gold.
+    ctx.fillStyle = goldInk;
+    ctx.textAlign = 'center';
+    const mid = F.x + F.w / 2;
+    fit(ctx, text.name, F.w - u * 4, 400, u * 1.7, DISPLAY, u * .12);
+    ctx.fillText(text.name, mid, F.y + F.h - u * 1.85);
+    ctx.globalAlpha = .8;
+    fit(ctx, `${team.short} · ${info.role} · #${text.number} · ${text.date || text.season}`, F.w - u * 4, 800, u * .42, SANS, u * .12);
+    ctx.fillText(`${team.short} · ${info.role} · #${text.number} · ${text.date || text.season}`, mid, F.y + F.h - u * 1.1);
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+  },
+};
+
+// Where the photo sits on each design.
+function frontArea(L, design) {
+  const F = L.front;
+  const u = F.w / 20;
+  const b = L.b;
+  if (design === 'full') return {x: F.x, y: F.y, w: F.w, h: F.h};
+  if (design === 'skyline') return {x: F.x + b, y: F.y + b, w: F.w - b * 2, h: F.h * .7};
+  if (design === 'comic') return {x: F.x + u * 2, y: F.y + u * 3.2, w: F.w - u * 4, h: F.h * .62};
+  if (design === 'stained') return {x: F.x + u * 2.6, y: F.y + u * 3, w: F.w - u * 5.2, h: F.h * .66};
+  if (design === 'premium') return {x: F.x + u * 1.6, y: F.y + u * 3.2, w: F.w - u * 3.2, h: F.h * .5};
+  return {x: F.x + b, y: F.y + b, w: F.w - b * 2, h: F.h - b * 2};
 }
 
 function cardBack(ctx, team, text, L, info) {
@@ -1577,10 +2589,20 @@ function cardBack(ctx, team, text, L, info) {
   ctx.globalAlpha = 1;
   if (logo) watermark(ctx, logo, B.x + B.w * .62, B.y + B.h * .56, B.w * .9, ink, .06, -.1);
 
-  // Header in the team colour: card number, name, team and position, crest.
+  // Header in the team colour, the parallel's foil running through it.
   const headH = u * 6.2;
   ctx.fillStyle = fill;
   ctx.fillRect(B.x, B.y, B.w, headH);
+  if (info.finish) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(B.x, B.y, B.w, headH);
+    ctx.clip();
+    ctx.globalAlpha = .4;
+    ctx.globalCompositeOperation = 'overlay';
+    foilFill(ctx, team, info, B.x, B.y, B.w, headH, 11);
+    ctx.restore();
+  }
   trim(ctx, team, B.x, B.y + headH, B.w, u * .32);
   ctx.restore();
   ctx.strokeStyle = fill;
@@ -1746,11 +2768,12 @@ function cardBack(ctx, team, text, L, info) {
   ctx.restore();
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'left';
-  const tierLine = `${words.parallel} · ${info.name}${info.auto ? ` · ${zh ? '签字' : 'AUTO'}` : ''}${info.patch ? ` · ${zh ? '球衣碎片' : 'PATCH'}` : ''}`;
+  const hits = [info.auto ? words.signed : '', info.mem ? (zh ? info.mem.zh : info.mem.en) : ''].filter(Boolean);
+  const tierLine = [`${words.parallel} · ${info.name}`].concat(hits).join(' · ');
   fit(ctx, tierLine, wIn * .68, 800, u * .42, SANS, u * .06);
   ctx.fillText(tierLine, x0, fy + u * 1.05);
   ctx.globalAlpha = .6;
-  const fine = `© ${new Date().getFullYear()} HOT 主场相框 · ${info.insert} · ${text.season}${text.date ? ` · ${text.date}` : ''}`;
+  const fine = `© ${new Date().getFullYear()} HOT 主场相框 · ${info.set} · ${info.insert} · ${text.season}${text.date ? ` · ${text.date}` : ''}`;
   fit(ctx, fine, wIn * .68, 600, u * .36, SANS, u * .03);
   ctx.fillText(fine, x0, fy + u * 1.75);
   ctx.globalAlpha = 1;
@@ -1765,9 +2788,130 @@ function cardBack(ctx, team, text, L, info) {
   ctx.textAlign = 'left';
 }
 
+// ----- How the card is shown -----
+
+// Draws `paint` scaled and turned about the centre of rect R, moved by dx, dy.
+function placed(ctx, R, scale, turn, dx, dy, paint) {
+  ctx.save();
+  ctx.translate(R.x + R.w / 2 + dx, R.y + R.h / 2 + dy);
+  ctx.rotate(turn);
+  ctx.scale(scale, scale);
+  ctx.translate(-(R.x + R.w / 2), -(R.y + R.h / 2));
+  paint();
+  ctx.restore();
+}
+
+// A graded slab round the card: a clear case with a label on top.
+function slab(ctx, team, text, info, F, words, paintCard) {
+  const u = F.w / 20;
+  const cx = F.x - u * 1;
+  const cy = F.y - u * 5.6;
+  const cw = F.w + u * 2;
+  const ch = F.h + u * 6.6;
+  // The case.
+  shadow(ctx, u * 2, true);
+  roundRect(ctx, cx, cy, cw, ch, u * .9);
+  ctx.fillStyle = 'rgba(235,240,245,.16)';
+  ctx.fill();
+  shadow(ctx, u, false);
+  ctx.strokeStyle = 'rgba(255,255,255,.6)';
+  ctx.lineWidth = u * .2;
+  ctx.stroke();
+  roundRect(ctx, cx + u * .45, cy + u * .45, cw - u * .9, ch - u * .9, u * .6);
+  ctx.strokeStyle = 'rgba(255,255,255,.25)';
+  ctx.lineWidth = u * .1;
+  ctx.stroke();
+  // The label.
+  const lx = cx + u * .7;
+  const ly = cy + u * .7;
+  const lw = cw - u * 1.4;
+  const lh = u * 3.8;
+  ctx.fillStyle = '#fbfbf8';
+  ctx.fillRect(lx, ly, lw, lh);
+  ctx.strokeStyle = '#c8102e';
+  ctx.lineWidth = u * .22;
+  ctx.strokeRect(lx + u * .25, ly + u * .25, lw - u * .5, lh - u * .5);
+  ctx.fillStyle = '#111111';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  const leftW = lw * .66;
+  fit(ctx, `${new Date().getFullYear()} ${info.set}`, leftW, 900, u * .55, SANS, u * .04);
+  ctx.fillText(`${new Date().getFullYear()} ${info.set}`, lx + u * .7, ly + u * 1.2);
+  fit(ctx, `${text.name} #${text.number}`, leftW, 900, u * .55, SANS, u * .04);
+  ctx.fillText(`${text.name} #${text.number}`, lx + u * .7, ly + u * 1.95);
+  const detail = [info.name, info.serial, info.auto ? words.signed : ''].filter(Boolean).join(' · ');
+  fit(ctx, detail, leftW, 700, u * .45, SANS, u * .04);
+  ctx.fillText(detail, lx + u * .7, ly + u * 2.65);
+  // Barcode.
+  ctx.fillStyle = '#111111';
+  let bx = lx + u * .7;
+  for (let k = 0; k < 34; k++) {
+    const bw = u * (.04 + ((k * 7 + info.cardNo) % 5) * .03);
+    ctx.fillRect(bx, ly + u * 2.95, bw, u * .5);
+    bx += bw + u * .06;
+  }
+  ctx.textAlign = 'right';
+  fit(ctx, words.grading, lw * .3, 900, u * .4, SANS, u * .08);
+  ctx.fillText(words.grading, lx + lw - u * .6, ly + u * 1.1);
+  fit(ctx, info.grade.word, lw * .3, 900, u * .5, SANS, u * .06);
+  ctx.fillText(info.grade.word, lx + lw - u * .6, ly + u * 1.8);
+  ctx.fillStyle = '#c8102e';
+  fit(ctx, info.grade.n, lw * .3, 400, u * 1.5, DISPLAY);
+  ctx.fillText(info.grade.n, lx + lw - u * .6, ly + u * 3.3);
+  ctx.textAlign = 'left';
+  // The card in its well, then a glare on the plastic.
+  paintCard();
+  ctx.save();
+  roundRect(ctx, cx, cy, cw, ch, u * .9);
+  ctx.clip();
+  const g = ctx.createLinearGradient(cx, cy, cx + cw, cy + ch);
+  g.addColorStop(.18, 'rgba(255,255,255,0)');
+  g.addColorStop(.26, 'rgba(255,255,255,.1)');
+  g.addColorStop(.34, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(cx, cy, cw, ch);
+  ctx.restore();
+}
+
+// A magnetic one-touch holder: thick clear edges round the card.
+function holder(ctx, F, paintCard) {
+  const u = F.w / 20;
+  const e = u * 1.3;
+  shadow(ctx, u * 2, true);
+  roundRect(ctx, F.x - e, F.y - e, F.w + e * 2, F.h + e * 2, u * 1.4);
+  ctx.fillStyle = 'rgba(235,240,245,.14)';
+  ctx.fill();
+  shadow(ctx, u, false);
+  ctx.strokeStyle = 'rgba(255,255,255,.7)';
+  ctx.lineWidth = u * .18;
+  ctx.stroke();
+  roundRect(ctx, F.x - u * .25, F.y - u * .25, F.w + u * .5, F.h + u * .5, u * .9);
+  ctx.strokeStyle = 'rgba(255,255,255,.35)';
+  ctx.lineWidth = u * .12;
+  ctx.stroke();
+  paintCard();
+  // The edge catches the light.
+  ctx.save();
+  ctx.beginPath();
+  roundRect(ctx, F.x - e, F.y - e, F.w + e * 2, F.h + e * 2, u * 1.4);
+  ctx.rect(F.x - u * .2, F.y - u * .2, F.w + u * .4, F.h + u * .4);
+  ctx.clip('evenodd');
+  const g = ctx.createLinearGradient(F.x - e, F.y - e, F.x + F.w + e, F.y + F.h + e);
+  g.addColorStop(0, 'rgba(255,255,255,.35)');
+  g.addColorStop(.5, 'rgba(255,255,255,.05)');
+  g.addColorStop(1, 'rgba(255,255,255,.3)');
+  ctx.fillStyle = g;
+  ctx.fillRect(F.x - e, F.y - e, F.w + e * 2, F.h + e * 2);
+  ctx.restore();
+}
+
 function card(ctx, team, text, L) {
   const {W, H} = L;
   const info = cardInfo(team, text.seed);
+  // The photo window moves with the design; app.js reads it back for dragging.
+  L.area = frontArea(L, info.design);
+  const words = CARD_WORDS[isZh(team) ? 'zh' : 'en'];
+  const rand = seeded(info.seed ^ 0x5bd1e995);
   // A dark table lit in the team colour.
   ctx.fillStyle = '#0c0c0e';
   ctx.fillRect(0, 0, W, H);
@@ -1778,8 +2922,23 @@ function card(ctx, team, text, L) {
   glow.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
-  cardBack(ctx, team, text, L, info);
-  cardFront(ctx, team, text, L, info);
+  const F = L.front;
+  const B = L.back;
+  const back = () => cardBack(ctx, team, text, L, info);
+  const front = () => fronts[info.design](ctx, team, text, L, info, words, rand);
+  if (info.show === 'fan') {
+    placed(ctx, B, .9, .12, -F.w * .14, F.w * .02, back);
+    placed(ctx, F, .93, -.07, F.w * .1, 0, front);
+  } else if (info.show === 'slab') {
+    placed(ctx, B, .9, .05, F.w * .02, 0, back);
+    placed(ctx, F, .8, 0, 0, F.w * .11, () => slab(ctx, team, text, info, F, words, front));
+  } else if (info.show === 'holder') {
+    placed(ctx, B, .9, .04, 0, 0, back);
+    placed(ctx, F, .88, -.02, 0, 0, () => holder(ctx, F, front));
+  } else {
+    back();
+    front();
+  }
 }
 
 const painters = {jersey, ticket, patch, card};
