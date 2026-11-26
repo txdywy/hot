@@ -343,8 +343,7 @@ function drawTeams() {
   const cards = document.createDocumentFragment();
   for (const team of teams.filter(item => item.group === state.group)) {
     const logo = logos[team.id] ? `<img src="${escape(logoUrl(team.id))}" alt="" loading="lazy" decoding="async">` : '';
-    const count = team.titles && team.titles.n ? ` · ${team.titles.n}×` : '';
-    const card = makeButton('team', `<span class="swatch"><canvas aria-hidden="true"></canvas>${logo}</span><b>${escape(team.short)}</b><small>${escape(team.cn + count)}</small>`,
+    const card = makeButton('team', `<span class="swatch"><canvas aria-hidden="true"></canvas>${logo}</span><b>${escape(team.short)}</b><small>${escape(team.cn)}</small>`,
       `${team.name}，${team.cn}`);
     card.dataset.team = team.id;
     card.title = team.name;
