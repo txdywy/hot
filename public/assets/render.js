@@ -1370,7 +1370,7 @@ function foilFill(ctx, team, info, x, y, w, h, salt = 0) {
 
 // The foil over a photo: strong at the edges, clear in the middle where the
 // player is, as on a real parallel where the player is cut out.
-function foilOnPhoto(ctx, team, info, area, strength = .55) {
+function foilOnPhoto(ctx, team, info, area, strength = .5) {
   if (!info.finish) return;
   const scale = Math.min(1, 520 / Math.max(area.w, area.h));
   const w = Math.max(1, Math.round(area.w * scale));
@@ -1381,10 +1381,10 @@ function foilOnPhoto(ctx, team, info, area, strength = .55) {
   const x = c.getContext('2d');
   x.drawImage(foilCanvas(info.finish, w, h, info.seed + 7, palette(team, info)), 0, 0, w, h);
   x.globalCompositeOperation = 'destination-out';
-  const g = x.createRadialGradient(w / 2, h * .46, 0, w / 2, h * .46, Math.max(w, h) * .62);
+  const g = x.createRadialGradient(w / 2, h * .46, 0, w / 2, h * .46, Math.max(w, h) * .6);
   g.addColorStop(0, 'rgba(0,0,0,1)');
-  g.addColorStop(.45, 'rgba(0,0,0,.85)');
-  g.addColorStop(1, 'rgba(0,0,0,0)');
+  g.addColorStop(.55, 'rgba(0,0,0,1)');
+  g.addColorStop(1, 'rgba(0,0,0,.1)');
   x.fillStyle = g;
   x.fillRect(0, 0, w, h);
   ctx.save();
@@ -1398,16 +1398,17 @@ function foilOnPhoto(ctx, team, info, area, strength = .55) {
 }
 
 // Light on the chrome: a rainbow sheen, a streak and glints on the rarer pulls.
-function lightUp(ctx, info, rand, x, y, w, h, u) {
+// over: how much of it falls on the photo, less where the photo is under it.
+function lightUp(ctx, info, rand, x, y, w, h, u, over = 1) {
   if (info.rarity === 'base') return;
   ctx.save();
   ctx.globalCompositeOperation = 'overlay';
-  holo(ctx, x, y, w, h, info.finish === 'refractor' || info.colour === 'silver' ? .5 : .28, .9 + rand() * .6);
+  holo(ctx, x, y, w, h, (info.finish === 'refractor' || info.colour === 'silver' ? .5 : .28) * over, .9 + rand() * .6);
   ctx.globalCompositeOperation = 'source-over';
   const g = ctx.createLinearGradient(x, y, x + w, y + h);
   const at = .2 + rand() * .5;
   g.addColorStop(at - .08, 'rgba(255,255,255,0)');
-  g.addColorStop(at, 'rgba(255,255,255,.22)');
+  g.addColorStop(at, `rgba(255,255,255,${.22 * over})`);
   g.addColorStop(at + .08, 'rgba(255,255,255,0)');
   ctx.fillStyle = g;
   ctx.fillRect(x, y, w, h);
@@ -1547,20 +1548,24 @@ const materials = {
   },
   number(ctx, team, x, y, w, h, number) {
     materials.jersey(ctx, team, x, y, w, h);
-    ctx.font = `400 ${Math.round(h * 1.5)}px ${DISPLAY}`;
-    ctx.textAlign = 'left';
+    const n = number || '0';
+    // Part of the number, as if cut from the shirt: big, but kept in the window.
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
+    fit(ctx, n, w * .92, 400, h * 1.15, DISPLAY);
+    const nx = x + w / 2;
+    const ny = y + h * .96;
     ctx.lineJoin = 'round';
     ctx.strokeStyle = team.c3 === team.c1 ? team.c2 : team.c3;
-    ctx.lineWidth = h * .1;
-    ctx.strokeText(number || '0', x + w * .18, y + h * 1.12);
+    ctx.lineWidth = h * .08;
+    ctx.strokeText(n, nx, ny);
     ctx.fillStyle = team.ink === team.c1 ? team.c2 : team.ink;
-    ctx.fillText(number || '0', x + w * .18, y + h * 1.12);
+    ctx.fillText(n, nx, ny);
     // Tackle-twill stitching along the number's edge.
     ctx.setLineDash([h * .03, h * .03]);
     ctx.lineWidth = Math.max(1, h * .012);
     ctx.strokeStyle = 'rgba(255,255,255,.7)';
-    ctx.strokeText(number || '0', x + w * .18, y + h * 1.12);
+    ctx.strokeText(n, nx, ny);
     ctx.setLineDash([]);
   },
   logo(ctx, team, x, y, w, h, number, logo) {
@@ -2075,7 +2080,7 @@ const fronts = {
     const fill = solid(team);
     cardBody(ctx, F, u * .7, u, () => {
       text.drawPhoto(area);
-      foilOnPhoto(ctx, team, info, area, .7);
+      foilOnPhoto(ctx, team, info, area, .55);
       if (text.mark) photoMarks(ctx, text.logo, area, u * 1.5, 'br', null);
       // Team colour rising from the foot and down the left side.
       const g = ctx.createLinearGradient(0, F.y + F.h * .5, 0, F.y + F.h);
@@ -2105,7 +2110,7 @@ const fronts = {
         ctx.fillRect(F.x, F.y, F.w, F.h);
       }
       ctx.restore();
-      lightUp(ctx, info, rand, F.x, F.y, F.w, F.h, u);
+      lightUp(ctx, info, rand, F.x, F.y, F.w, F.h, u, .3);
     });
     // The name up the left side.
     ctx.save();
@@ -2220,7 +2225,7 @@ const fronts = {
     ctx.fillStyle = '#07070c';
     ctx.fillRect(F.x, ground, F.w, F.h);
     ctx.restore();
-    lightUp(ctx, info, rand, F.x, F.y, F.w, F.h * .5, u);
+    lightUp(ctx, info, rand, F.x, F.y, F.w, F.h * .5, u, .4);
     // Name and team under the city.
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'left';
@@ -2304,7 +2309,7 @@ const fronts = {
       ctx.strokeStyle = '#ffffff';
       ctx.stroke();
       photo(ctx, team, info, text, area, u, 0, 'bl', burst);
-      lightUp(ctx, info, rand, F.x, F.y, F.w, F.h, u);
+      lightUp(ctx, info, rand, F.x, F.y, F.w, F.h, u, .45);
     });
     // The big word.
     ctx.save();
