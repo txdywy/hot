@@ -782,6 +782,135 @@ export const motifs = {
     fillPath(ctx, 'M38 66 H62 V72 C62 86 56 94 50 94 C44 94 38 86 38 72Z', fg);
     ctx.restore();
   },
+  laurel(ctx, fg, bg) {
+    // Capital Normal University: an open book inside a laurel branch.
+    ctx.strokeStyle = fg;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(50, 50, 40, Math.PI * .55, Math.PI * 1.75);
+    ctx.stroke();
+    for (let k = 0; k < 9; k++) {
+      const a = Math.PI * (.6 + k * .13);
+      const x = 50 + Math.cos(a) * 40;
+      const y = 50 + Math.sin(a) * 40;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(a + Math.PI * .75);
+      ctx.fillStyle = fg;
+      ctx.beginPath();
+      ctx.ellipse(0, -6, 3.2, 7.5, 0, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+    fillPath(ctx, 'M22 62 C34 56 44 58 50 64 C56 58 66 56 78 62 V72 C66 66 56 68 50 74 C44 68 34 66 22 72Z', fg);
+    line(ctx, bg, 1.6, [50, 64, 50, 73]);
+    ctx.fillStyle = fg;
+    ctx.fillRect(30, 30, 40, 20);
+    ctx.fillStyle = bg;
+    ctx.fillRect(33, 33, 34, 14);
+    fillPath(ctx, 'M36 44 V36 H41 L47 42 V36 H50 V44 H45 L39 38 V44Z M53 36 H56 V42 H61 V36 H64 V44 H53Z', fg);
+  },
+  renda(ctx, fg) {
+    // Renmin University: three seal-script 人 standing side by side.
+    ctx.strokeStyle = fg;
+    ctx.lineWidth = 7;
+    ctx.lineCap = 'round';
+    for (const x of [28, 50, 72]) {
+      ctx.beginPath();
+      ctx.moveTo(x, 16);
+      ctx.bezierCurveTo(x - 9, 30, x + 9, 42, x, 56);
+      ctx.bezierCurveTo(x - 6, 66, x - 10, 76, x - 9, 88);
+      ctx.moveTo(x, 56);
+      ctx.bezierCurveTo(x + 6, 66, x + 10, 76, x + 9, 88);
+      ctx.stroke();
+    }
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(22, 16);
+    ctx.bezierCurveTo(34, 8, 66, 8, 78, 16);
+    ctx.stroke();
+  },
+  peaks(ctx, fg, bg) {
+    // Northeastern University: snow mountains over the river's waves.
+    circle(ctx, 50, 50, 46, fg);
+    circle(ctx, 50, 50, 41, bg);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(50, 50, 38, 0, TAU);
+    ctx.clip();
+    fillPath(ctx, 'M8 62 L36 24 L44 34 L56 18 L92 62Z', fg);
+    fillPath(ctx, 'M30 32 L36 24 L42 32 L38 30 L36 34 L33 30Z M50 26 L56 18 L63 28 L59 26 L56 31 L53 27Z', bg);
+    ctx.strokeStyle = fg;
+    ctx.lineWidth = 4;
+    for (const y of [68, 76, 84]) {
+      ctx.beginPath();
+      ctx.moveTo(8, y);
+      for (let x = 8; x <= 92; x += 12) ctx.quadraticCurveTo(x + 3, y - 4, x + 6, y), ctx.quadraticCurveTo(x + 9, y + 4, x + 12, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+  sizhong(ctx, fg, bg) {
+    // Beijing No.4 High School: the character 四 cut into a round seal.
+    circle(ctx, 50, 50, 47, fg);
+    circle(ctx, 50, 50, 42, bg);
+    circle(ctx, 50, 50, 39, fg);
+    ctx.fillStyle = bg;
+    ctx.fillRect(25, 28, 50, 6);
+    ctx.fillRect(25, 28, 6, 44);
+    ctx.fillRect(69, 28, 6, 44);
+    ctx.fillRect(25, 66, 50, 6);
+    fillPath(ctx, 'M41 34 H47 C47 46 44 54 34 60 L31 55 C39 50 41 44 41 34Z', bg);
+    fillPath(ctx, 'M54 34 H60 V52 C60 55 61 56 64 56 H69 V61 H62 C56 61 54 58 54 53Z', bg);
+  },
+  rdfz(ctx, fg, bg, accent) {
+    // RDFZ: the dark blade and the bright peak of its 1950 badge.
+    fillPath(ctx, 'M10 84 L58 14 L70 26 L30 84Z', fg);
+    fillPath(ctx, 'M46 84 L68 46 L92 84 H82 C80 70 72 64 64 64 C56 64 50 72 50 84Z', accent || fg);
+  },
+  puckman(ctx, fg, bg) {
+    // RPI's Puckman: a hockey puck in an engineer's hard hat, crossed sticks behind.
+    ctx.save();
+    ctx.lineCap = 'round';
+    line(ctx, fg, 6, [14, 92, 70, 22]);
+    line(ctx, fg, 6, [86, 92, 30, 22]);
+    fillPath(ctx, 'M8 92 L14 92 L22 82 L16 80Z M92 92 L86 92 L78 82 L84 80Z', fg);
+    ctx.restore();
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.ellipse(50, 66, 28, 9, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillRect(22, 52, 56, 14);
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.ellipse(50, 52, 28, 9, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.ellipse(50, 52, 25, 7, 0, 0, TAU);
+    ctx.fill();
+    fillPath(ctx, 'M24 44 C24 26 36 18 50 18 C64 18 76 26 76 44 H84 V48 H16 V44Z', fg);
+    ctx.fillStyle = bg;
+    ctx.fillRect(47, 20, 6, 24);
+    circle(ctx, 41, 58, 3, bg);
+    circle(ctx, 59, 58, 3, bg);
+  },
+  im(ctx, fg, bg) {
+    // Inter's round IM badge: the I down the middle, the M's legs bending round it.
+    circle(ctx, 50, 50, 48, fg);
+    circle(ctx, 50, 50, 41, bg);
+    circle(ctx, 50, 50, 37, fg);
+    ctx.fillStyle = bg;
+    ctx.fillRect(45, 18, 10, 64);
+    ctx.strokeStyle = bg;
+    ctx.lineWidth = 7;
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(50 + side * 22, 78);
+      ctx.bezierCurveTo(50 + side * 30, 56, 50 + side * 28, 30, 50 + side * 12, 22);
+      ctx.stroke();
+    }
+  },
   yanan(ctx, fg, bg) {
     // Pagoda Hill and the Yan River bridge, from BIT's emblem and its 1940 start in Yan'an.
     fillPath(ctx, 'M2 62 C20 44 34 40 50 40 C66 40 80 44 98 62Z', fg);
@@ -1097,6 +1226,86 @@ export function venue(ctx, team, w, h) {
     const box = Math.min(w * .6, u * 70);
     ctx.strokeRect(w / 2 - box / 2, -2, box, h * .14);
     ctx.strokeRect(w / 2 - box / 2, h - h * .14 + 2, box, h * .14);
+  } else if (kind === 'ice') {
+    // A hockey rink: white ice, red centre line, blue lines, the logo circle in the team colour.
+    ctx.fillStyle = '#eef4f8';
+    ctx.fillRect(0, 0, w, h);
+    for (let k = 0; k < 60; k++) {
+      ctx.strokeStyle = `rgba(150,180,200,${.08 + (k % 5) * .02})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const y = (k * 37 % 100) / 100 * h;
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y + (k % 7 - 3) * u * 4);
+      ctx.stroke();
+    }
+    const bar = Math.max(4, u * 1.6);
+    ctx.fillStyle = '#c8102e';
+    ctx.fillRect(0, h / 2 - bar / 2, w, bar);
+    ctx.fillStyle = '#1f4fa3';
+    ctx.fillRect(0, h * .3 - bar / 2, w, bar);
+    ctx.fillRect(0, h * .7 - bar / 2, w, bar);
+    ctx.lineWidth = Math.max(2, u * .5);
+    ctx.strokeStyle = '#1f4fa3';
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, Math.min(w, h) * .16, 0, TAU);
+    ctx.stroke();
+    ctx.strokeStyle = '#c8102e';
+    for (const [x, y] of [[.25, .14], [.75, .14], [.25, .86], [.75, .86]]) {
+      ctx.beginPath();
+      ctx.arc(w * x, h * y, Math.min(w, h) * .12, 0, TAU);
+      ctx.stroke();
+      circle(ctx, w * x, h * y, Math.max(3, u * 1.2), '#c8102e');
+    }
+    ctx.fillStyle = team.c1;
+    ctx.globalAlpha = .9;
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, Math.min(w, h) * .1, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  } else if (kind === 'track') {
+    // A school field: the red running track round a green pitch, lanes and the name in white.
+    ctx.fillStyle = '#b7412e';
+    ctx.fillRect(0, 0, w, h);
+    const lanes = 6;
+    const lane = Math.max(u * 2.6, 8);
+    ctx.strokeStyle = 'rgba(255,255,255,.8)';
+    ctx.lineWidth = Math.max(1.5, u * .35);
+    const inset = lane * lanes;
+    for (let k = 0; k <= lanes; k++) {
+      const d = k * lane;
+      const r = Math.max(10, w / 2 - inset + d);
+      ctx.beginPath();
+      ctx.moveTo(w / 2 - r, h * .28);
+      ctx.lineTo(w / 2 - r, h * .72);
+      ctx.arc(w / 2, h * .72, r, Math.PI, 0, true);
+      ctx.lineTo(w / 2 + r, h * .28);
+      ctx.arc(w / 2, h * .28, r, 0, Math.PI, true);
+      ctx.stroke();
+    }
+    const r0 = Math.max(10, w / 2 - inset);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - r0, h * .28);
+    ctx.lineTo(w / 2 - r0, h * .72);
+    ctx.arc(w / 2, h * .72, r0, Math.PI, 0, true);
+    ctx.lineTo(w / 2 + r0, h * .28);
+    ctx.arc(w / 2, h * .28, r0, 0, Math.PI, true);
+    ctx.clip();
+    const band = Math.max(u * 10, 26);
+    for (let y = 0, k = 0; y < h; y += band, k++) {
+      ctx.fillStyle = k % 2 ? '#2f7d36' : '#3a8c40';
+      ctx.fillRect(0, y, w, band);
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.8)';
+    ctx.beginPath();
+    ctx.moveTo(0, h / 2);
+    ctx.lineTo(w, h / 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, Math.min(w, h) * .14, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
   } else if (kind === 'gridiron') {
     ctx.fillStyle = '#2e7a34';
     ctx.fillRect(0, 0, w, h);
