@@ -11,7 +11,7 @@ const dateInput = $('date');
 
 const state = {
   group: 'hoops',
-  team: byId.get('la'),
+  team: byId.get('lakers'),
   style: 'jersey',
   name: '',
   number: null, // null = the team's default number
@@ -110,7 +110,9 @@ function drawTeams() {
   const box = $('teams');
   box.textContent = '';
   for (const t of teams.filter(t => t.group === state.group)) {
-    const card = button('button', 'team', `<span class="swatch"></span><b>${escape(t.city)}</b><small>${escape(t.colour)}</small>`);
+    const card = button('button', 'team', `<span class="swatch"></span><b>${escape(t.short)}</b><small>${escape(t.cn)}</small>`);
+    card.title = t.name;
+    card.setAttribute('aria-label', `${t.name} ${t.cn}`);
     card.setAttribute('role', 'radio');
     card.setAttribute('aria-checked', String(t === state.team));
     const swatch = card.querySelector('.swatch');
@@ -238,7 +240,7 @@ $('save').addEventListener('click', () => {
     if (!blob) return;
     if (resultUrl) URL.revokeObjectURL(resultUrl);
     resultUrl = URL.createObjectURL(blob);
-    const name = `HOT-${state.team.city}-${styles.find(s => s[0] === state.style)[1]}.jpg`;
+    const name = `HOT-${state.team.id}-${state.style}.jpg`;
     $('result-image').src = resultUrl;
     const download = $('download');
     download.href = resultUrl;

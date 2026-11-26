@@ -1,52 +1,54 @@
-// Themes are built from city, colours and numbers only: no club, league or
-// school logos and no official names (most are registered trademarks).
+// Teams and schools by their real English names, nicknames and chants.
+// Chinese only appears as a small note (cn). No logo images are used.
+// name = full name, short = the word across the chest, city = home city,
+// nick = nickname or mascot, letter = varsity letter on the patch style.
 // c1 = main colour, c2 = second colour, c3 = trim, ink = text on c1.
 
 export const groups = [
-  ['hoops', '篮球城市', 'NBA 风'],
-  ['college', '大学篮球', 'NCAA 风'],
-  ['campus', '名校', 'CAMPUS'],
-  ['gridiron', '大学橄榄球', 'SATURDAY'],
-  ['football', '欧洲足球', 'EURO'],
+  ['hoops', 'NBA', '篮球'],
+  ['college', 'NCAA', '大学篮球'],
+  ['campus', 'CAMPUS', '名校'],
+  ['gridiron', 'NCAA FOOTBALL', '大学橄榄球'],
+  ['football', 'EUROPE', '欧洲足球'],
 ];
 
-function team(id, group, city, en, colour, c1, c2, c3, ink, number, slogan) {
-  return {id, group, city, en, colour, c1, c2, c3, ink, number, slogan};
+function team(id, group, name, short, city, nick, cn, letter, [c1, c2, c3, ink], number, slogan) {
+  return {id, group, name, short, city, nick, cn, letter, c1, c2, c3, ink, number, slogan};
 }
 
 export const teams = [
-  team('la', 'hoops', '洛杉矶', 'LOS ANGELES', '紫金', '#552583', '#fdb927', '#ffffff', '#fdb927', '24', '今夜，主场是我们的'),
-  team('boston', 'hoops', '波士顿', 'BOSTON', '绿白', '#007a33', '#ffffff', '#ba9653', '#ffffff', '34', '绿色是一种信仰'),
-  team('bay', 'hoops', '旧金山湾', 'THE BAY', '蓝金', '#1d428a', '#ffc72c', '#ffffff', '#ffc72c', '30', '三分线外，也是主场'),
-  team('chicago', 'hoops', '芝加哥', 'CHICAGO', '红黑', '#ce1141', '#111111', '#ffffff', '#ffffff', '23', '风城从不服输'),
-  team('miami', 'hoops', '迈阿密', 'MIAMI', '霓虹', '#121212', '#ff5fa2', '#41c8f0', '#ff5fa2', '3', 'NIGHT GAME'),
-  team('newyork', 'hoops', '纽约', 'NEW YORK', '蓝橙', '#006bb6', '#f58426', '#ffffff', '#ffffff', '33', '世界的主场'),
-  team('dallas', 'hoops', '达拉斯', 'DALLAS', '湖蓝', '#00538c', '#b8c4ca', '#ffffff', '#ffffff', '77', '德州不大，梦想很大'),
-  team('sanantonio', 'hoops', '圣安东尼奥', 'SAN ANTONIO', '银黑', '#111111', '#c4ced4', '#ffffff', '#c4ced4', '21', '安静，但赢'),
+  team('lakers', 'hoops', 'Los Angeles Lakers', 'LAKERS', 'LOS ANGELES', 'Purple & Gold', '湖人', 'L', ['#552583', '#fdb927', '#ffffff', '#fdb927'], '24', 'SHOWTIME'),
+  team('celtics', 'hoops', 'Boston Celtics', 'CELTICS', 'BOSTON', 'Celtic Pride', '凯尔特人', 'C', ['#007a33', '#ffffff', '#ba9653', '#ffffff'], '34', 'BLEED GREEN'),
+  team('warriors', 'hoops', 'Golden State Warriors', 'WARRIORS', 'SAN FRANCISCO', 'Dub Nation', '勇士', 'W', ['#1d428a', '#ffc72c', '#ffffff', '#ffc72c'], '30', 'STRENGTH IN NUMBERS'),
+  team('bulls', 'hoops', 'Chicago Bulls', 'BULLS', 'CHICAGO', 'Windy City', '公牛', 'B', ['#ce1141', '#111111', '#ffffff', '#ffffff'], '23', 'SEE RED'),
+  team('heat', 'hoops', 'Miami Heat', 'HEAT', 'MIAMI', 'Heat Nation', '热火', 'H', ['#98002e', '#f9a01b', '#111111', '#ffffff'], '3', 'HEAT CULTURE'),
+  team('knicks', 'hoops', 'New York Knicks', 'KNICKS', 'NEW YORK', 'The Garden', '尼克斯', 'N', ['#006bb6', '#f58426', '#ffffff', '#ffffff'], '33', 'GO NY GO NY GO'),
+  team('mavericks', 'hoops', 'Dallas Mavericks', 'MAVERICKS', 'DALLAS', 'Mavs', '独行侠', 'M', ['#00538c', '#b8c4ca', '#002b5e', '#ffffff'], '77', 'MFFL'),
+  team('spurs', 'hoops', 'San Antonio Spurs', 'SPURS', 'SAN ANTONIO', 'Silver & Black', '马刺', 'S', ['#111111', '#c4ced4', '#ffffff', '#c4ced4'], '21', 'GO SPURS GO'),
 
-  team('durham', 'college', '达勒姆', 'DURHAM', '皇家蓝', '#003087', '#ffffff', '#6e8fc4', '#ffffff', '1', '整座城都在喊'),
-  team('chapelhill', 'college', '教堂山', 'CHAPEL HILL', '天空蓝', '#7bafd4', '#13294b', '#ffffff', '#13294b', '23', '天空蓝，一辈子'),
-  team('lexington', 'college', '列克星敦', 'LEXINGTON', '蓝白', '#0033a0', '#ffffff', '#99b4e6', '#ffffff', '11', '蓝草之州，篮球之心'),
-  team('lawrence', 'college', '劳伦斯', 'LAWRENCE', '红蓝', '#0051ba', '#e8000d', '#ffffff', '#ffffff', '22', '摇滚吧，体育馆'),
+  team('duke', 'college', 'Duke Blue Devils', 'DUKE', 'DURHAM, NC', 'Blue Devils', '杜克大学', 'D', ['#003087', '#ffffff', '#6e8fc4', '#ffffff'], '1', "LET'S GO DUKE"),
+  team('unc', 'college', 'North Carolina Tar Heels', 'CAROLINA', 'CHAPEL HILL, NC', 'Tar Heels', '北卡大学', 'N', ['#7bafd4', '#13294b', '#ffffff', '#13294b'], '23', 'GO HEELS'),
+  team('kentucky', 'college', 'Kentucky Wildcats', 'KENTUCKY', 'LEXINGTON, KY', 'Wildcats', '肯塔基大学', 'K', ['#0033a0', '#ffffff', '#99b4e6', '#ffffff'], '11', 'GO BIG BLUE'),
+  team('kansas', 'college', 'Kansas Jayhawks', 'KANSAS', 'LAWRENCE, KS', 'Jayhawks', '堪萨斯大学', 'K', ['#0051ba', '#e8000d', '#ffffff', '#ffffff'], '22', 'ROCK CHALK, JAYHAWK'),
 
-  team('paloalto', 'campus', '帕洛阿尔托', 'PALO ALTO', '红杉红', '#8c1515', '#ffffff', '#4d4f53', '#ffffff', '26', '我的青春，有主场'),
-  team('cambridge', 'campus', '剑桥', 'CAMBRIDGE, MA', '绯红', '#a51c30', '#ffffff', '#1e1e1e', '#ffffff', '36', '真理之外，还有球场'),
-  team('newhaven', 'campus', '纽黑文', 'NEW HAVEN', '深蓝', '#00356b', '#ffffff', '#978d85', '#ffffff', '01', '毕业了，心还在主场'),
-  team('berkeley', 'campus', '伯克利', 'BERKELEY', '蓝金', '#003262', '#fdb515', '#ffffff', '#fdb515', '68', '要有光，也要有球'),
+  team('stanford', 'campus', 'Stanford Cardinal', 'STANFORD', 'STANFORD, CA', 'Cardinal', '斯坦福大学', 'S', ['#8c1515', '#ffffff', '#4d4f53', '#ffffff'], '26', 'FEAR THE TREE'),
+  team('harvard', 'campus', 'Harvard Crimson', 'HARVARD', 'CAMBRIDGE, MA', 'Crimson', '哈佛大学', 'H', ['#a51c30', '#ffffff', '#1e1e1e', '#ffffff'], '36', 'VERITAS'),
+  team('yale', 'campus', 'Yale Bulldogs', 'YALE', 'NEW HAVEN, CT', 'Bulldogs', '耶鲁大学', 'Y', ['#00356b', '#ffffff', '#978d85', '#ffffff'], '01', 'LUX ET VERITAS'),
+  team('cal', 'campus', 'Cal Golden Bears', 'CAL', 'BERKELEY, CA', 'Golden Bears', '加州大学伯克利', 'C', ['#003262', '#fdb515', '#ffffff', '#fdb515'], '68', 'GO BEARS'),
 
-  team('annarbor', 'gridiron', '安娜堡', 'ANN ARBOR', '蓝玉米黄', '#00274c', '#ffcb05', '#ffffff', '#ffcb05', '2', '周六是比赛日'),
-  team('columbus', 'gridiron', '哥伦布', 'COLUMBUS', '猩红灰', '#bb0000', '#666666', '#ffffff', '#ffffff', '7', '十万人一起心跳'),
-  team('tuscaloosa', 'gridiron', '塔斯卡卢萨', 'TUSCALOOSA', '深红', '#9e1b32', '#ffffff', '#828a8f', '#ffffff', '9', '赢，是一种习惯'),
-  team('austin', 'gridiron', '奥斯汀', 'AUSTIN', '焦橙', '#bf5700', '#ffffff', '#333f48', '#ffffff', '10', '德州的周六'),
+  team('michigan', 'gridiron', 'Michigan Wolverines', 'MICHIGAN', 'ANN ARBOR, MI', 'Wolverines', '密歇根大学', 'M', ['#00274c', '#ffcb05', '#ffffff', '#ffcb05'], '2', 'GO BLUE'),
+  team('ohiostate', 'gridiron', 'Ohio State Buckeyes', 'OHIO STATE', 'COLUMBUS, OH', 'Buckeyes', '俄亥俄州立大学', 'O', ['#bb0000', '#666666', '#ffffff', '#ffffff'], '7', 'O-H-I-O'),
+  team('alabama', 'gridiron', 'Alabama Crimson Tide', 'ALABAMA', 'TUSCALOOSA, AL', 'Crimson Tide', '阿拉巴马大学', 'A', ['#9e1b32', '#ffffff', '#828a8f', '#ffffff'], '9', 'ROLL TIDE'),
+  team('texas', 'gridiron', 'Texas Longhorns', 'TEXAS', 'AUSTIN, TX', 'Longhorns', '德州大学奥斯汀', 'T', ['#bf5700', '#ffffff', '#333f48', '#ffffff'], '10', "HOOK 'EM"),
 
-  team('milano', 'football', '米兰', 'MILANO', '红黑', '#d6001c', '#111111', '#ffffff', '#ffffff', '22', '红与黑，就是答案'),
-  team('manchester', 'football', '曼彻斯特', 'MANCHESTER', '红', '#da291c', '#111111', '#fbe122', '#ffffff', '7', '梦剧场永不落幕'),
-  team('madrid', 'football', '马德里', 'MADRID', '纯白', '#f6f6f2', '#00529f', '#d4a017', '#00529f', '7', '白色，是冠军的颜色'),
-  team('paris', 'football', '巴黎', 'PARIS', '蓝红', '#004170', '#da291c', '#ffffff', '#ffffff', '10', '巴黎从不安静'),
-  team('barcelona', 'football', '巴塞罗那', 'BARCELONA', '红蓝', '#a50044', '#004d98', '#edbb00', '#ffffff', '10', '不止是一场球'),
-  team('munich', 'football', '慕尼黑', 'MÜNCHEN', '红白', '#dc052d', '#ffffff', '#0066b2', '#ffffff', '25', '南部之星'),
-  team('liverpool', 'football', '利物浦', 'LIVERPOOL', '红', '#c8102e', '#ffffff', '#00b2a9', '#ffffff', '11', '红色的夜晚'),
-  team('torino', 'football', '都灵', 'TORINO', '黑白', '#111111', '#ffffff', '#c9a227', '#ffffff', '10', '黑白之间，只有胜利'),
+  team('milan', 'football', 'AC Milan', 'MILAN', 'MILANO', 'Rossoneri', 'AC 米兰', 'M', ['#d6001c', '#111111', '#ffffff', '#ffffff'], '22', 'FORZA MILAN'),
+  team('manutd', 'football', 'Manchester United', 'MAN UTD', 'MANCHESTER', 'Red Devils', '曼联', 'M', ['#da291c', '#111111', '#fbe122', '#ffffff'], '7', 'GLORY GLORY MAN UNITED'),
+  team('realmadrid', 'football', 'Real Madrid', 'REAL MADRID', 'MADRID', 'Los Blancos', '皇马', 'R', ['#f6f6f2', '#00529f', '#d4a017', '#00529f'], '7', '¡HALA MADRID!'),
+  team('psg', 'football', 'Paris Saint-Germain', 'PSG', 'PARIS', 'Les Parisiens', '大巴黎', 'P', ['#004170', '#da291c', '#ffffff', '#ffffff'], '10', "ICI C'EST PARIS"),
+  team('barca', 'football', 'FC Barcelona', 'BARÇA', 'BARCELONA', 'Blaugrana', '巴萨', 'B', ['#a50044', '#004d98', '#edbb00', '#ffffff'], '10', 'MÉS QUE UN CLUB'),
+  team('bayern', 'football', 'FC Bayern München', 'BAYERN', 'MÜNCHEN', 'Die Roten', '拜仁', 'B', ['#dc052d', '#ffffff', '#0066b2', '#ffffff'], '25', 'MIA SAN MIA'),
+  team('liverpool', 'football', 'Liverpool FC', 'LIVERPOOL', 'LIVERPOOL', 'The Reds', '利物浦', 'L', ['#c8102e', '#ffffff', '#00b2a9', '#ffffff'], '11', "YOU'LL NEVER WALK ALONE"),
+  team('juventus', 'football', 'Juventus', 'JUVENTUS', 'TORINO', 'Bianconeri', '尤文图斯', 'J', ['#111111', '#ffffff', '#c9a227', '#ffffff'], '10', 'FINO ALLA FINE'),
 ];
 
 export const styles = [

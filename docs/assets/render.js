@@ -148,11 +148,11 @@ function jersey(ctx, team, text, L) {
   const side = W / 2 - numberHalf - m * .7;
   ctx.textAlign = 'left';
   ctx.fillStyle = team.ink;
-  fit(ctx, team.city, side, 900, m * .46, SANS);
-  ctx.fillText(team.city, m * .7, y0 + m * 1.85);
+  fit(ctx, team.short, side, 900, m * .46, BLOCK, m * .03);
+  ctx.fillText(team.short, m * .7, y0 + m * 1.85);
   ctx.globalAlpha = .8;
-  fit(ctx, team.en, side, 800, m * .24, SANS, m * .06);
-  ctx.fillText(team.en, m * .7, y0 + m * 2.3);
+  fit(ctx, team.city, side, 800, m * .24, SANS, m * .06);
+  ctx.fillText(team.city, m * .7, y0 + m * 2.3);
   ctx.globalAlpha = 1;
 
   ctx.textAlign = 'right';
@@ -198,8 +198,9 @@ function ticket(ctx, team, text, L) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = team.c1 === '#f6f6f2' ? '#ffffff' : team.ink;
-  fit(ctx, team.en, perforation - o - m, 900, m * .52, BLOCK, m * .16);
-  ctx.fillText(team.en, 0, 0);
+  const strip = team.name.toUpperCase();
+  fit(ctx, strip, perforation - o - m, 900, m * .52, BLOCK, m * .16);
+  ctx.fillText(strip, 0, 0);
   ctx.restore();
 
   ctx.textBaseline = 'alphabetic';
@@ -221,7 +222,7 @@ function ticket(ctx, team, text, L) {
   fit(ctx, text.slogan, area.w * .68, 900, m * .5, SANS);
   ctx.fillText(text.slogan, area.x, area.y + area.h + m * .72);
   ctx.textAlign = 'right';
-  const tag = `${team.city} · ${team.colour}`;
+  const tag = `${team.city} · ${team.cn}`;
   fit(ctx, tag, area.w * .3, 700, m * .26, SANS);
   ctx.globalAlpha = .7;
   ctx.fillText(tag, area.x + area.w, area.y + area.h + m * .7);
@@ -421,7 +422,7 @@ function patch(ctx, team, text, L) {
   ctx.textBaseline = 'alphabetic';
 
   // Chenille varsity letter, bottom left.
-  const letter = team.en.replace(/^THE /, '')[0];
+  const letter = team.letter;
   font(ctx, 900, m * 2.3, SLAB);
   const letterWidth = ctx.measureText(letter).width;
   const letterX = m * .75 + letterWidth / 2;
@@ -448,11 +449,11 @@ function patch(ctx, team, text, L) {
   const textWidth = W - textLeft - m * .6;
   ctx.textAlign = 'left';
   ctx.fillStyle = '#ffffff';
-  fit(ctx, team.city, textWidth, 900, m * .82, SANS);
-  ctx.fillText(team.city, textLeft, y0 + m * 1.32);
+  fit(ctx, team.short, textWidth, 900, m * .82, BLOCK, m * .02);
+  ctx.fillText(team.short, textLeft, y0 + m * 1.32);
   ctx.strokeStyle = felt === '#f6f6f2' ? team.c2 : felt;
   ctx.lineWidth = Math.max(1, m * .035);
-  const line = text.date ? `${team.en} · ${text.date}` : `${team.en} · ${team.colour}`;
+  const line = `${team.nick.toUpperCase()} · ${text.date || team.city}`;
   fit(ctx, line, textWidth, 900, m * .36, BLOCK, m * .08);
   ctx.fillStyle = luminance(felt) < .5 ? '#ffffff' : felt;
   ctx.globalAlpha = .85;
