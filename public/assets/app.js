@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos, logoVersion, isZh} from './teams.js?v=25';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=25';
-import {venue, kit, trim, drawMotif} from './art.js?v=25';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=25';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=25';
+import {groups, teams, styles, slogans, byId, logos, logoVersion, isZh} from './teams.js?v=26';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=26';
+import {venue, kit, trim, drawMotif} from './art.js?v=26';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=26';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=26';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -681,7 +681,14 @@ $('draw').addEventListener('click', () => {
     // Restart the little flip animation.
     void stage.offsetWidth;
     stage.classList.add('pulled');
+    const button = $('draw');
+    button.classList.remove('rolling');
+    void button.offsetWidth;
+    button.classList.add('rolling');
   }
+});
+$('draw').addEventListener('animationend', event => {
+  if (event.animationName === 'roll') $('draw').classList.remove('rolling');
 });
 stage.addEventListener('animationend', () => stage.classList.remove('pulled'));
 

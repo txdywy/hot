@@ -273,7 +273,32 @@ a { color: var(--hl); }
 
 .draw-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
 .draw-row[hidden], .ratio-row[hidden] { display: none; }
-.draw { min-height: 48px; padding: 0 18px; }
+/* 再抽一张: a holo foil pill like a fresh pack, with a light sweeping across it
+   and the dice giving a nudge now and then, so it reads as the thing to press. */
+.button.draw {
+  position: relative; overflow: hidden; z-index: 0;
+  flex: 1 1 210px; max-width: 380px; min-height: 56px; padding: 0 20px; border-radius: 999px;
+  color: #15110a; font-size: 1.125rem; letter-spacing: .08em;
+  background: #ffd76a linear-gradient(115deg, #ffe27a 0%, #ff9fcf 24%, #a8d8ff 48%, #b9f5b0 72%, #ffe27a 100%);
+  background-size: 240% 100%;
+  box-shadow: 0 0 0 2px var(--hl), 0 0 0 5px rgba(0, 0, 0, .55), 0 8px 26px rgba(255, 200, 90, .35);
+  animation: holo 7s linear infinite;
+}
+.button.draw::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 50%; z-index: -1; pointer-events: none;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .85), rgba(255, 255, 255, 0));
+  transform: skewX(-18deg); animation: sheen 3.4s ease-in-out 1s infinite;
+}
+.button.draw .icon { width: 24px; height: 24px; flex: none; animation: nudge 3.4s ease-in-out 1s infinite; }
+.button.draw.rolling .icon { animation: roll .5s ease-out; }
+.draw-tag {
+  flex: none; padding: 3px 7px; border-radius: 6px; background: #15110a; color: #ffe27a;
+  font: 400 .6875rem/1 var(--display); letter-spacing: .12em; font-style: normal;
+}
+@keyframes holo { to { background-position: 240% 0; } }
+@keyframes sheen { 0%, 55% { left: -60%; } 100% { left: 120%; } }
+@keyframes nudge { 0%, 70%, 100% { transform: none; } 78% { transform: rotate(-16deg) scale(1.1); } 86% { transform: rotate(12deg) scale(1.1); } 93% { transform: rotate(-5deg); } }
+@keyframes roll { from { transform: rotate(-200deg) scale(.7); } to { transform: none; } }
 .draw-note { flex: 1 1 160px; margin: 0; font-size: .875rem; font-weight: 800; line-height: 1.35; color: var(--muted); }
 .draw-note[data-tier="chrome"] { color: #d7dde4; }
 .draw-note[data-tier="numbered"] { color: var(--hl); }

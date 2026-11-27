@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; font-src 'self'; img-src 'self' blob: data: https://www.googletagmanager.com https://*.google-analytics.com; connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://*.google.com">
-  <script defer src="./assets/analytics.js?v=25"></script>
+  <script defer src="./assets/analytics.js?v=26"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d0c0b">
   <meta name="color-scheme" content="dark">
@@ -16,15 +16,15 @@
   <link rel="apple-touch-icon" href="./assets/icon-180.png">
   <link rel="preload" href="./assets/fonts/anton.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="./assets/fonts/graduate.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="./assets/style.css?v=25">
-  <link rel="modulepreload" href="./assets/teams.js?v=25">
-  <link rel="modulepreload" href="./assets/render.js?v=25">
-  <link rel="modulepreload" href="./assets/art.js?v=25">
-  <link rel="modulepreload" href="./assets/photo-date.js?v=25">
-  <link rel="modulepreload" href="./assets/dialog.js?v=25">
-  <link rel="modulepreload" href="./assets/foil.js?v=25">
-  <script src="./assets/old.js?v=25"></script>
-  <script type="module" src="./assets/app.js?v=25"></script>
+  <link rel="stylesheet" href="./assets/style.css?v=26">
+  <link rel="modulepreload" href="./assets/teams.js?v=26">
+  <link rel="modulepreload" href="./assets/render.js?v=26">
+  <link rel="modulepreload" href="./assets/art.js?v=26">
+  <link rel="modulepreload" href="./assets/photo-date.js?v=26">
+  <link rel="modulepreload" href="./assets/dialog.js?v=26">
+  <link rel="modulepreload" href="./assets/foil.js?v=26">
+  <script src="./assets/old.js?v=26"></script>
+  <script type="module" src="./assets/app.js?v=26"></script>
 </head>
 <body>
   <svg class="sprite" aria-hidden="true" focusable="false">
@@ -91,8 +91,8 @@
         <h2 class="label" id="step-style"><span>02</span> 选款式</h2>
         <div class="styles" id="styles" role="group" aria-label="款式"></div>
         <div class="draw-row" id="draw-row" hidden>
-          <button class="button secondary draw" id="draw" type="button">
-            <svg class="icon" aria-hidden="true"><use href="#i-dice"/></svg><span>再抽一张</span>
+          <button class="button draw" id="draw" type="button">
+            <svg class="icon" aria-hidden="true"><use href="#i-dice"/></svg><span>再抽一张</span><em class="draw-tag" aria-hidden="true">抽卡</em>
           </button>
           <p class="draw-note" id="draw-note" aria-live="polite"></p>
         </div>
