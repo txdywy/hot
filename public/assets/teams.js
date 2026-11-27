@@ -5851,7 +5851,7 @@ export const isZh = team => zhGroups.has(team.group);
 // file changes.
 // Raise this whenever a picture under logos/ is replaced at the same path, so
 // phones that kept the old picture fetch the new one.
-export const logoVersion = 3;
+export const logoVersion = 4;
 
 export const logos = {
   "buckbeak-book": "characters/hogwarts/buckbeak-book.jpg",
