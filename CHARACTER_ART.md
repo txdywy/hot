@@ -204,3 +204,9 @@
 | `neva` | 奈巴 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/c184d8ba085544cbb2db3089cc32de26/chara_neva.png) |
 | `majinkuu` | 魔人库 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/7622c28122e6440cae9be5e2925b65a4/chara_kuu.png) |
 | `majinduu` | 魔人杜 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/21f822bf42b54cc1b660939aa4ffa6df/chara_duu.png) |
+
+## 处理记录（2026-11-27 第二轮检查）
+
+- 鬼灭之刃 7 张剧照从 16:9 裁成 4:3，以人物脸为中心。
+- 龙珠、咒术回战新加的 PNG 用 pngquant 压缩，三个系列从约 10.8MB 降到约 4.1MB。
+- 拉蒂兹的图只有 108×238，放大后会糊，以后有更大的官方图可以替换（替换后 `logoVersion` 加一）。
