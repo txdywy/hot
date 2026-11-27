@@ -769,7 +769,7 @@ function ticket(ctx, team, text, L) {
   ctx.fillRect(px + headW + u * .3, hTop - u * .13, P - headW - u * .3, Math.max(1, u * .05));
   (team.moments || []).slice(0, 3).forEach(([year, line, note], k) => {
     const y = hTop + u * .98 + k * u * 1.1;
-    ctx.fillStyle = strip === PAPER ? ink : solid(team);
+    ctx.fillStyle = strip === PAPER ? ink : team.paper || solid(team);
     fit(ctx, String(year), u * 2.2, 400, u * .82, DISPLAY);
     ctx.fillText(String(year), px, y + u * .1);
     ctx.fillStyle = '#1b1b1b';
