@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=16';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo} from './render.js?v=16';
-import {venue, kit, trim, drawMotif} from './art.js?v=16';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=16';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=16';
+import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=17';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=17';
+import {venue, kit, trim, drawMotif} from './art.js?v=17';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=17';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=17';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -320,7 +320,7 @@ function drawVenue() {
     ctx.fillText(text, 0, 0);
     ctx.restore();
   };
-  side(`EST. ${team.est} · ${team.home}`, u * 5, -Math.PI / 2);
+  side(`${playGroup(team.group) ? wordsFor(team).est : 'EST.'} ${team.est} · ${team.home}`, u * 5, -Math.PI / 2);
   side(titleLine(team), W - u * 5, Math.PI / 2);
   ctx.restore();
 }
@@ -369,16 +369,34 @@ function makeButton(className, html, label) {
 
 const escape = text => String(text).replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'})[ch]);
 
+// Two rows of groups: sports and schools, then anime, cards and games. Each row
+// scrolls sideways on its own.
 function drawGroups() {
   const box = $('groups');
   box.textContent = '';
-  for (const [id, label, note] of groups) {
-    const chip = makeButton('chip', `${escape(label)}<small>${escape(note)}</small>`);
-    chip.dataset.group = id;
-    chip.setAttribute('aria-pressed', String(id === state.group));
-    box.append(chip);
+  for (const [kind, title, short] of [['', '体育和名校', '体育名校'], ['play', '动漫、卡牌和游戏', '动漫游戏']]) {
+    const row = document.createElement('div');
+    row.className = 'groups';
+    row.setAttribute('role', 'group');
+    row.setAttribute('aria-label', title);
+    const head = document.createElement('span');
+    head.className = 'group-head';
+    head.textContent = short;
+    head.setAttribute('aria-hidden', 'true');
+    row.append(head);
+    for (const [id, label, note, own] of groups) {
+      if ((own || '') !== kind) continue;
+      const chip = makeButton('chip', `${escape(label)}<small>${escape(note)}</small>`);
+      chip.dataset.group = id;
+      chip.setAttribute('aria-pressed', String(id === state.group));
+      row.append(chip);
+    }
+    box.append(row);
   }
 }
+
+// Whether a group is one of the anime, card and game series.
+const playGroup = id => groups.some(item => item[0] === id && item[3] === 'play');
 
 function drawTeams() {
   const box = $('teams');
@@ -438,6 +456,9 @@ function paintSwatches() {
 // The team's file: founding year, home, titles, legends, chant and big moments.
 function drawDossier() {
   const team = state.team;
+  // A character is printed as itself, not as a crest.
+  const crest = $('mark-text');
+  if (crest) crest.innerHTML = playGroup(team.group) ? '照片上加角色 <small>角色贴纸和水印</small>' : '照片上加队徽 <small>队徽贴纸和水印</small>';
   const box = $('dossier');
   const fact = (label, value) => value ? `<div><dt>${escape(label)}</dt><dd>${escape(value)}</dd></div>` : '';
   const home = team.homeNick ? `${team.home} · ${team.homeNick}` : team.home;
@@ -445,9 +466,11 @@ function drawDossier() {
     `<li><b>${escape(year)}</b><span>${escape(en)}<small>${escape(cn)}</small></span></li>`).join('');
   const zh = isZh(team);
   const extra = [team.motto ? `${zh ? '校训' : 'MOTTO'} · ${team.motto}` : '', team.mascot ? `${zh ? '吉祥物' : 'MASCOT'} · ${team.mascot}` : '']
+    .concat((team.facts || []).map(([label, value]) => `${label} · ${value}`))
     .filter(Boolean).map(line => `<p class="d-line">${escape(line)}</p>`).join('');
+  const said = wordsFor(team);
   box.innerHTML = `<header><span class="d-badge${logos[team.id] ? ' has-logo' : ''}"><canvas aria-hidden="true"></canvas>${logos[team.id] ? `<img src="${escape(logoUrl(team.id))}" alt="">` : ''}</span><div><b>${escape(team.name)}</b><small>${escape(zh ? team.city : team.cn)} · ${escape(team.nick)}</small></div></header>`
-    + `<dl class="d-facts">${fact(zh ? '始于' : 'EST.', String(team.est))}${fact(zh ? '主场' : 'HOME', home)}${fact(zh ? '荣誉' : 'TITLES', titleLine(team))}</dl>`
+    + `<dl class="d-facts">${fact(said.est, String(team.est))}${fact(said.home, home)}${fact(zh ? '荣誉' : said.titles, titleLine(team))}</dl>`
     + (team.chant ? `<p class="d-chant">${escape(team.chant)}</p>` : '')
     + (moments ? `<ol class="d-moments">${moments}</ol>` : '')
     + `<p class="d-line">${escape(retiredLine(team))}</p>${extra}`
@@ -498,7 +521,9 @@ function drawSlogans() {
 }
 
 function syncPressed(box, key, value) {
-  for (const item of box.children) item.setAttribute('aria-pressed', String(item.dataset[key] === value));
+  for (const item of box.children) {
+    if (item.dataset[key] !== undefined) item.setAttribute('aria-pressed', String(item.dataset[key] === value));
+  }
 }
 
 function pickTeam(team) {
@@ -518,7 +543,7 @@ $('groups').addEventListener('click', event => {
   const chip = event.target.closest('[data-group]');
   if (!chip || chip.dataset.group === state.group) return;
   state.group = chip.dataset.group;
-  syncPressed($('groups'), 'group', state.group);
+  for (const row of $('groups').children) syncPressed(row, 'group', state.group);
   drawTeams();
   // Show the group's first team straight away.
   if (state.team.group !== state.group) pickTeam(teams.find(team => team.group === state.group));

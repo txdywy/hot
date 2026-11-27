@@ -164,6 +164,12 @@ a { color: var(--hl); }
   margin: 0 -16px; padding: 2px 16px 6px; scroll-padding: 0 16px;
 }
 .groups::-webkit-scrollbar { display: none; }
+.group-rows .groups + .groups { margin-top: 4px; }
+.group-head {
+  flex: none; align-self: center; width: 2.3em;
+  font-size: .75rem; font-weight: 900; line-height: 1.15; letter-spacing: .04em; color: var(--muted);
+  white-space: normal; word-break: break-all;
+}
 .chip {
   flex: none; display: inline-flex; align-items: center; gap: 6px;
   min-height: 44px; padding: 0 16px; border: 1.5px solid var(--line); border-radius: 99px;

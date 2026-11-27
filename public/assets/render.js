@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=16';
-import {isZh} from './teams.js?v=16';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=16';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=17';
+import {isZh} from './teams.js?v=17';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=17';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -45,7 +45,26 @@ const WORDS = {
     honours: '荣誉', since: '始于',
   },
 };
-const say = team => WORDS[isZh(team) ? 'zh' : 'en'];
+// Anime, card and game series speak their own words: a character's year is its
+// debut, its home is its base, its legends are its signature moves.
+const STORY_WORDS = {
+  en: {est: 'DEBUT', since: 'DEBUT', home: 'BASE', homeGame: 'SPECIAL EVENT', titles: 'HONOURS', season: 'EDITION', history: 'STORY'},
+  zh: {est: '登场', since: '登场', home: '所在', homeGame: '巅峰之夜', titles: '荣誉', season: '赛季', history: '高光时刻'},
+};
+const sayCache = new Map();
+const say = team => {
+  const key = `${team.group} ${isZh(team) ? 'zh' : 'en'}`;
+  if (!sayCache.has(key)) {
+    const lang = isZh(team) ? 'zh' : 'en';
+    sayCache.set(key, Object.assign({}, WORDS[lang], storyGroup(team) ? STORY_WORDS[lang] : null));
+  }
+  return sayCache.get(key);
+};
+export const wordsFor = say;
+// Series that are told as a story, not as a league (Slam Dunk and Captain Tsubasa
+// play real sports, so they keep the sports words).
+const STORY_GROUPS = ['ultraman', 'pokemon', 'yugioh', 'dragonball', 'onepiece', 'naruto', 'hogwarts', 'hok', 'genshin'];
+export const storyGroup = team => STORY_GROUPS.indexOf(team.group) >= 0;
 const upper = text => String(text).toUpperCase();
 
 // "17× NBA CHAMPIONS", or the team's own line when it has no title count.
@@ -1240,7 +1259,103 @@ const BURSTS = {
   cnu: ['燃！', '冲！', '满分！', '学霸！'],
   hs: ['燃！', '冲！', '满分！', '学霸！', '砰！'],
 };
-const SPORT = {hoops: 'hoop', college: 'hoop', cba: 'hoop', gridiron: 'gridiron', football: 'soccer', csl: 'soccer'};
+const SPORT = {hoops: 'hoop', college: 'hoop', cba: 'hoop', gridiron: 'gridiron', football: 'soccer', csl: 'soccer', slamdunk: 'hoop', tsubasa: 'soccer'};
+// The anime, card and game series: their card words. role is the default position
+// when an entry has none of its own; attrs the six ratings; levels the three tiers
+// of the select design; relics renames the memorabilia.
+const HERO_RELICS = {
+  en: {jersey: 'BATTLE SUIT SWATCH', logo: 'EMBLEM PATCH', tag: 'COSTUME TAG', sneaker: 'HERO BOOT', number: 'NUMBER PATCH', dual: 'DUAL RELIC'},
+  zh: {jersey: '战衣碎片', logo: '徽记补丁', tag: '战衣洗标', sneaker: '战靴物料', number: '号码补丁', dual: '双物料'},
+};
+const SERIES = {
+  ultraman: {
+    attrs: {en: ['POW', 'SPD', 'BEAM', 'DEF', 'TECH', 'LIGHT'], zh: ['力量', '速度', '光线', '防御', '技巧', '光能']},
+    levels: [['LAND OF LIGHT', '光之国'], ['ULTRA BROTHERS', '奥特兄弟'], ['ULTRA LEGEND', '奥特传说']],
+    inserts: ['LAND OF LIGHT', 'ULTRA FIGHT', 'COLOR TIMER', 'ULTRA BROTHERS', 'SPECIUM'],
+    bursts: ['SHUWATCH!', 'ZAP!', 'BOOM!', 'DEAH!'],
+    relics: {en: {jersey: 'ULTRA SUIT SWATCH', logo: 'COLOR TIMER PATCH'}, zh: {jersey: '战衣碎片', logo: '能量灯补丁'}},
+  },
+  pokemon: {
+    attrs: {en: ['HP', 'ATK', 'DEF', 'SP.A', 'SP.D', 'SPE'], zh: ['HP', '攻击', '防御', '特攻', '特防', '速度']},
+    levels: [['ROOKIE TRAINER', '新手训练家'], ['GYM LEADER', '道馆馆主'], ['CHAMPION', '冠军']],
+    inserts: ["GOTTA CATCH 'EM ALL", 'POKÉ BALL', 'GYM BATTLE', 'EVOLUTION', 'POKÉDEX'],
+    bursts: ['PIKA!', 'CRITICAL HIT!', 'SUPER EFFECTIVE!', 'BOOM!'],
+    relics: {en: {jersey: 'TRAINER JACKET', logo: 'GYM BADGE PATCH', tag: 'TRAINER TAG', sneaker: 'TRAINER SHOE'}, zh: {jersey: '训练家外套', logo: '道馆徽章', tag: '训练家洗标', sneaker: '训练家跑鞋'}},
+  },
+  yugioh: {
+    attrs: {en: ['ATK', 'DEF', 'MAGIC', 'SPD', 'LORE', 'LUCK'], zh: ['攻击', '守备', '魔力', '速度', '传说', '运势']},
+    levels: [['DUELIST', '决斗者'], ['DUEL MASTER', '决斗大师'], ['KING OF GAMES', '决斗王']],
+    inserts: ['DUEL MONSTERS', 'HEART OF THE CARDS', 'MILLENNIUM', 'LEGEND OF BLUE EYES', "IT'S TIME TO DUEL"],
+    bursts: ['DUEL!', 'DIRECT ATTACK!', 'BOOM!', 'GO!'],
+    relics: {en: {jersey: 'DUEL COAT SWATCH', logo: 'MILLENNIUM PATCH', sneaker: 'DUEL DISK'}, zh: {jersey: '决斗风衣碎片', logo: '千年积木补丁', sneaker: '决斗盘物料'}},
+  },
+  dragonball: {
+    attrs: {en: ['POW', 'SPD', 'KI', 'DEF', 'TECH', 'LIMIT'], zh: ['力量', '速度', '气', '防御', '技巧', '潜力']},
+    levels: [['EARTHLING', '地球战士'], ['SUPER SAIYAN', '超级赛亚人'], ['GOD LEVEL', '神之领域']],
+    inserts: ['SUPER SAIYAN', 'TENKAICHI BUDOKAI', 'DRAGON BALLS', 'Z WARRIORS', 'SPIRIT BOMB'],
+    bursts: ['KAMEHAMEHA!', 'BOOM!', 'POW!', 'ZAP!'],
+    relics: {en: {jersey: 'GI SWATCH', logo: 'KANJI PATCH'}, zh: {jersey: '道服碎片', logo: '字号补丁'}},
+  },
+  onepiece: {
+    attrs: {en: ['POW', 'SPD', 'HAKI', 'DEF', 'WILL', 'LUCK'], zh: ['力量', '速度', '霸气', '防御', '意志', '运气']},
+    levels: [['EAST BLUE', '东海'], ['GRAND LINE', '伟大航路'], ['NEW WORLD', '新世界']],
+    inserts: ['GRAND LINE', 'WANTED', 'STRAW HAT CREW', 'NEW WORLD', 'ONE PIECE'],
+    bursts: ['DON!!', 'GOMU GOMU!', 'BOOM!', 'WHAM!'],
+    relics: {en: {jersey: 'SAIL CLOTH', logo: 'JOLLY ROGER PATCH', tag: 'WANTED POSTER', sneaker: 'SANDAL LEATHER'}, zh: {jersey: '船帆布', logo: '海贼旗补丁', tag: '通缉令碎片', sneaker: '草鞋物料'}},
+  },
+  naruto: {
+    attrs: {en: ['TAI', 'NIN', 'GEN', 'SPD', 'CHAKRA', 'INT'], zh: ['体术', '忍术', '幻术', '速度', '查克拉', '智力']},
+    levels: [['GENIN', '下忍'], ['JONIN', '上忍'], ['KAGE', '影']],
+    inserts: ['HIDDEN LEAF', 'WILL OF FIRE', 'SHINOBI WAY', 'AKATSUKI', 'NINJA WAR'],
+    bursts: ['DATTEBAYO!', 'RASENGAN!', 'POOF!', 'BOOM!'],
+    relics: {en: {jersey: 'FLAK JACKET SWATCH', logo: 'HEADBAND PLATE', sneaker: 'SHINOBI SANDAL'}, zh: {jersey: '马甲碎片', logo: '护额铁片', sneaker: '忍者鞋物料'}},
+  },
+  hogwarts: {
+    attrs: {en: ['CHARMS', 'POTIONS', 'DADA', 'FLYING', 'HERBOLOGY', 'TRANSFIG'], zh: ['魔咒', '魔药', '黑魔法防御', '飞行', '草药', '变形']},
+    levels: [['FIRST YEARS', '一年级'], ['PREFECTS', '级长'], ['HEAD OF HOUSE', '院长']],
+    inserts: ['HOUSE CUP', 'QUIDDITCH', 'GREAT HALL', 'SORTING HAT', 'PLATFORM 9¾'],
+    bursts: ['EXPELLIARMUS!', 'LUMOS!', 'ACCIO!', 'BOOM!'],
+    relics: {en: {jersey: 'QUIDDITCH ROBE', logo: 'HOUSE CREST PATCH', tag: 'ROBE TAG', sneaker: 'DRAGONHIDE GLOVE', number: 'ROBE NUMBER'}, zh: {jersey: '魁地奇袍碎片', logo: '学院徽章', tag: '校袍洗标', sneaker: '龙皮手套', number: '袍上号码'}},
+  },
+  hok: {
+    attrs: {zh: ['生存', '攻击', '技能', '机动', '团战', '难度'], en: ['HP', 'ATK', 'SKILL', 'MOVE', 'TEAM', 'DIFF']},
+    levels: [['BRONZE', '倔强青铜'], ['DIAMOND', '璀璨钻石'], ['KING', '荣耀王者']],
+    inserts: ['王者峡谷', '五杀时刻', '巅峰赛', '荣耀王者', '长安城'],
+    bursts: ['五杀！', '超神！', '团灭！', '砰！'],
+    relics: {zh: {jersey: '皮肤碎片', logo: '战令徽章', tag: '皮肤吊牌', sneaker: '战靴物料'}},
+  },
+  genshin: {
+    attrs: {zh: ['生命', '攻击', '防御', '精通', '暴击', '充能'], en: ['HP', 'ATK', 'DEF', 'EM', 'CRIT', 'ER']},
+    levels: [['ADVENTURER', '冒险家'], ['VISION', '神之眼'], ['GNOSIS', '神之心']],
+    inserts: ['提瓦特', '元素爆发', '七国巡游', '深境螺旋', '命之座'],
+    bursts: ['元素爆发！', '暴击！', '满命！', '砰！'],
+    relics: {zh: {jersey: '衣角碎片', logo: '神之眼徽记', tag: '冒险家协会吊牌', sneaker: '靴面物料'}},
+  },
+  slamdunk: {
+    inserts: ['INTER-HIGH', 'KANAGAWA', 'REBOUND KING', 'BUZZER BEATER', 'GENIUS'],
+    bursts: ['SLAM DUNK!', 'SWISH!', 'REBOUND!', 'BOOM!'],
+  },
+  tsubasa: {
+    inserts: ['DRIVE SHOT', 'GOLDEN COMBI', 'NATIONAL CUP', 'FIELD OF DREAMS', 'BALL IS MY FRIEND'],
+    bursts: ['DRIVE SHOT!', 'GOAL!', 'TIGER SHOT!', 'BOOM!'],
+  },
+};
+const series = team => SERIES[team.group] || {};
+// The card words for a team: the language's own, with a series' legend heading.
+const cardWordCache = new Map();
+function cardWords(team) {
+  const lang = isZh(team) ? 'zh' : 'en';
+  const key = `${team.id} ${lang}`;
+  if (!cardWordCache.has(key)) {
+    const extra = storyGroup(team) && team.retiredWord ? {legends: team.retiredWord} : null;
+    cardWordCache.set(key, Object.assign({}, CARD_WORDS[lang], extra));
+  }
+  return cardWordCache.get(key);
+}
+// A rating's bar from 0 to 1, and how bright to show it (2 top, 1 good, 0 plain).
+// Real stats (Pokémon's base stats) run to about 160; ratings run from 50 to 99.
+const barOf = (info, value) => info.rating.real ? Math.min(1, Math.max(.05, value / 160)) : Math.max(.05, (value - 50) / 49);
+const toneOf = (info, value) => info.rating.real ? (value >= 110 ? 2 : value >= 85 ? 1 : 0) : (value >= 90 ? 2 : value >= 80 ? 1 : 0);
 const SCHOOLS = ['campus', 'cnu', 'hs'];
 
 const CARD_WORDS = {
@@ -1317,17 +1432,20 @@ export function cardInfo(team, seed) {
   const auto = rand() < odds[0] ? {
     style: rand() < .45 ? 'sticker' : 'ink',
     ink: weighted(rand, INKS).ink,
-    inscription: rand() < .4 ? pick(zh ? ['加油！', '#{n}', '冠军', `${team.short}永远`] : ['#{n}', 'RC', `GO ${upper(team.short)}!`, `EST. ${team.est}`]) : '',
+    inscription: rand() < .4 ? pick(zh ? ['加油！', '#{n}', '冠军', `${team.short}永远`] : ['#{n}', 'RC', `GO ${upper(team.short)}!`, `${say(team).est} ${team.est}`]) : '',
   } : null;
   let mem = null;
   if (rand() < odds[1]) {
     const choices = RELICS.filter(item => item.id !== 'ball' || SPORT[team.group]);
     const kind = weighted(rand, choices, rarity === 'rare' || rarity === 'one' ? 'rare' : 'w');
     const shapes = kind.id === 'jersey' || kind.id === 'number' ? WINDOWS : WINDOWS.slice(0, 4);
+    const renamed = series(team).relics || (storyGroup(team) ? HERO_RELICS : {});
+    const own = Object.assign({}, storyGroup(team) ? HERO_RELICS.en : null, renamed.en)[kind.id];
+    const ownZh = Object.assign({}, storyGroup(team) ? HERO_RELICS.zh : null, renamed.zh)[kind.id];
     mem = {
       id: kind.id,
-      en: kind.en,
-      zh: school && kind.school ? kind.school : kind.zh,
+      en: own || kind.en,
+      zh: ownZh || (school && kind.school ? kind.school : kind.zh),
       window: kind.id === 'tag' || kind.id === 'dual' ? 'rect' : pick(shapes),
     };
   }
@@ -1339,9 +1457,10 @@ export function cardInfo(team, seed) {
   const grade = weighted(rand, GRADES.map(([n, word, w]) => ({n, word, w})));
 
   const sport = SPORT[team.group] || 'school';
+  const own = series(team);
   const rookie = weighted(rand, ROOKIES).id;
   const levelN = weighted(rand, LEVEL_ODDS[rarity].map((w, n) => ({w, n}))).n;
-  const levelNames = LEVELS[sport === 'school' ? 'school' : sport][levelN];
+  const levelNames = (own.levels || LEVELS[sport === 'school' ? 'school' : sport])[levelN];
   const level = {n: levelN, name: levelNames[zh ? 1 : 0]};
   // Four facts for the front: the number and three others.
   const pool = ['est', 'titles', 'legends', 'home', 'city', 'season'];
@@ -1349,12 +1468,16 @@ export function cardInfo(team, seed) {
   while (stats.length < 5 && pool.length) stats.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]);
   const [lo, hi] = OVR[rarity];
   const ovr = lo + Math.floor(rand() * (hi - lo + 1));
-  const attrs = ATTRS[sport][zh ? 'zh' : 'en'].map(label => [label, Math.max(55, Math.min(99, ovr - 13 + Math.floor(rand() * 20)))]);
+  const labels = (own.attrs || ATTRS[sport])[zh ? 'zh' : 'en'];
+  const random = labels.map(label => [label, Math.max(55, Math.min(99, ovr - 13 + Math.floor(rand() * 20)))]);
+  // Real numbers where the series has them (Pokémon's base stats).
+  const real = Array.isArray(team.stats) && team.stats.length === 6;
+  const attrs = real ? team.stats.map(([label, value], k) => [zh ? labels[k] : label, value]) : random;
   const back = (auto || mem) && rand() < .45 ? 'certificate' : weighted(rand, BACKS).id;
   const cardNo = Math.floor(rand() * 300) + 1;
-  const role = pick(ROLES[team.group] || ROLES.hoops);
-  const insert = pick(INSERTS[team.group] || INSERTS.hoops);
-  const burst = pick(BURSTS[team.group] || BURSTS.hoops);
+  const role = team.role || (storyGroup(team) ? (zh ? '英雄' : 'HERO') : pick(ROLES[team.group] || ROLES.hoops));
+  const insert = pick(own.inserts || INSERTS[team.group] || INSERTS.hoops);
+  const burst = pick(own.bursts || BURSTS[team.group] || BURSTS.hoops);
   // Two of the big moments, kept in year order.
   const moments = (team.moments || []).slice();
   while (moments.length > 2) moments.splice(Math.floor(rand() * moments.length), 1);
@@ -1362,7 +1485,7 @@ export function cardInfo(team, seed) {
   const legends = (team.retired || []).slice();
   while (legends.length > 3) legends.splice(Math.floor(rand() * legends.length), 1);
   // Two pieces of trivia.
-  const w = CARD_WORDS[zh ? 'zh' : 'en'];
+  const w = cardWords(team);
   const school2 = team.group === 'cnu' || team.group === 'hs';
   const trivia = [
     team.motto ? [zh && !school2 ? '格言' : w.motto, team.motto] : null,
@@ -1373,6 +1496,9 @@ export function cardInfo(team, seed) {
     team.story ? [w.story, team.story] : null,
   ].filter(Boolean);
   const facts = [];
+  // A character's own facts (height, bounty, element…) come first.
+  const known = (team.facts || []).slice();
+  while (known.length && facts.length < 2) facts.push(known.splice(Math.floor(rand() * known.length), 1)[0]);
   while (trivia.length && facts.length < 2) facts.push(trivia.splice(Math.floor(rand() * trivia.length), 1)[0]);
   const designZh = design.id === 'chrome' ? '' : {
     full: '全幅', skyline: '城市', comic: '漫画', stained: '彩窗', premium: '珍藏',
@@ -1386,7 +1512,7 @@ export function cardInfo(team, seed) {
     tier: {id: rarity}, rarity, gold: Boolean(gold), finish: finish ? finish.id : '', colour: colour ? colour.id : '',
     name: zh ? nameZh : name, run, serial: serialText, auto, mem, design: design.id,
     set: zh ? design.zh : design.en, show, grade, cardNo, role, insert, burst, moments, legends, facts, label,
-    rookie, level, stats, rating: {ovr, attrs}, back,
+    rookie, level, stats, rating: {ovr, attrs, real}, back,
     seed: hash(`${team.id} ${seed}`),
   };
 }
@@ -2269,7 +2395,7 @@ function statCells(team, text, info) {
   const short = titled && team.titles.short && Array.from(team.titles.short).length <= 11 ? team.titles.short : zh ? '冠军' : 'TITLES';
   const cells = {
     no: [zh ? '号码' : 'NO.', text.number || '—'],
-    est: [zh ? '始于' : 'EST.', String(team.est)],
+    est: [words.est.replace(/\.$/, ''), String(team.est)],
     titles: titled ? [short, zh ? `${team.titles.n}冠` : `${team.titles.n}×`] : null,
     legends: team.retired && team.retired.length ? [zh ? '传奇' : 'LEGENDS', String(team.retired.length)] : null,
     home: [words.home, team.homeNick || team.home],
@@ -3435,7 +3561,7 @@ const fronts = {
       const x = F.x + u * 1.5 + col * colW + (col ? u * .4 : 0);
       const y = top + row * rowH;
       ctx.textAlign = 'left';
-      ctx.fillStyle = value >= 90 ? '#7dff8a' : value >= 80 ? '#ffe14d' : '#ffffff';
+      ctx.fillStyle = ['#ffffff', '#ffe14d', '#7dff8a'][toneOf(info, value)];
       fit(ctx, String(value), u * 2, 400, rowH * .6, DISPLAY);
       ctx.fillText(String(value), x, y + rowH * .62);
       ctx.fillStyle = '#ffffff';
@@ -3444,8 +3570,8 @@ const fronts = {
       const bw = colW - u * 2.8;
       ctx.fillStyle = 'rgba(255,255,255,.18)';
       ctx.fillRect(x + u * 2.1, y + rowH * .66, bw, rowH * .1);
-      ctx.fillStyle = value >= 90 ? '#7dff8a' : value >= 80 ? '#ffe14d' : two;
-      ctx.fillRect(x + u * 2.1, y + rowH * .66, bw * Math.max(.05, (value - 50) / 49), rowH * .1);
+      ctx.fillStyle = [two, '#ffe14d', '#7dff8a'][toneOf(info, value)];
+      ctx.fillRect(x + u * 2.1, y + rowH * .66, bw * barOf(info, value), rowH * .1);
     });
     ctx.fillStyle = 'rgba(255,255,255,.35)';
     ctx.fillRect(F.x + F.w / 2, top + rowH * .15, Math.max(1, u * .05), rowH * 2.7);
@@ -3646,7 +3772,7 @@ function backClassic(ctx, team, text, L, info) {
   const {back: B} = L;
   const u = B.w / 20;
   const zh = isZh(team);
-  const words = CARD_WORDS[zh ? 'zh' : 'en'];
+  const words = cardWords(team);
   const say_ = say(team);
   const logo = text.logo;
   const fill = solid(team);
@@ -4056,7 +4182,7 @@ const backs = {
     const B = L.back;
     const u = B.w / 20;
     const zh = isZh(team);
-    const words = CARD_WORDS[zh ? 'zh' : 'en'];
+    const words = cardWords(team);
     const fill = solid(team);
     const fillInk = readable(fill);
     const ink = onPaper(team);
@@ -4192,7 +4318,7 @@ const backs = {
     const B = L.back;
     const u = B.w / 20;
     const zh = isZh(team);
-    const words = CARD_WORDS[zh ? 'zh' : 'en'];
+    const words = cardWords(team);
     const fill = solid(team);
     const two = second(team, fill);
     const ink = onPaper(team);
@@ -4286,7 +4412,7 @@ const backs = {
       ctx.fillStyle = 'rgba(0,0,0,.1)';
       ctx.fillRect(bx + u * 2.3, by + bh * .2, bw - u * 3.6, bh * .6);
       ctx.fillStyle = fill === '#ffffff' ? ink : fill;
-      ctx.fillRect(bx + u * 2.3, by + bh * .2, (bw - u * 3.6) * Math.max(.05, (value - 50) / 49), bh * .6);
+      ctx.fillRect(bx + u * 2.3, by + bh * .2, (bw - u * 3.6) * barOf(info, value), bh * .6);
       ctx.fillStyle = '#111111';
       ctx.textAlign = 'right';
       fit(ctx, String(value), u * 1.2, 400, bh * .8, DISPLAY);
@@ -4343,7 +4469,7 @@ const backs = {
     const B = L.back;
     const u = B.w / 20;
     const zh = isZh(team);
-    const words = CARD_WORDS[zh ? 'zh' : 'en'];
+    const words = cardWords(team);
     const fill = onPaper(team);
     const dark = '#2a2118';
     const r = u * .5;
@@ -4478,7 +4604,7 @@ const backs = {
     const B = L.back;
     const u = B.w / 20;
     const zh = isZh(team);
-    const words = CARD_WORDS[zh ? 'zh' : 'en'];
+    const words = cardWords(team);
     const fill = solid(team);
     const r = u * .7;
     const wIn = B.w - u * 2.8;
@@ -4727,7 +4853,7 @@ function card(ctx, team, text, L) {
   const info = cardInfo(team, text.seed);
   // The photo window moves with the design; app.js reads it back for dragging.
   L.area = frontArea(L, info.design);
-  const words = CARD_WORDS[isZh(team) ? 'zh' : 'en'];
+  const words = cardWords(team);
   const rand = seeded(info.seed ^ 0x5bd1e995);
   // A dark table lit in the team colour.
   ctx.fillStyle = '#0c0c0e';
