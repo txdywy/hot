@@ -26,7 +26,8 @@ export const luminance = luminanceOf;
 
 const readable = colour => luminance(colour) > .45 ? '#111111' : '#ffffff';
 // The team colour that reads best on light paper.
-const onPaper = team => luminance(team.c1) > .6 ? team.c2 : team.c1;
+// A team whose main colour is too pale to print on paper (北京八中's 秋裤蓝) names a deeper shade.
+const onPaper = team => team.paper || (luminance(team.c1) > .6 ? team.c2 : team.c1);
 // The team colour to use as a solid field: the main one unless it is almost white.
 const solid = team => luminance(team.c1) > .75 ? team.c2 : team.c1;
 
