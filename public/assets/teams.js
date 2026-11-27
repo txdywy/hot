@@ -31,6 +31,8 @@ export const groups = [
   ['dragonball', 'DRAGON BALL', '七龙珠', 'play'],
   ['onepiece', 'ONE PIECE', '海贼王', 'play'],
   ['naruto', 'NARUTO', '火影忍者', 'play'],
+  ['demonslayer', 'DEMON SLAYER', '鬼灭之刃', 'play'],
+  ['jujutsu', 'JUJUTSU KAISEN', '咒术回战', 'play'],
   ['hok', '王者荣耀', 'HONOR OF KINGS', 'play'],
   ['genshin', '原神', 'GENSHIN', 'play'],
   ['chiikawa', 'CHIIKAWA', '吉伊卡哇', 'play'],
@@ -5545,6 +5547,57 @@ for (const [group, roster, last, motif, floor] of [
   teams.splice(index + 1, 0, ...additions);
 }
 
+// Animation debuts keep the dates consistent within each new collection.
+const animationCollections = [
+  {
+    group: 'dragonball', after: 'frieza', motif: 'dragonball', home: 'CAPSULE CORP.', city: 'WEST CITY',
+    members: [
+      ['gohan', 'Son Gohan', 'GOHAN', '孙悟饭', '#8c3c72', '#ffc16d', 'HIDDEN POTENTIAL', '从小与比克修行，也曾在沙鲁之战中挺身而出。', 'MYSTIC SAIYAN', 'MOUNT PAOZU'],
+      ['bulma', 'Bulma', 'BULMA', '布尔玛', '#087f8b', '#b8f4f4', 'DRAGON RADAR', '万能胶囊公司的发明家，早年发明了龙珠雷达。', 'INVENTOR'],
+      ['trunks', 'Trunks', 'TRUNKS', '特兰克斯', '#4353a4', '#d4c7ff', 'CAPSULE CORP.', '贝吉塔与布尔玛的儿子。此处采用《龙珠超》的少年造型。', 'YOUNG SAIYAN'],
+      ['krillin', 'Krillin', 'KRILLIN', '克林', '#ac4322', '#ffc67a', 'DESTRUCTO DISC', '悟空在龟仙流的同门伙伴，擅长气圆斩。', 'TURTLE SCHOOL', 'KAME HOUSE'],
+      ['beerus', 'Beerus', 'BEERUS', '比鲁斯', '#56368a', '#80d4fc', 'GOD OF DESTRUCTION', '第七宇宙的破坏神，由维斯陪伴并指导。', 'UNIVERSE 7', 'BEERUS’S PLANET'],
+    ],
+    debut: [1989, 1986, 1991, 1986, 2013],
+  },
+  {
+    group: 'demonslayer', motif: 'flame', home: 'DEMON SLAYER CORPS', city: 'TAISHO JAPAN', debut: 2019,
+    members: [
+      ['tanjiro', 'Tanjiro Kamado', 'TANJIRO', '灶门炭治郎', '#176554', '#a7e3c8', 'WATER BREATHING', '为让妹妹恢复为人类而加入鬼杀队，嗅觉敏锐。', 'DEMON SLAYER'],
+      ['nezuko', 'Nezuko Kamado', 'NEZUKO', '灶门祢豆子', '#803d63', '#fbc7dc', 'EXPLODING BLOOD', '炭治郎的妹妹，变成鬼后仍保护家人和人类。', 'KAMADO FAMILY'],
+      ['zenitsu', 'Zenitsu Agatsuma', 'ZENITSU', '我妻善逸', '#8c4d14', '#fed361', 'THUNDER BREATHING', '听觉敏锐，擅长雷之呼吸。', 'DEMON SLAYER'],
+      ['inosuke', 'Inosuke Hashibira', 'INOSUKE', '嘴平伊之助', '#3e526b', '#bdd6ed', 'BEAST BREATHING', '戴野猪头套的鬼杀队士，使用自创的兽之呼吸。', 'DEMON SLAYER'],
+      ['giyu', 'Giyu Tomioka', 'GIYU', '富冈义勇', '#243c7b', '#a4d8ff', 'WATER HASHIRA', '把炭治郎引向鬼杀队的水柱。', 'WATER HASHIRA'],
+      ['shinobu', 'Shinobu Kocho', 'SHINOBU', '蝴蝶忍', '#594481', '#e8caff', 'INSECT BREATHING', '鬼杀队虫柱，精通药理和用毒。', 'INSECT HASHIRA'],
+      ['rengoku', 'Kyojuro Rengoku', 'RENGOKU', '炼狱杏寿郎', '#a83828', '#ffcb6b', 'FLAME BREATHING', '鬼杀队炎柱，在无限列车执行护卫任务。', 'FLAME HASHIRA'],
+    ],
+  },
+  {
+    group: 'jujutsu', motif: 'star', home: 'TOKYO JUJUTSU HIGH', city: 'TOKYO', debut: 2020,
+    members: [
+      ['itadori', 'Yuji Itadori', 'ITADORI', '虎杖悠仁', '#872d45', '#ffc4bc', 'BLACK FLASH', '能承受宿傩手指的少年，进入东京咒术高专。', 'FIRST YEAR'],
+      ['fushiguro', 'Megumi Fushiguro', 'FUSHIGURO', '伏黑惠', '#263858', '#a3c9ed', 'TEN SHADOWS', '入学时已是二级术师，使用十种影法术。', 'GRADE 2'],
+      ['kugisaki', 'Nobara Kugisaki', 'KUGISAKI', '钉崎野蔷薇', '#844938', '#f5be9d', 'STRAW DOLL TECHNIQUE', '从地方来到东京的咒术师，使用钉锤和稻草人。', 'FIRST YEAR'],
+      ['gojo', 'Satoru Gojo', 'GOJO', '五条悟', '#353678', '#a9ccff', 'LIMITLESS', '东京咒术高专教师，使用无下限术式。', 'SPECIAL GRADE'],
+      ['maki-zenin', "Maki Zen'in", 'MAKI', '禅院真希', '#285653', '#aee6ce', 'CURSED TOOLS', '拥有出色的身体能力，以咒具战斗。', 'CURSED TOOL USER'],
+      ['nanami', 'Kento Nanami', 'NANAMI', '七海建人', '#6a583c', '#f0d4a0', 'RATIO TECHNIQUE', '曾离开咒术界进入公司工作，后来回归成为一级术师。', 'GRADE 1'],
+    ],
+  },
+];
+
+for (const {group, after, motif, home, city, debut, members} of animationCollections) {
+  const entries = members.map(([id, name, short, cn, c1, accent, slogan, story, role, characterBase], index) => ({
+    id, group, name, short, cn, nick: role, role, city: characterBase || city,
+    home: characterBase || home, homeNick: role,
+    letter: short[0], c1, c2: '#191926', c3: accent, ink: '#ffffff', accent,
+    number: String(index + 1).padStart(2, '0'), slogan, story, motif,
+    kit: 'tone', floor: 'arena', collar: 'crew', season: 'year',
+    est: Array.isArray(debut) ? debut[index] : debut, titles: {label: role},
+  }));
+  const index = after ? teams.findIndex(team => team.id === after) + 1 : teams.length;
+  teams.splice(index, 0, ...entries);
+}
+
 export const styles = [
   ['jersey', '球衣', '背后印上你的名字和号码'],
   ['ticket', '球票', '一张写着日期的入场券'],
@@ -5716,6 +5769,25 @@ export const logos = {
   franky: "characters/onepiece/franky.jpg",
   brook: "characters/onepiece/brook.jpg",
   jinbe: "characters/onepiece/jinbe.jpg",
+  // Expanded animation collections.
+  itadori: "characters/jujutsu/itadori.png",
+  fushiguro: "characters/jujutsu/fushiguro.png",
+  kugisaki: "characters/jujutsu/kugisaki.png",
+  'maki-zenin': "characters/jujutsu/maki-zenin.png",
+  gojo: "characters/jujutsu/gojo.png",
+  nanami: "characters/jujutsu/nanami.png",
+  tanjiro: "characters/demonslayer/tanjiro.jpg",
+  nezuko: "characters/demonslayer/nezuko.jpg",
+  zenitsu: "characters/demonslayer/zenitsu.jpg",
+  inosuke: "characters/demonslayer/inosuke.jpg",
+  giyu: "characters/demonslayer/giyu.jpg",
+  shinobu: "characters/demonslayer/shinobu.jpg",
+  rengoku: "characters/demonslayer/rengoku.jpg",
+  gohan: "characters/dragonball/gohan.png",
+  bulma: "characters/dragonball/bulma.png",
+  trunks: "characters/dragonball/trunks.png",
+  krillin: "characters/dragonball/krillin.png",
+  beerus: "characters/dragonball/beerus.png",
   // Other play logos
   shohoku: "shohoku.png",
   sannoh: "sannoh.png",
