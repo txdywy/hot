@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=20';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=20';
-import {venue, kit, trim, drawMotif} from './art.js?v=20';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=20';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=20';
+import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=21';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=21';
+import {venue, kit, trim, drawMotif} from './art.js?v=21';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=21';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=21';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -469,11 +469,13 @@ function drawTeams() {
   const box = $('teams');
   const cards = document.createDocumentFragment();
   for (const team of teams.filter(item => item.group === state.group)) {
+    const label = isZh(team) ? team.nick : team.cn;
+    const cardLabel = team.variant ? label + " · " + team.variant : label;
     const logo = logos[team.id] ? `<img src="${escape(logoUrl(team.id))}" alt="" loading="lazy" decoding="async">` : '';
-    const card = makeButton('team', `<span class="swatch"><canvas aria-hidden="true"></canvas>${logo}</span><b>${escape(team.short)}</b><small>${escape(isZh(team) ? team.nick : team.cn)}</small>`,
-      `${team.name}，${team.cn}`);
+    const card = makeButton('team', `<span class="swatch"><canvas aria-hidden="true"></canvas>${logo}</span><b>${escape(team.short)}</b><small>${escape(cardLabel)}</small>`,
+      `${team.name}，${team.variant ? cardLabel : team.cn}`);
     card.dataset.team = team.id;
-    card.title = team.name;
+    card.title = team.variant ? `${team.name} · ${team.variant}` : team.name;
     card.setAttribute('aria-pressed', String(team === state.team));
     const swatch = card.firstElementChild;
     swatch.style.setProperty('--a', team.c1);
