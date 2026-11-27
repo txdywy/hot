@@ -23,6 +23,15 @@ function assetsIn(html) {
   return found;
 }
 
+function isLogo(url) {
+  return url.indexOf(PAGE + 'assets/logos/') === 0;
+}
+
+function logoVersion(url) {
+  var match = /[?&]v=(\d+)/.exec(url);
+  return match ? Number(match[1]) : 0;
+}
+
 // Saves every file the page names, and only once all of them are saved replaces
 // the saved page and drops the files it no longer names. If the connection drops
 // halfway, the previous saved copy stays whole and still opens offline.
@@ -41,9 +50,15 @@ function keep(response) {
         })).then(function () {
           return cache.put(PAGE, response);
         }).then(function () {
-          // Logos are not named by the page, so once fetched they are kept.
+          // Logos are not named by the page, so once fetched they are kept, until a
+          // newer logo version (logoVersion in teams.js) shows the pictures changed.
+          var newest = 0;
+          keys.forEach(function (request) {
+            if (isLogo(request.url)) newest = Math.max(newest, logoVersion(request.url));
+          });
           return Promise.all(keys.filter(function (request) {
-            return request.url !== PAGE && !wanted[request.url] && request.url.indexOf(PAGE + 'assets/logos/') !== 0;
+            if (isLogo(request.url)) return logoVersion(request.url) < newest;
+            return request.url !== PAGE && !wanted[request.url];
           }).map(function (request) { return cache.delete(request); }));
         });
       });

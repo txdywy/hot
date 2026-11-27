@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=21';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=21';
-import {venue, kit, trim, drawMotif} from './art.js?v=21';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=21';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=21';
+import {groups, teams, styles, slogans, byId, logos, logoVersion, isZh} from './teams.js?v=22';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=22';
+import {venue, kit, trim, drawMotif} from './art.js?v=22';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=22';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=22';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -183,7 +183,19 @@ function words() {
 const logoImages = new Map();
 const logoWaits = new Map();
 function logoUrl(id) {
-  return logos[id] ? `./assets/logos/${logos[id]}?v=1` : '';
+  return logos[id] ? `./assets/logos/${logos[id]}?v=${logoVersion}` : '';
+}
+// The small copy the team cards show (tools/thumbs.py makes them). If a picture
+// has no small copy yet, the card falls back to the full picture.
+function thumbUrl(id) {
+  return logos[id] && /\.(png|jpe?g)$/i.test(logos[id]) ? `./assets/logos/thumbs/${logos[id]}?v=${logoVersion}` : logoUrl(id);
+}
+function fallBackToFull(img, id) {
+  if (!img) return;
+  img.onerror = () => {
+    img.onerror = null;
+    if (img.getAttribute('src') !== logoUrl(id)) img.src = logoUrl(id);
+  };
 }
 // The loaded logo for a team, or null; starts loading it the first time.
 function logoFor(team) {
@@ -193,7 +205,7 @@ function logoFor(team) {
     logoImages.set(team.id, null);
     logoWaits.set(team.id, new Promise(resolve => {
       logo.onload = () => {
-        logo.photoStill = logos[team.id].endsWith('.jpg');
+        logo.photoStill = /\.jpe?g$/i.test(logos[team.id]);
         logoImages.set(team.id, logo);
         requestRender(true);
         resolve();
@@ -471,10 +483,11 @@ function drawTeams() {
   for (const team of teams.filter(item => item.group === state.group)) {
     const label = isZh(team) ? team.nick : team.cn;
     const cardLabel = team.variant ? label + " · " + team.variant : label;
-    const logo = logos[team.id] ? `<img src="${escape(logoUrl(team.id))}" alt="" loading="lazy" decoding="async">` : '';
+    const logo = logos[team.id] ? `<img src="${escape(thumbUrl(team.id))}" alt="" loading="lazy" decoding="async">` : '';
     const card = makeButton('team', `<span class="swatch"><canvas aria-hidden="true"></canvas>${logo}</span><b>${escape(team.short)}</b><small>${escape(cardLabel)}</small>`,
       `${team.name}，${team.variant ? cardLabel : team.cn}`);
     card.dataset.team = team.id;
+    fallBackToFull(card.querySelector('.swatch img'), team.id);
     card.title = team.variant ? `${team.name} · ${team.variant}` : team.name;
     card.setAttribute('aria-pressed', String(team === state.team));
     const swatch = card.firstElementChild;
@@ -538,12 +551,13 @@ function drawDossier() {
     .concat((team.facts || []).map(([label, value]) => `${label} · ${value}`))
     .filter(Boolean).map(line => `<p class="d-line">${escape(line)}</p>`).join('');
   const said = wordsFor(team);
-  box.innerHTML = `<header><span class="d-badge${logos[team.id] ? ' has-logo' : ''}"><canvas aria-hidden="true"></canvas>${logos[team.id] ? `<img src="${escape(logoUrl(team.id))}" alt="">` : ''}</span><div><b>${escape(team.name)}</b><small>${escape(zh ? team.city : team.cn)} · ${escape(team.nick)}</small></div></header>`
+  box.innerHTML = `<header><span class="d-badge${logos[team.id] ? ' has-logo' : ''}"><canvas aria-hidden="true"></canvas>${logos[team.id] ? `<img src="${escape(thumbUrl(team.id))}" alt="">` : ''}</span><div><b>${escape(team.name)}</b><small>${escape(zh ? team.city : team.cn)} · ${escape(team.nick)}</small></div></header>`
     + `<dl class="d-facts">${fact(said.est, String(team.est))}${fact(said.home, home)}${fact(zh ? '荣誉' : said.titles, titleLine(team))}</dl>`
     + (team.chant ? `<p class="d-chant">${escape(team.chant)}</p>` : '')
     + (moments ? `<ol class="d-moments">${moments}</ol>` : '')
     + `<p class="d-line">${escape(retiredLine(team))}</p>${extra}`
     + (team.story ? `<p class="d-story">${escape(team.story)}</p>` : '');
+  fallBackToFull(box.querySelector('.d-badge img'), team.id);
   box.style.setProperty('--d1', team.c1);
   box.style.setProperty('--d2', team.c2);
   const canvas = box.querySelector('canvas');
