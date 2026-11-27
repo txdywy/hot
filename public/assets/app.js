@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=19';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=19';
-import {venue, kit, trim, drawMotif} from './art.js?v=19';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=19';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=19';
+import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=20';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=20';
+import {venue, kit, trim, drawMotif} from './art.js?v=20';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=20';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=20';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -193,6 +193,7 @@ function logoFor(team) {
     logoImages.set(team.id, null);
     logoWaits.set(team.id, new Promise(resolve => {
       logo.onload = () => {
+        logo.photoStill = logos[team.id].endsWith('.jpg');
         logoImages.set(team.id, logo);
         requestRender(true);
         resolve();
