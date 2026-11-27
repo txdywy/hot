@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=29';
-import {groups, isZh} from './teams.js?v=29';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=29';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=30';
+import {groups, isZh} from './teams.js?v=30';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=30';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -26,7 +26,8 @@ export const luminance = luminanceOf;
 
 const readable = colour => luminance(colour) > .45 ? '#111111' : '#ffffff';
 // The team colour that reads best on light paper.
-const onPaper = team => luminance(team.c1) > .6 ? team.c2 : team.c1;
+// A team whose main colour is too pale to print on paper (北京八中's 秋裤蓝) names a deeper shade.
+const onPaper = team => team.paper || (luminance(team.c1) > .6 ? team.c2 : team.c1);
 // The team colour to use as a solid field: the main one unless it is almost white.
 const solid = team => luminance(team.c1) > .75 ? team.c2 : team.c1;
 
@@ -768,7 +769,7 @@ function ticket(ctx, team, text, L) {
   ctx.fillRect(px + headW + u * .3, hTop - u * .13, P - headW - u * .3, Math.max(1, u * .05));
   (team.moments || []).slice(0, 3).forEach(([year, line, note], k) => {
     const y = hTop + u * .98 + k * u * 1.1;
-    ctx.fillStyle = strip === PAPER ? ink : solid(team);
+    ctx.fillStyle = strip === PAPER ? ink : team.paper || solid(team);
     fit(ctx, String(year), u * 2.2, 400, u * .82, DISPLAY);
     ctx.fillText(String(year), px, y + u * .1);
     ctx.fillStyle = '#1b1b1b';
