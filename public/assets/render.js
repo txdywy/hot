@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=28';
-import {groups, isZh} from './teams.js?v=28';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=28';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=29';
+import {groups, isZh} from './teams.js?v=29';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=29';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -2792,15 +2792,17 @@ function battleOf(team, info) {
   const hw = ['HEIGHT', 'WEIGHT'].map(label => facts.find(([name]) => name === label)).filter(Boolean);
   const shown = (hw.length === 2 ? hw : facts.slice(0, 2)).map(([label, value]) => label === 'HEIGHT' ? `HT ${value}` : label === 'WEIGHT' ? `WT ${value}` : `${label} ${value}`);
   const ribbon = [`NO.${String(team.number || info.cardNo).padStart(4, '0')}`, team.variant || team.nick || info.role, ...shown].filter(Boolean).join('  ·  ');
-  const setSize = 150 + hash(team.group) % 120;
+  // The number matches the back; secret rares print past the end of the set.
+  const secret = info.rarity === 'rare' || info.rarity === 'one';
+  const base = 150 + hash(team.group) % 120;
+  const setSize = secret ? Math.max(1, Math.min(base, info.cardNo - 1 - info.cardNo % 12)) : base >= info.cardNo ? base : info.cardNo + 12 + hash(team.id) % 48;
   return {
     type, hp, moves, ability, ribbon,
     weak: WEAK[type], resist: rand() < .45 ? RESIST[type] : '',
     retreat: hp < 90 ? 1 : hp < 160 ? 2 : 3,
     flavour: team.story || team.slogan || '',
     setSize,
-    // Secret rares are numbered past the end of the set.
-    number: info.rarity === 'rare' || info.rarity === 'one' ? setSize + 1 + info.cardNo % 24 : (info.cardNo - 1) % setSize + 1,
+    number: info.cardNo,
     mark: 'H',
   };
 }
