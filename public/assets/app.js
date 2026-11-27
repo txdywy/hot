@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=18';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=18';
-import {venue, kit, trim, drawMotif} from './art.js?v=18';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=18';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=18';
+import {groups, teams, styles, slogans, byId, logos, isZh} from './teams.js?v=19';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=19';
+import {venue, kit, trim, drawMotif} from './art.js?v=19';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=19';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=19';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -187,7 +187,7 @@ function logoUrl(id) {
 }
 // The loaded logo for a team, or null; starts loading it the first time.
 function logoFor(team) {
-  if (!logos[team.id]) return null;
+  if (!logos[team.id]) return playGroup(team.group) ? nameBadge(team) : null;
   if (!logoImages.has(team.id)) {
     const logo = new Image();
     logoImages.set(team.id, null);
@@ -202,6 +202,72 @@ function logoFor(team) {
     logo.src = logoUrl(team.id);
   }
   return logoImages.get(team.id);
+}
+// A character with no artwork of its own gets a round name badge in its colours
+// instead: the series emblem, the Chinese name big and the English name under it,
+// so the photo still carries a big, bright mark. Kept once the page's fonts are in.
+const nameBadges = new Map();
+const BADGE_CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", system-ui, sans-serif';
+function nameBadge(team) {
+  if (nameBadges.has(team.id)) return nameBadges.get(team.id);
+  const S = 512;
+  const c = document.createElement('canvas');
+  c.width = S;
+  c.height = S;
+  c.nameBadge = true;
+  const x = c.getContext('2d');
+  const ring = luminance(team.c2) > .85 && luminance(team.c1) > .85 ? team.ink : (team.c2 === team.c1 ? team.accent : team.c2);
+  const ink = team.ink || '#ffffff';
+  x.fillStyle = ring;
+  x.beginPath();
+  x.arc(S / 2, S / 2, S / 2, 0, Math.PI * 2);
+  x.fill();
+  x.fillStyle = team.c1;
+  x.beginPath();
+  x.arc(S / 2, S / 2, S * .44, 0, Math.PI * 2);
+  x.fill();
+  x.strokeStyle = team.accent || ink;
+  x.lineWidth = S * .014;
+  x.beginPath();
+  x.arc(S / 2, S / 2, S * .405, 0, Math.PI * 2);
+  x.stroke();
+  // The series emblem, faint and large behind, then small and bright on top.
+  x.save();
+  x.globalAlpha = .14;
+  drawMotif(x, team.motif, S / 2, S / 2, S * .7, ink, team.c1, team.accent);
+  x.restore();
+  drawMotif(x, team.motif, S / 2, S * .25, S * .15, ink, team.c1, team.accent);
+  const fitText = (text, max, size, family, weight, spacing) => {
+    let px = size;
+    for (;;) {
+      x.font = `${weight} ${Math.round(px)}px ${family}`;
+      if ('letterSpacing' in x) x.letterSpacing = `${Math.round(px * spacing)}px`;
+      if (x.measureText(text).width <= max || px < 12) return px;
+      px *= .92;
+    }
+  };
+  x.textAlign = 'center';
+  x.textBaseline = 'middle';
+  x.fillStyle = ink;
+  // A long name like 卡尔·海因茨·施奈德 goes by its last part on the badge.
+  const full = team.cn || team.short;
+  const cn = Array.from(full).length > 5 && full.indexOf('·') >= 0 ? full.split('·').pop() : full;
+  fitText(cn, S * .72, S * (Array.from(cn).length <= 2 ? .27 : .2), BADGE_CJK, 900, .02);
+  x.fillText(cn, S / 2, S * .52);
+  fitText(team.short, S * .56, S * .085, '"HOT Display", "Arial Black", Impact, sans-serif', 400, .12);
+  x.fillText(team.short, S / 2, S * .73);
+  if ('letterSpacing' in x) x.letterSpacing = '0px';
+  const fontsIn = !document.fonts || document.fonts.status === 'loaded';
+  if (fontsIn) nameBadges.set(team.id, c);
+  else if (!nameBadges.has('wait')) {
+    nameBadges.set('wait', true);
+    document.fonts.ready.then(() => {
+      for (const key of Array.from(nameBadges.keys())) if (nameBadges.get(key) !== true) nameBadges.delete(key);
+      nameBadges.delete('wait');
+      requestRender(true);
+    });
+  }
+  return c;
 }
 // Waits (a few seconds at most) for the team's logo, so a saved picture has it.
 function logoReady(team) {
