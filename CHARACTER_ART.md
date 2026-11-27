@@ -136,3 +136,71 @@
 | dragonball | `trunks` | [图源](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/tranks/img01.png) |
 | dragonball | `krillin` | [图源](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/kuririn/img01.png) |
 | dragonball | `beerus` | [图源](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/buils/img01.png) |
+
+## 龙珠角色扩充
+
+以东映动画角色设定图为主，搭配《龙珠超 比鲁斯》动画剧照及万代南梦宫《龙珠 FighterZ》官方角色立绘。各角色均有独立缩略图。
+
+| ID | 角色 | 图源 |
+|---|---|---|
+| `roshi` | 龟仙人 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/kamesennin/img01.png) |
+| `yamcha` | 雅木茶 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/yamcha/portrait.png) |
+| `tien` | 天津饭 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/tenshinhan/portrait.png) |
+| `chiaotzu` | 饺子 | [《龙珠超 比鲁斯》](https://dragonball-super.com/img/chara/cr-cha.jpg) |
+| `chi-chi` | 琪琪 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/chichi/img01.png) |
+| `oolong` | 乌龙 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/c03107d0bebc4815ba32e8439aa8c6b7/chara_oolong.png) |
+| `puar` | 普尔 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/dacf5e0bdb094be283085add7c1100d0/chara_puar.png) |
+| `pilaf` | 皮拉夫 | [《龙珠超 比鲁斯》](https://dragonball-super.com/img/chara/cr-pilaf.jpg) |
+| `mai` | 小舞 | [《龙珠超 比鲁斯》](https://dragonball-super.com/img/chara/cr-mai.jpg) |
+| `shu` | 阿修 | [《龙珠超 比鲁斯》](https://dragonball-super.com/img/chara/cr-shu.jpg) |
+| `shenron` | 神龙 | [《龙珠超 比鲁斯》](https://dragonball-super.com/img/chara/cr-she.jpg) |
+| `goten` | 孙悟天 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/goten/img01.png) |
+| `videl` | 比迪丽 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/bideru/img01.png) |
+| `mr-satan` | 撒旦先生 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/satan/img01.png) |
+| `pan` | 小芳 | [东映动画《龙珠 GT》](https://www.toei-anim.co.jp/tv/dragongt/chara/images/c03.jpg) |
+| `marron` | 玛伦 | [《龙珠超 比鲁斯》](https://dragonball-super.com/img/chara/cr-maa.jpg) |
+| `king-kai` | 北界王 | [《龙珠超 比鲁斯》](https://dragonball-super.com/img/chara/cr-kai.jpg) |
+| `dende` | 丹迪 | [《龙珠超 比鲁斯》](https://dragonball-super.com/img/chara/cr-den.jpg) |
+| `supreme-kai` | 东界王神 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_kai/character/img/8/imgChara.png) |
+| `kibito` | 杰比特 | [《龙珠超 比鲁斯》](https://dragonball-super.com/img/chara/cr-kibito.jpg) |
+| `elder-kai` | 老界王神 | [《龙珠超 比鲁斯》](https://dragonball-super.com/img/chara/cr-oldkai.jpg) |
+| `raditz` | 拉蒂兹 | [东映动画](https://www.toei-anim.co.jp/tv/dragonz/character/images/radhittu.gif) |
+| `nappa` | 那巴 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/nappa/portrait.png) |
+| `bardock` | 巴达克 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/barduck/portrait.png) |
+| `ginyu` | 基纽 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/ginyu/portrait.png) |
+| `android-16` | 人造人16号 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/no16/portrait.png) |
+| `android-17` | 人造人17号 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/no17/portrait.png) |
+| `android-18` | 人造人18号 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/no18/portrait.png) |
+| `cell` | 沙鲁 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/cell/portrait.png) |
+| `babidi` | 巴比迪 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_kai/character/img/9/imgChara.png) |
+| `majin-buu` | 魔人布欧 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/buu/img01.png) |
+| `gotenks` | 悟天克斯 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/gotenks/portrait.png) |
+| `vegito` | 贝吉特 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/vegetto/portrait.png) |
+| `gogeta` | 悟吉塔 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/gogeta/portrait.png) |
+| `broly` | 布罗利 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/broly-dbs/portrait.png) |
+| `cooler` | 古拉 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/cooler/portrait.png) |
+| `janemba` | 邪念波 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/janemba/portrait.png) |
+| `whis` | 维斯 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/wijs/img01.png) |
+| `jaco` | 加克 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/jako/img01.png) |
+| `champa` | 象帕 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/champa/img01.png) |
+| `vados` | 芭朵斯 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/vados/img01.png) |
+| `hit` | 希特 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/hit/img01.png) |
+| `cabba` | 加贝 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/cabe/img01.png) |
+| `frost` | 弗罗斯特 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/frost/img01.png) |
+| `future-trunks` | 未来特兰克斯 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/miraitranks/img01.png) |
+| `future-mai` | 未来小舞 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/miraimai/img01.png) |
+| `goku-black` | 黑悟空 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/gokublack/img01.png) |
+| `zamasu` | 扎马斯 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/zamas/img01.png) |
+| `zeno` | 全王 | [东映动画](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/zenoh/img01.png) |
+| `jiren` | 吉连 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/jiren/portrait.png) |
+| `kefla` | 开芙拉 | [万代南梦宫《龙珠 FighterZ》](https://dba.bn-ent.net/character/images/kefla/portrait.png) |
+| `uub` | 欧布 | [东映动画《龙珠 GT》](https://www.toei-anim.co.jp/tv/dragongt/chara/images/c05.jpg) |
+| `baby` | 贝比 | [东映动画《龙珠 GT》](https://www.toei-anim.co.jp/tv/dragongt/chara/images/c10.jpg) |
+| `glorio` | 格罗里奥 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/93bbf08674934844b514f8e0ba48d830/chara_glorio.png) |
+| `panzy` | 潘吉 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/0180a0fb1f2240a9b572a64b5610f827/chara_panzy.png) |
+| `gomah` | 戈麻 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/89dd9596ba6f49f2996a7ef9445e788d/chara_gomah.png) |
+| `degessu` | 德格斯 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/9a8cd77757ad451e933ea8b4eeeccc73/chara_degesu.png) |
+| `arinsu` | 阿琳丝博士 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/31a47cc5181f4d209295692937a1694c/chara_arinsu.png) |
+| `neva` | 奈巴 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/c184d8ba085544cbb2db3089cc32de26/chara_neva.png) |
+| `majinkuu` | 魔人库 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/7622c28122e6440cae9be5e2925b65a4/chara_kuu.png) |
+| `majinduu` | 魔人杜 | [东映动画《龙珠大魔》](https://images.microcms-assets.io/assets/79a305090571443fb06a9260d669fe02/21f822bf42b54cc1b660939aa4ffa6df/chara_duu.png) |
