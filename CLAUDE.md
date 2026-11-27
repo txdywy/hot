@@ -49,6 +49,11 @@ node tools/old-syntax.mjs
   service worker 会把带版本号的图片一直留在手机上，不加一的话老用户永远看到旧图。
 - `teams.js` 的 `logos` 里列的文件必须存在，`check-assets` 会查。
 - 角色图上传前去掉原图里的文字、横线、投影和白边，裁到人物本身，长边 640 以内；PNG 用 pngquant 压一下。
+- 动画剧照（16:9）裁成 4:3 再用，否则球衣和徽章款式里人物太小。
+- 新角色要写全 `moments`、`retired`（招式）、`facts`、有意义的 `titles`，否则球票的“历史时刻”和球星卡背面是空的。
+  批量生成的角色可以把这些写在 `characterDetails` 里。
+- 新开一个动漫系列时，在 `render.js` 的 `SERIES` 里给它加卡面文字（attrs、levels、inserts、bursts、relics），
+  否则球星卡会用篮球的词。
 
 ## 预览
 

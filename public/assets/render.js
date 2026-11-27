@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=24';
-import {groups, isZh} from './teams.js?v=24';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=24';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=25';
+import {groups, isZh} from './teams.js?v=25';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=25';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -1354,6 +1354,20 @@ const SERIES = {
     inserts: ['VICE CITY', 'ONLY IN LEONIDA', 'LEONIDA KEYS', 'WANTED', 'NEON NIGHTS'],
     bursts: ['WASTED!', 'BUSTED!', 'BOOM!', 'RESPECT +'],
     relics: {en: {jersey: 'BEACH SHIRT SWATCH', logo: 'VICE PATCH', tag: 'EVIDENCE TAG', sneaker: 'GETAWAY TIRE'}, zh: {jersey: '花衬衫碎片', logo: '罪恶都市补丁', tag: '证物标签', sneaker: '跑路轮胎物料'}},
+  },
+  demonslayer: {
+    attrs: {en: ['POW', 'SPD', 'BREATH', 'DEF', 'TECH', 'WILL'], zh: ['力量', '速度', '呼吸', '防御', '技巧', '意志']},
+    levels: [['MIZUNOTO', '癸级剑士'], ['KINOE', '甲级剑士'], ['HASHIRA', '柱']],
+    inserts: ['DEMON SLAYER CORPS', 'TOTAL CONCENTRATION', 'NICHIRIN BLADE', 'MUGEN TRAIN', 'HASHIRA'],
+    bursts: ['SLASH!', 'HINOKAMI!', 'ZAP!', 'BOOM!'],
+    relics: {en: {jersey: 'HAORI SWATCH', logo: 'CORPS EMBLEM', tag: 'UNIFORM TAG', sneaker: 'WARAJI STRAW'}, zh: {jersey: '羽织碎片', logo: '鬼杀队徽', tag: '队服洗标', sneaker: '草鞋物料'}},
+  },
+  jujutsu: {
+    attrs: {en: ['POW', 'SPD', 'CURSED', 'DEF', 'TECH', 'DOMAIN'], zh: ['力量', '速度', '咒力', '防御', '术式', '领域']},
+    levels: [['GRADE 4', '四级'], ['GRADE 1', '一级'], ['SPECIAL GRADE', '特级']],
+    inserts: ['TOKYO JUJUTSU HIGH', 'DOMAIN EXPANSION', 'BLACK FLASH', 'SHIBUYA', 'CURSED ENERGY'],
+    bursts: ['BLACK FLASH!', 'DOMAIN EXPANSION!', 'ZAP!', 'BOOM!'],
+    relics: {en: {jersey: 'UNIFORM SWATCH', logo: 'JUJUTSU HIGH BUTTON', tag: 'UNIFORM TAG', sneaker: 'CURSED TOOL'}, zh: {jersey: '校服碎片', logo: '高专纽扣', tag: '校服洗标', sneaker: '咒具物料'}},
   },
   slamdunk: {
     inserts: ['INTER-HIGH', 'KANAGAWA', 'REBOUND KING', 'BUZZER BEATER', 'GENIUS'],
