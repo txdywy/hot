@@ -103,7 +103,7 @@ for (const [name, way] of runs) {
   await page.click('[data-style="card"]');
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   r.check(await page.isVisible('#draw') && !(await page.isVisible('#ratio-row')), `${label}: card style does not swap photo shapes for 再抽一张`);
-  r.check(/^这张：/.test(await page.textContent('#draw-note')), `${label}: card style does not say which card came out`);
+  r.check((await page.textContent('#draw-finish')).trim().length > 0, `${label}: card style does not show the finish drawn`);
   pixels = await previewPixels(page);
   await page.click('#draw');
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));

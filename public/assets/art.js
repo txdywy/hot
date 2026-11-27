@@ -121,6 +121,15 @@ const SHIELD = 'M10 8 H90 V46 C90 72 72 88 50 96 C28 88 10 72 10 46Z';
 // Each motif: (ctx, fg, bg) in a 100 × 100 box. fg is the main ink, bg the colour
 // behind (used for cut-outs and details).
 export const motifs = {
+  wand(ctx, fg, bg, accent) {
+    ctx.lineCap = 'round';
+    line(ctx, fg, 7, [[19, 86], [73, 32]]);
+    line(ctx, accent, 9, [[19, 86], [37, 68]]);
+    for (const [x, y, s] of [[78, 20, 12], [43, 23, 7], [83, 49, 6]]) {
+      line(ctx, fg, 2.8, [[x - s, y], [x + s, y]]);
+      line(ctx, fg, 2.8, [[x, y - s], [x, y + s]]);
+    }
+  },
   ball(ctx, fg, bg) {
     circle(ctx, 50, 50, 44, fg);
     ctx.save();
