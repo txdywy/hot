@@ -101,3 +101,13 @@
 | onepiece | `franky` | [图源](https://one-piece.com/o/assets/images/anime/character/data/franky/face.jpg) |
 | onepiece | `brook` | [图源](https://one-piece.com/o/assets/images/anime/character/data/brook/face.jpg) |
 | onepiece | `jinbe` | [图源](https://one-piece.com/o/assets/images/anime/character/data/Jinbe/face.jpg) |
+
+## 处理记录（2026-11-27 检查）
+
+- 火影忍者的设定图去掉了原图下方的名字横线、日文名和配音标注，并裁到人物本身，相框里人物更大。
+- 足球小将的立绘去掉了原图自带的半透明白色投影。
+- 灌篮高手的五张电影剧照从 16:9 裁成 4:3，居中在人物脸部；牧绅一的原画照片裁掉了白边和角上的编号。
+- 所有 PNG 角色图做了无明显损失的压缩，角色图总量从约 9.3 MB 降到约 3.9 MB。
+- 选队卡片用 `logos/thumbs/` 下的小图（`python3 tools/thumbs.py` 生成），相框本身仍用原图。
+- 在原路径替换图片后，要把 `teams.js` 里的 `logoVersion` 加一，否则看过旧图的手机会一直用旧图。
+

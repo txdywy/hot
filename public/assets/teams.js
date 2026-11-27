@@ -5445,33 +5445,102 @@ for (const id of ['chiikawa', 'hachiware', 'usagi']) {
     {...original, id: id + '-island', variant: '人鱼岛'});
 }
 
+// Six more Straw Hats after Ace, and four more shinobi after Tsunade, each with a
+// full file (moves, big moments, facts) like the characters around them.
 const strawHats = [
-  {id: 'usopp', name: 'Usopp', short: 'USOPP', cn: '乌索普', nick: 'God Usopp', city: 'SYRUP VILLAGE', role: 'SNIPER', est: 1998, c1: '#73451b', accent: '#f1bb60', story: '草帽团狙击手，梦想成为勇敢的海上战士。'},
-  {id: 'chopper', name: 'Tony Tony Chopper', short: 'CHOPPER', cn: '托尼托尼·乔巴', nick: 'Cotton Candy Lover', city: 'DRUM ISLAND', role: 'DOCTOR', est: 2000, c1: '#ae3265', accent: '#ffd0e2', story: '吃下人人果实的驯鹿，也是草帽团的船医。'},
-  {id: 'robin', name: 'Nico Robin', short: 'ROBIN', cn: '妮可·罗宾', nick: 'Devil Child', city: 'OHARA', role: 'ARCHAEOLOGIST', est: 1999, c1: '#553477', accent: '#dfbcff', story: '草帽团考古学家，能够解读历史正文。'},
-  {id: 'franky', name: 'Franky', short: 'FRANKY', cn: '弗兰奇', nick: 'Cyborg', city: 'WATER SEVEN', role: 'SHIPWRIGHT', est: 2004, c1: '#145f85', accent: '#98e9ff', story: '改造人船匠，造出了千阳号。'},
-  {id: 'brook', name: 'Brook', short: 'BROOK', cn: '布鲁克', nick: 'Soul King', city: 'WEST BLUE', role: 'MUSICIAN', est: 2007, c1: '#51416e', accent: '#e1c4fc', story: '草帽团音乐家，带着与拉布重逢的约定踏上旅途。'},
-  {id: 'jinbe', name: 'Jinbe', short: 'JINBE', cn: '甚平', nick: 'Knight of the Sea', city: 'FISH-MAN ISLAND', role: 'HELMSMAN', est: 2009, c1: '#194f82', accent: '#a9d9ff', story: '擅长鱼人空手道的鲸鲨鱼人，也是草帽团的舵手。'},
-];
+  {id: 'usopp', name: 'Usopp', short: 'USOPP', cn: '乌索普', nick: 'God Usopp', city: 'SYRUP VILLAGE', role: 'SNIPER', est: 1997,
+    c1: '#73451b', c2: '#f1bb60', accent: '#f1bb60', number: '4', slogan: 'CAPTAIN USOPP!',
+    titles: {label: 'BOUNTY ฿500,000,000'},
+    retired: [['KB', 'KUROKABUTO'], ['LS', 'LEAD STAR'], ['FB', 'FIRE BIRD STAR'], ['PG', 'POP GREEN']], retiredWord: 'WEAPONS',
+    chant: 'I am Captain Usopp!', nicknames: ['God Usopp', 'Sogeking', 'Captain Usopp'],
+    moments: [[1997, 'FIRST APPEARANCE', '西罗布村篇登场'], [2006, 'SOGEKING', '司法岛化身狙击王'], [2015, 'GOD USOPP', '德雷斯罗萨被尊为神']],
+    facts: [['BOUNTY', '฿500,000,000'], ['WEAPON', 'KUROKABUTO'], ['DREAM', 'BRAVE WARRIOR OF THE SEA'], ['VOICE', 'KAPPEI YAMAGUCHI']],
+    story: '草帽团狙击手，梦想成为勇敢的海上战士。'},
+  {id: 'chopper', name: 'Tony Tony Chopper', short: 'CHOPPER', cn: '托尼托尼·乔巴', nick: 'Cotton Candy Lover', city: 'DRUM ISLAND', role: 'DOCTOR', est: 2000,
+    c1: '#ae3265', c2: '#2f6fb3', accent: '#ffd0e2', number: '6', slogan: 'MONSTER POINT!',
+    titles: {label: 'BOUNTY ฿1,000'},
+    retired: [['RB', 'RUMBLE BALL'], ['HP', 'HEAVY POINT'], ['KP', 'KUNG FU POINT'], ['MP', 'MONSTER POINT']], retiredWord: 'TRANSFORMATIONS',
+    chant: 'Calling me cute won\'t make me happy, you jerk!', nicknames: ['Cotton Candy Lover', 'Tony Tony Chopper'],
+    moments: [[2000, 'DRUM ISLAND', '磁鼓岛篇登场'], [2006, 'MONSTER POINT', '司法岛首次变成怪物'], [2022, 'NEW BOUNTY', '悬赏1000贝利']],
+    facts: [['BOUNTY', '฿1,000'], ['DEVIL FRUIT', 'HITO HITO NO MI'], ['DREAM', 'CURE ANY DISEASE'], ['VOICE', 'IKUE OTANI']],
+    story: '吃下人人果实的驯鹿，也是草帽团的船医。'},
+  {id: 'robin', name: 'Nico Robin', short: 'ROBIN', cn: '妮可·罗宾', nick: 'Devil Child', city: 'OHARA', role: 'ARCHAEOLOGIST', est: 1999,
+    c1: '#553477', c2: '#1d1630', accent: '#dfbcff', number: '7', slogan: 'I WANT TO LIVE!',
+    titles: {label: 'BOUNTY ฿930,000,000'},
+    retired: [['CF', 'CIEN FLEUR'], ['GM', 'GIGANTESCO MANO'], ['DF', 'DEMONIO FLEUR'], ['CL', 'CLUTCH']], retiredWord: 'SIGNATURE MOVES',
+    chant: 'I want to live!', nicknames: ['Devil Child', 'Miss All Sunday', 'Light of the Revolution'],
+    moments: [[1999, 'MISS ALL SUNDAY', '以巴洛克工作室副社长登场'], [2006, 'ENIES LOBBY', '司法岛被伙伴救回'], [2022, 'NEW BOUNTY', '悬赏9亿3000万']],
+    facts: [['BOUNTY', '฿930,000,000'], ['DEVIL FRUIT', 'HANA HANA NO MI'], ['DREAM', 'THE TRUE HISTORY'], ['VOICE', 'YURIKO YAMAGUCHI']],
+    story: '草帽团考古学家，能够解读历史正文。'},
+  {id: 'franky', name: 'Franky', short: 'FRANKY', cn: '弗兰奇', nick: 'Cyborg', city: 'WATER SEVEN', role: 'SHIPWRIGHT', est: 2004,
+    c1: '#145f85', c2: '#e53935', accent: '#98e9ff', number: '8', slogan: 'SUPER!',
+    titles: {label: 'BOUNTY ฿394,000,000'},
+    retired: [['FF', 'FRESH FIRE'], ['SR', 'STRONG RIGHT'], ['RB', 'RADICAL BEAM'], ['GF', 'GENERAL FRANKY']], retiredWord: 'SIGNATURE MOVES',
+    chant: 'SUPER!', nicknames: ['Cyborg Franky', 'Iron Man Franky'],
+    moments: [[2004, 'FIRST APPEARANCE', '水之七岛篇登场'], [2022, 'NEW BOUNTY', '悬赏3亿9400万']],
+    facts: [['BOUNTY', '฿394,000,000'], ['BUILT', 'THOUSAND SUNNY'], ['BODY', 'CYBORG'], ['VOICE', 'KAZUKI YAO']],
+    story: '改造人船匠，造出了千阳号。'},
+  {id: 'brook', name: 'Brook', short: 'BROOK', cn: '布鲁克', nick: 'Soul King', city: 'WEST BLUE', role: 'MUSICIAN', est: 2007,
+    c1: '#51416e', c2: '#111111', accent: '#e1c4fc', number: '9', slogan: 'YOHOHOHO!',
+    titles: {label: 'BOUNTY ฿383,000,000'},
+    retired: [['SS', 'SOUL SOLID'], ['YG', 'YAHAZU GIRI'], ['GB', 'GAVOTTE BOND EN AVANT'], ['BS', 'BINKS\' SAKE']], retiredWord: 'SIGNATURE MOVES',
+    chant: 'Yohohoho!', nicknames: ['Soul King', 'Humming Brook'],
+    moments: [[2007, 'THRILLER BARK', '恐怖三桅船篇登场'], [2022, 'NEW BOUNTY', '悬赏3亿8300万']],
+    facts: [['BOUNTY', '฿383,000,000'], ['DEVIL FRUIT', 'YOMI YOMI NO MI'], ['PROMISE', 'LABOON'], ['VOICE', 'CHO']],
+    story: '草帽团音乐家，带着与拉布重逢的约定踏上旅途。'},
+  {id: 'jinbe', name: 'Jinbe', short: 'JINBE', cn: '甚平', nick: 'Knight of the Sea', city: 'FISH-MAN ISLAND', role: 'HELMSMAN', est: 2009,
+    c1: '#194f82', c2: '#d84315', accent: '#a9d9ff', number: '10', slogan: 'KNIGHT OF THE SEA',
+    titles: {label: 'BOUNTY ฿1,100,000,000'},
+    retired: [['FK', 'FISH-MAN KARATE'], ['FJ', 'FISH-MAN JUJUTSU'], ['VD', 'VAGABOND DRILL'], ['SB', 'SHARK BRICK FIST']], retiredWord: 'SIGNATURE MOVES',
+    nicknames: ['Knight of the Sea', 'First Son of the Sea'],
+    moments: [[2009, 'IMPEL DOWN', '推进城篇登场'], [2020, 'JOINS THE CREW', '正式加入草帽团'], [2022, 'BILLION BOUNTY', '悬赏11亿']],
+    facts: [['BOUNTY', '฿1,100,000,000'], ['STYLE', 'FISH-MAN KARATE'], ['FORMER', 'WARLORD OF THE SEA'], ['VOICE', 'KATSUHISA HOKI']],
+    story: '擅长鱼人空手道的鲸鲨鱼人，也是草帽团的舵手。'},
+].map(character => ({...character, home: 'THOUSAND SUNNY', homeNick: 'STRAW HAT PIRATES', collar: 'crew'}));
 
 const shinobi = [
-  {id: 'neji', name: 'Neji Hyuga', short: 'NEJI', cn: '日向宁次', nick: 'Hyuga Prodigy', role: 'TEAM GUY', est: 2000, c1: '#56556e', accent: '#e6e0ff', story: '日向一族的忍者，以白眼和柔拳闻名。'},
-  {id: 'orochimaru', name: 'Orochimaru', short: 'OROCHIMARU', cn: '大蛇丸', nick: 'Legendary Sannin', role: 'LEGENDARY SANNIN', est: 2000, c1: '#4c345e', accent: '#e4c461', story: '木叶传说中的三忍之一，执着于探索禁术。'},
-  {id: 'sai', name: 'Sai', short: 'SAI', cn: '佐井', nick: 'Ink Artist', role: 'TEAM KAKASHI', est: 2005, c1: '#334358', accent: '#c8dcf1', story: '擅长用超兽伪画把墨画化成实体。'},
-  {id: 'guy', name: 'Might Guy', short: 'GUY', cn: '迈特凯', nick: 'Blue Beast', role: 'TEAM GUY', est: 2000, c1: '#28633b', accent: '#beed86', story: '洛克·李的老师，擅长体术和八门遁甲。'},
-];
+  {id: 'neji', name: 'Neji Hyuga', short: 'NEJI', cn: '日向宁次', nick: 'Hyuga Prodigy', role: 'TEAM GUY', est: 2000,
+    c1: '#56556e', c2: '#efeaf7', accent: '#e6e0ff', number: '64', slogan: 'BYAKUGAN!',
+    home: 'HYUGA COMPOUND', titles: {label: 'HYUGA PRODIGY'},
+    retired: [['64', 'EIGHT TRIGRAMS 64 PALMS'], ['RT', 'ROTATION'], ['AP', 'AIR PALM'], ['BY', 'BYAKUGAN']], retiredWord: 'JUTSU',
+    nicknames: ['Hyuga Prodigy', 'Neji Hyuga'],
+    moments: [[2000, 'FIRST APPEARANCE', '中忍考试登场'], [2001, 'VS NARUTO', '中忍考试正赛对战鸣人']],
+    facts: [['BIRTHDAY', 'JUL 3'], ['TEAM', 'TEAM GUY'], ['EYES', 'BYAKUGAN'], ['VOICE', 'KOICHI TOCHIKA']],
+    story: '日向一族的忍者，以白眼和柔拳闻名。'},
+  {id: 'orochimaru', name: 'Orochimaru', short: 'OROCHIMARU', cn: '大蛇丸', nick: 'Legendary Sannin', role: 'LEGENDARY SANNIN', est: 2000,
+    c1: '#4c345e', c2: '#e4c461', accent: '#e4c461', number: '3', slogan: 'ALL JUTSU',
+    home: 'OTOGAKURE', homeNick: 'THE HIDDEN SOUND', titles: {label: 'LEGENDARY SANNIN'},
+    retired: [['SS', 'SNAKE SUMMONING'], ['CM', 'CURSE MARK'], ['KS', 'KUSANAGI'], ['EB', 'EIGHT BRANCHES']], retiredWord: 'JUTSU',
+    nicknames: ['Legendary Sannin', 'Snake Sannin'],
+    moments: [[2000, 'FOREST OF DEATH', '死亡森林中现身'], [2001, 'KONOHA CRUSH', '发动木叶崩溃计划']],
+    facts: [['BIRTHDAY', 'OCT 27'], ['SUMMON', 'MANDA'], ['VILLAGE', 'HIDDEN SOUND'], ['VOICE', 'KUJIRA']],
+    story: '木叶传说中的三忍之一，执着于探索禁术。'},
+  {id: 'sai', name: 'Sai', short: 'SAI', cn: '佐井', nick: 'Ink Artist', role: 'TEAM KAKASHI', est: 2005,
+    c1: '#334358', c2: '#111111', accent: '#c8dcf1', number: '7', slogan: 'SUPER BEAST SCROLL',
+    home: 'TEAM KAKASHI', titles: {label: 'ROOT ANBU'},
+    retired: [['SB', 'SUPER BEAST SCROLL'], ['IB', 'INK BIRDS'], ['TS', 'TONGUE SEAL']], retiredWord: 'JUTSU',
+    nicknames: ['Ink Artist', 'Sai'],
+    moments: [[2005, 'FIRST APPEARANCE', '加入卡卡西班'], [2007, 'SHIPPUDEN ANIME', '《疾风传》动画开播']],
+    facts: [['BIRTHDAY', 'NOV 25'], ['TEAM', 'TEAM KAKASHI'], ['FORMER', 'ROOT'], ['VOICE', 'SATOSHI HINO']],
+    story: '擅长用超兽伪画把墨画化成实体。'},
+  {id: 'guy', name: 'Might Guy', short: 'GUY', cn: '迈特凯', nick: 'Blue Beast', role: 'TEAM GUY', est: 2000,
+    c1: '#28633b', c2: '#ff7043', accent: '#beed86', number: '8', slogan: 'EIGHT GATES!',
+    home: 'TEAM GUY', titles: {label: 'THE BLUE BEAST'},
+    retired: [['DE', 'DYNAMIC ENTRY'], ['LH', 'LEAF HURRICANE'], ['8G', 'EIGHT GATES'], ['NG', 'NIGHT GUY']], retiredWord: 'TAIJUTSU',
+    chant: 'The power of youth!', nicknames: ['Blue Beast', 'Might Guy'],
+    moments: [[2000, 'FIRST APPEARANCE', '中忍考试篇登场'], [2014, 'NIGHT GUY', '八门全开对战斑']],
+    facts: [['BIRTHDAY', 'JAN 1'], ['STUDENT', 'ROCK LEE'], ['RIVAL', 'KAKASHI'], ['VOICE', 'MASASHI EBARA']],
+    story: '洛克·李的老师，擅长体术和八门遁甲。'},
+].map(character => ({homeNick: 'THE HIDDEN LEAF', ...character, city: 'KONOHAGAKURE', collar: 'v'}));
 
-for (const [group, roster, last, home, homeNick, motif, floor] of [
-  ['onepiece', strawHats, 'ace', 'THOUSAND SUNNY', 'STRAW HAT PIRATES', 'jollyroger', 'ocean'],
-  ['naruto', shinobi, 'tsunade', 'HIDDEN LEAF', 'KONOHAGAKURE', 'konoha', 'arena'],
+for (const [group, roster, last, motif, floor] of [
+  ['onepiece', strawHats, 'ace', 'jollyroger', 'ocean'],
+  ['naruto', shinobi, 'tsunade', 'konoha', 'arena'],
 ]) {
   const index = teams.findIndex(team => team.id === last);
   const additions = roster.map(character => ({
-    ...character, group, city: character.city || home, home, homeNick,
-    letter: character.short[0], c2: '#232235', c3: character.accent, ink: '#ffffff',
-    number: '01', slogan: group === 'onepiece' ? 'STRAW HAT PIRATES' : 'WILL OF FIRE',
-    motif, floor, kit: 'tone', collar: 'crew', season: 'year',
-    titles: {label: character.role},
+    ...character, group, letter: character.short[0], c3: character.accent, ink: '#ffffff',
+    motif, floor, kit: 'tone', season: 'year',
   }));
   teams.splice(index + 1, 0, ...additions);
 }
@@ -5496,6 +5565,10 @@ export const isZh = team => zhGroups.has(team.group);
 // Official logos in assets/logos/, by team id. A team without an entry is drawn with
 // its colours, emblem and names only. Raise the ?v= in app.js's logoUrl when a logo
 // file changes.
+// Raise this whenever a picture under logos/ is replaced at the same path, so
+// phones that kept the old picture fetch the new one.
+export const logoVersion = 2;
+
 export const logos = {
   lakers: "lakers.png",
   celtics: "celtics.png",

@@ -41,6 +41,15 @@ node tools/old-syntax.mjs
   一个问题只报一次。
 - Playwright 版本固定在 1.49.1，两个 job 和镜像要一起改。
 
+## 队徽和角色图
+
+- 新加或替换 `public/assets/logos/` 下的图片后，跑 `python3 tools/thumbs.py` 生成选队卡片用的小图
+  （`logos/thumbs/`）。缺小图时卡片会退回用原图，`check-assets` 只给警告。
+- 在**同一路径**替换图片时，把 `teams.js` 里的 `logoVersion` 加一。图片地址带 `?v=logoVersion`，
+  service worker 会把带版本号的图片一直留在手机上，不加一的话老用户永远看到旧图。
+- `teams.js` 的 `logos` 里列的文件必须存在，`check-assets` 会查。
+- 角色图上传前去掉原图里的文字、横线、投影和白边，裁到人物本身，长边 640 以内；PNG 用 pngquant 压一下。
+
 ## 预览
 
 - PR 的预览看 Cloudflare 的分支预览：`https://<分支名>.hot-9l0.pages.dev`。
