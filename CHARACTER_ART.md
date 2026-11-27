@@ -111,3 +111,28 @@
 - 选队卡片用 `logos/thumbs/` 下的小图（`python3 tools/thumbs.py` 生成），相框本身仍用原图。
 - 在原路径替换图片后，要把 `teams.js` 里的 `logoVersion` 加一，否则看过旧图的手机会一直用旧图。
 
+
+## 龙珠扩充、鬼灭之刃与咒术回战
+
+龙珠使用东映《龙珠超》角色设定图，鬼灭之刃使用动画官方角色页和《无限列车篇》剧照，咒术回战使用动画第一季官网立绘。
+
+| 系列 | 角色 ID | 图源 |
+| --- | --- | --- |
+| jujutsu | `itadori` | [图源](https://jujutsukaisen.jp/images/chara_detail1.png) |
+| jujutsu | `fushiguro` | [图源](https://jujutsukaisen.jp/images/chara_detail2.png) |
+| jujutsu | `kugisaki` | [图源](https://jujutsukaisen.jp/images/chara_detail3.png) |
+| jujutsu | `maki-zenin` | [图源](https://jujutsukaisen.jp/images/chara_detail6.png) |
+| jujutsu | `gojo` | [图源](https://jujutsukaisen.jp/images/chara_detail4.png) |
+| jujutsu | `nanami` | [图源](https://jujutsukaisen.jp/images/chara_detail9.png) |
+| demonslayer | `tanjiro` | [图源](https://demonslayer-anime.com/hta/assets/img/chara/img_chara_tanjiro.jpg) |
+| demonslayer | `nezuko` | [图源](https://demonslayer-anime.com/hta/assets/img/chara/img_chara_nezuko.jpg) |
+| demonslayer | `zenitsu` | [图源](https://demonslayer-anime.com/hta/assets/img/chara/img_chara_zennitsu.jpg) |
+| demonslayer | `inosuke` | [图源](https://demonslayer-anime.com/hta/assets/img/chara/img_chara_inosuke.jpg) |
+| demonslayer | `giyu` | [图源](https://demonslayer-anime.com/hta/assets/img/chara/img_chara_giyu.jpg) |
+| demonslayer | `shinobu` | [图源](https://demonslayer-anime.com/hta/assets/img/chara/img_chara_shinobu.jpg) |
+| demonslayer | `rengoku` | [图源](https://demonslayer-anime.com/mugentrain/assets/img/character/img_cha_05.jpg) |
+| dragonball | `gohan` | [图源](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/gohan/img01.png) |
+| dragonball | `bulma` | [图源](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/buruma/img01.png) |
+| dragonball | `trunks` | [图源](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/tranks/img01.png) |
+| dragonball | `krillin` | [图源](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/kuririn/img01.png) |
+| dragonball | `beerus` | [图源](https://www.toei-anim.co.jp/tv/dragon_s/assets/img/chara/buils/img01.png) |

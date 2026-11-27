@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=22';
-import {isZh} from './teams.js?v=22';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=22';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=23';
+import {groups, isZh} from './teams.js?v=23';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=23';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -63,7 +63,7 @@ const say = team => {
 export const wordsFor = say;
 // Series that are told as a story, not as a league (Slam Dunk and Captain Tsubasa
 // play real sports, so they keep the sports words).
-const STORY_GROUPS = ['ultraman', 'pokemon', 'yugioh', 'dragonball', 'onepiece', 'naruto', 'hogwarts', 'hok', 'genshin', 'chiikawa', 'gta6'];
+const STORY_GROUPS = ['ultraman', 'pokemon', 'yugioh', 'dragonball', 'onepiece', 'naruto', 'hogwarts', 'hok', 'genshin', 'chiikawa', 'gta6', 'demonslayer', 'jujutsu'];
 export const storyGroup = team => STORY_GROUPS.indexOf(team.group) >= 0;
 const upper = text => String(text).toUpperCase();
 
@@ -288,7 +288,7 @@ function cutOut(logo, edge) {
 // The logo as a die-cut sticker, size being its long side, tilted by `turn`.
 // Characters get their art bigger than a team's crest: the picture is the point.
 let logoBoost = 1;
-const PLAY_GROUPS = new Set(['ultraman', 'pokemon', 'slamdunk', 'tsubasa', 'hogwarts', 'yugioh', 'dragonball', 'onepiece', 'naruto', 'hok', 'genshin', 'chiikawa', 'gta6']);
+const PLAY_GROUPS = new Set(groups.filter(group => group[3] === 'play').map(group => group[0]));
 
 function sticker(ctx, logo, cx, cy, size, m, turn = 0, edge = '#ffffff') {
   // A round name badge fills its whole box, so it reads bigger than cut-out art.
