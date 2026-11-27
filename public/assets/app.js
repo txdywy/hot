@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos, logoVersion, isZh} from './teams.js?v=23';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=23';
-import {venue, kit, trim, drawMotif} from './art.js?v=23';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=23';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=23';
+import {groups, teams, styles, slogans, byId, logos, logoVersion, isZh} from './teams.js?v=24';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=24';
+import {venue, kit, trim, drawMotif} from './art.js?v=24';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=24';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=24';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -479,13 +479,16 @@ const playGroup = id => groups.some(item => item[0] === id && item[3] === 'play'
 
 function drawTeams() {
   const box = $('teams');
+  box.classList.toggle('dragonball-roster', state.group === 'dragonball');
+  box.setAttribute('aria-label', playGroup(state.group) ? '角色' : '主队');
   const cards = document.createDocumentFragment();
   for (const team of teams.filter(item => item.group === state.group)) {
     const label = isZh(team) ? team.nick : team.cn;
     const cardLabel = team.variant ? label + " · " + team.variant : label;
     const logo = logos[team.id] ? `<img src="${escape(thumbUrl(team.id))}" alt="" loading="lazy" decoding="async">` : '';
+    const description = team.variant || team.name === team.cn ? cardLabel : team.cn;
     const card = makeButton('team', `<span class="swatch"><canvas aria-hidden="true"></canvas>${logo}</span><b>${escape(team.short)}</b><small>${escape(cardLabel)}</small>`,
-      `${team.name}，${team.variant ? cardLabel : team.cn}`);
+      description === team.name ? team.name : `${team.name}，${description}`);
     card.dataset.team = team.id;
     fallBackToFull(card.querySelector('.swatch img'), team.id);
     card.title = team.variant ? `${team.name} · ${team.variant}` : team.name;
@@ -498,6 +501,7 @@ function drawTeams() {
   }
   box.textContent = '';
   box.append(cards);
+  box.scrollTop = 0;
   paintSwatches();
 }
 
