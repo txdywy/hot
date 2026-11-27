@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=27';
-import {groups, isZh} from './teams.js?v=27';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=27';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=28';
+import {groups, isZh} from './teams.js?v=28';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=28';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -1193,6 +1193,10 @@ const DESIGNS = [
   {id: 'stained', w: 7, en: 'HOT STAINED GLASS', zh: '主场彩窗'},
   {id: 'premium', w: 11, en: 'HOT TREASURES', zh: '主场珍藏'},
 ];
+// The monster-card layout, for the anime, card and game series only.
+const BATTLE = [{id: 'tcg', w: 24, en: 'HOT BATTLE', zh: '对战卡'}];
+// Houses and places in the story series: no HP or moves for these.
+const NOT_FIGHTERS = ['gryffindor', 'slytherin', 'ravenclaw', 'hufflepuff', 'hogwarts-castle', 'vicecity'];
 const SHOWS = [{id: 'side', w: 40}, {id: 'fan', w: 22}, {id: 'slab', w: 22}, {id: 'holder', w: 16}];
 // Memorabilia: weights for ordinary and rare pulls.
 const RELICS = [
@@ -1495,7 +1499,7 @@ export function cardInfo(team, seed) {
 
   // The design and how the card is shown.
   const showcase = rand() < .75 ? 'premium' : 'obsidian';
-  const standard = auto && mem && rand() < .5 ? DESIGNS.find(item => item.id === showcase) : weighted(rand, DESIGNS);
+  const standard = auto && mem && rand() < .5 ? DESIGNS.find(item => item.id === showcase) : weighted(rand, storyGroup(team) && NOT_FIGHTERS.indexOf(team.id) < 0 ? DESIGNS.concat(BATTLE) : DESIGNS);
   // A separate roll leaves the finish, numbering and other traits of existing seeds intact.
   const archive = ARCHIVE_CARDS[team.group];
   const useArchive = archive && !(auto && mem) && seeded(hash(`${team.id}|${seed}|archive`))() < .29;
@@ -1547,8 +1551,11 @@ export function cardInfo(team, seed) {
   const known = (team.facts || []).slice();
   while (known.length && facts.length < 2) facts.push(known.splice(Math.floor(rand() * known.length), 1)[0]);
   while (trivia.length && facts.length < 2) facts.push(trivia.splice(Math.floor(rand() * trivia.length), 1)[0]);
+  // Everything else worth knowing, for backs with room to fill.
+  const seen = new Set([team.slogan]);
+  const more = facts.concat(known, trivia).filter(([, value]) => !seen.has(value) && seen.add(value));
   const designZh = useArchive ? design.zh : design.id === 'chrome' ? '' : {
-    full: '全幅', skyline: '城市', comic: '漫画', stained: '彩窗', premium: '珍藏',
+    tcg: '对战', full: '全幅', skyline: '城市', comic: '漫画', stained: '彩窗', premium: '珍藏',
     select: `精选${levelNames[1]}`, classic: '经典', rated: '评分', obsidian: '黑曜',
   }[design.id];
   const details = [
@@ -1561,7 +1568,7 @@ export function cardInfo(team, seed) {
     name: zh ? nameZh : name, run, serial: serialText, auto, mem, design: design.id,
     set: zh ? design.zh : design.en, show, grade, cardNo, role, insert, burst, moments, legends, facts, label,
     finishLabel: nameZh, details,
-    rookie, level, stats, rating: {ovr, attrs, real}, back,
+    rookie, level, stats, rating: {ovr, attrs, real}, back, more: more.length ? more : facts,
     seed: hash(`${team.id} ${seed}`),
   };
 }
@@ -2671,6 +2678,320 @@ function gem(ctx, cx, cy, r, colour) {
 // ----- Front designs -----
 // Each draws the front in L.front, with the photo in L.area.
 
+// ----- The battle card (tcg design): energy types, attacks and set marks -----
+
+// The energy types: colour and the glyph in the orb.
+const ENERGY = {
+  lightning: {c: '#f6c81e', glyph: 'bolt'},
+  fire: {c: '#e5532d', glyph: 'flame'},
+  water: {c: '#2d8fe0', glyph: 'drop'},
+  grass: {c: '#3fa34a', glyph: 'leaf'},
+  psychic: {c: '#9a4fd0', glyph: 'eye'},
+  fighting: {c: '#b86a2e', glyph: 'fist'},
+  darkness: {c: '#2c333d', glyph: 'moon'},
+  metal: {c: '#8d9aa6', glyph: 'hex'},
+  dragon: {c: '#b38f2c', glyph: 'diamond'},
+  fairy: {c: '#e66aa6', glyph: 'sparkle'},
+  colorless: {c: '#f1efe8', glyph: 'star'},
+};
+// Pokémon types and move codes to energy; the other series by their own words.
+const TYPE_WORDS = [
+  [/ELEC|LIGHTNING|THUNDER|雷/, 'lightning'], [/FIRE|FLAME|SUN|火|炎/, 'fire'], [/WATER|WATR|ICE|水|冰/, 'water'],
+  [/GRASS|BUG|INSECT|草/, 'grass'], [/PSY|GHOST|GHST|POISON|PSN|MAGIC|SPELL/, 'psychic'], [/FIGHT|FGHT|BEAST|岩/, 'fighting'],
+  [/DARK/, 'darkness'], [/STEEL|METAL/, 'metal'], [/DRAGON|DRGN/, 'dragon'], [/FAIRY/, 'fairy'],
+  [/NORMAL|NORM|FLY|风/, 'colorless'],
+];
+const GROUP_TYPES = {
+  ultraman: 'lightning', dragonball: 'fighting', onepiece: 'water', naruto: 'fire', hogwarts: 'psychic',
+  yugioh: 'darkness', hok: 'fighting', genshin: 'colorless', chiikawa: 'fairy', gta6: 'darkness',
+  demonslayer: 'fighting', jujutsu: 'psychic', slamdunk: 'fighting', tsubasa: 'fighting', pokemon: 'colorless',
+};
+const WEAK = {lightning: 'fighting', fire: 'water', water: 'lightning', grass: 'fire', psychic: 'darkness', fighting: 'psychic',
+  darkness: 'fighting', metal: 'fire', dragon: '', fairy: 'metal', colorless: 'fighting'};
+const RESIST = {lightning: 'metal', fire: 'grass', water: 'fire', grass: 'water', psychic: 'fighting', fighting: 'lightning',
+  darkness: 'psychic', metal: 'grass', dragon: '', fairy: 'darkness', colorless: ''};
+const ABILITY_LABELS = ['ABILITY', 'DEVIL FRUIT', 'BREATHING', 'TECHNIQUE', 'TAILED BEAST', 'BEAM', 'ELEMENT', '能力', '招牌招式'];
+const EFFECTS = {
+  en: [
+    ["Flip a coin. If heads, your opponent's Active card is now Paralyzed.", ''],
+    ['Flip 2 coins. This attack does 30 more damage for each heads.', '+'],
+    ['Discard an Energy from this card.', ''],
+    ['Heal 30 damage from this card.', ''],
+    ["During your opponent's next turn, this card takes 30 less damage from attacks.", ''],
+    ["Your opponent's Active card is now Confused.", ''],
+    ["This attack also does 20 damage to 1 of your opponent's Benched cards.", ''],
+    ["This attack's damage isn't affected by Resistance.", ''],
+    ['This card does 10 damage to itself.', ''],
+  ],
+  zh: [
+    ['抛 1 次硬币，若为正面，对手的战斗卡陷入麻痹状态。', ''],
+    ['抛 2 次硬币，每有 1 次正面，这个招式的伤害增加 30。', '+'],
+    ['弃掉这张卡身上的 1 个能量。', ''],
+    ['这张卡回复 30 点伤害。', ''],
+    ['在对手的下一个回合，这张卡受到的招式伤害减少 30。', ''],
+    ['对手的战斗卡陷入混乱状态。', ''],
+    ['给对手的 1 张备战卡也造成 20 点伤害。', ''],
+    ['这个招式的伤害不计算抗性。', ''],
+    ['这张卡也受到 10 点伤害。', ''],
+  ],
+};
+const ABILITY_TEXT = {
+  en: ['Once during your turn, you may draw a card.', 'This card takes 20 less damage from attacks.',
+    'Once during your turn, you may heal 20 damage from this card.', "If this card is damaged by an attack, the attacking card is now Paralyzed."],
+  zh: ['在自己的回合可使用 1 次：从牌库抽 1 张卡。', '这张卡受到的招式伤害减少 20。', '在自己的回合可使用 1 次：这张卡回复 20 点伤害。', '这张卡受到招式伤害时，令攻击方陷入麻痹状态。'],
+};
+const round10 = n => Math.max(10, Math.round(n / 10) * 10);
+// "THUNDERBOLT" → "Thunderbolt", as a monster card prints its attacks.
+const titleCase = text => HAN.test(text) || !/^[^a-z]*$/.test(text) ? text
+  : text.toLowerCase().replace(/(^|[\s\-·(/])([a-zà-ÿ])/g, (all, gap, ch) => gap + ch.toUpperCase());
+function typeOf(word, fallback) {
+  const found = TYPE_WORDS.find(([test]) => test.test(String(word || '').toUpperCase()));
+  return found ? found[1] : fallback;
+}
+
+// What the battle card prints for a character: HP, type, ability, two attacks,
+// weakness, resistance, retreat, the ribbon under the art and the flavour text.
+function battleOf(team, info) {
+  const zh = isZh(team);
+  const rand = seeded(info.seed ^ 0x2c1b3c6d);
+  const real = info.rating.real;
+  const stat = label => {
+    const found = (team.stats || []).find(([name]) => name === label);
+    return found ? found[1] : 0;
+  };
+  const groupType = GROUP_TYPES[team.group] || 'colorless';
+  const type = team.group === 'pokemon' || team.group === 'genshin' || team.group === 'demonslayer'
+    ? typeOf(`${team.role || ''} ${team.titles && team.titles.label || ''} ${(team.facts || []).map(f => f[1]).join(' ')}`, groupType)
+    : groupType;
+  const ovr = info.rating.ovr;
+  const hp = real ? round10(20 + stat('HP') * 1.4) : round10(60 + (ovr - 70) * 6);
+  const power = real ? Math.max(stat('ATK'), stat('SP.A')) : ovr;
+  // Two attacks from the character's signature moves, the weaker one first.
+  let pool = (team.retired || []).map(item => Array.isArray(item) ? item : ['', item]).filter(([, name]) => name);
+  if (pool.length < 2) pool = pool.concat(zh ? [['', '冲撞'], ['', '全力一击']] : [['', 'TACKLE'], ['', 'FULL POWER']]).slice(0, 2);
+  const picked = [];
+  while (picked.length < 2 && pool.length) picked.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]);
+  const effects = EFFECTS[zh ? 'zh' : 'en'].slice();
+  const moves = picked.map(([code, name], k) => {
+    const own = team.group === 'pokemon' ? typeOf(code, type) : type;
+    const cost = k === 0 ? [own] : rand() < .5 ? [own, own] : [own, own, 'colorless'];
+    let effect = '';
+    let suffix = '';
+    if (rand() < (k === 0 ? .45 : .75)) {
+      const [line, mark] = effects.splice(Math.floor(rand() * effects.length), 1)[0];
+      effect = line;
+      suffix = mark;
+    }
+    const base = real ? power * (k === 0 ? .5 : 1.15 + cost.length * .2) : ovr * (k === 0 ? .4 : 1.1 + cost.length * .2);
+    return {name: titleCase(name), cost, damage: `${Math.min(300, round10(base))}${suffix}`, effect};
+  });
+  const own = (team.facts || []).find(([label]) => ABILITY_LABELS.indexOf(label) >= 0);
+  const ability = own ? [titleCase(own[1]), ABILITY_TEXT[zh ? 'zh' : 'en'][Math.floor(rand() * 4)]] : null;
+  // The ribbon: number, kind, and two facts (height and weight first, as on the real cards).
+  const facts = (team.facts || []).filter(([label]) => label !== (own && own[0]));
+  const hw = ['HEIGHT', 'WEIGHT'].map(label => facts.find(([name]) => name === label)).filter(Boolean);
+  const shown = (hw.length === 2 ? hw : facts.slice(0, 2)).map(([label, value]) => label === 'HEIGHT' ? `HT ${value}` : label === 'WEIGHT' ? `WT ${value}` : `${label} ${value}`);
+  const ribbon = [`NO.${String(team.number || info.cardNo).padStart(4, '0')}`, team.variant || team.nick || info.role, ...shown].filter(Boolean).join('  ·  ');
+  const setSize = 150 + hash(team.group) % 120;
+  return {
+    type, hp, moves, ability, ribbon,
+    weak: WEAK[type], resist: rand() < .45 ? RESIST[type] : '',
+    retreat: hp < 90 ? 1 : hp < 160 ? 2 : 3,
+    flavour: team.story || team.slogan || '',
+    setSize,
+    // Secret rares are numbered past the end of the set.
+    number: info.rarity === 'rare' || info.rarity === 'one' ? setSize + 1 + info.cardNo % 24 : (info.cardNo - 1) % setSize + 1,
+    mark: 'H',
+  };
+}
+
+// The text lines a battle-card effect takes.
+function lines(ctx, text, width, u) {
+  font(ctx, 600, u * .42, SANS, u * .01);
+  return wrapLines(ctx, text, width, 3).length;
+}
+
+// An energy orb: the type's colour, a light rim and its glyph.
+function energy(ctx, kind, cx, cy, r) {
+  const type = ENERGY[kind] || ENERGY.colorless;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.35)';
+  ctx.shadowBlur = r * .25;
+  ctx.shadowOffsetY = r * .08;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, TAU);
+  ctx.fillStyle = '#f7f5ef';
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  const g = ctx.createRadialGradient(cx - r * .3, cy - r * .35, 0, cx, cy, r);
+  g.addColorStop(0, mix(type.c, '#ffffff', .45));
+  g.addColorStop(1, mix(type.c, '#000000', .15));
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * .86, 0, TAU);
+  ctx.fillStyle = g;
+  ctx.fill();
+  const ink = luminance(type.c) > .55 ? '#1d1a14' : '#ffffff';
+  ctx.translate(cx, cy);
+  ctx.scale(r, r);
+  ctx.fillStyle = ink;
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = .12;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  switch (type.glyph) {
+    case 'bolt':
+      [[.12, -.7], [-.4, .08], [-.04, .08], [-.18, .7], [.4, -.12], [.04, -.12], [.22, -.7]].forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 'flame':
+      ctx.moveTo(0, -.66);
+      ctx.bezierCurveTo(.42, -.22, .52, .12, .3, .45);
+      ctx.bezierCurveTo(.14, .64, -.14, .64, -.3, .45);
+      ctx.bezierCurveTo(-.5, .16, -.32, -.14, -.12, -.28);
+      ctx.bezierCurveTo(-.12, -.06, -.02, .04, .06, .06);
+      ctx.bezierCurveTo(.14, -.18, .06, -.42, 0, -.66);
+      ctx.fill();
+      break;
+    case 'drop':
+      ctx.moveTo(0, -.64);
+      ctx.bezierCurveTo(.3, -.24, .44, .04, .44, .22);
+      ctx.bezierCurveTo(.44, .7, -.44, .7, -.44, .22);
+      ctx.bezierCurveTo(-.44, .04, -.3, -.24, 0, -.64);
+      ctx.fill();
+      break;
+    case 'leaf':
+      ctx.moveTo(-.5, .5);
+      ctx.bezierCurveTo(-.55, -.25, .05, -.62, .55, -.55);
+      ctx.bezierCurveTo(.6, .05, .25, .55, -.5, .5);
+      ctx.fill();
+      ctx.strokeStyle = mix(type.c, '#000000', .2);
+      ctx.lineWidth = .08;
+      ctx.beginPath();
+      ctx.moveTo(-.45, .45);
+      ctx.lineTo(.4, -.4);
+      ctx.stroke();
+      break;
+    case 'eye':
+      ctx.moveTo(-.62, 0);
+      ctx.quadraticCurveTo(0, -.6, .62, 0);
+      ctx.quadraticCurveTo(0, .6, -.62, 0);
+      ctx.fill();
+      ctx.fillStyle = mix(type.c, '#000000', .2);
+      ctx.beginPath();
+      ctx.arc(0, 0, .2, 0, TAU);
+      ctx.fill();
+      break;
+    case 'fist':
+      roundRect(ctx, -.4, -.22, .74, .62, .16);
+      ctx.fill();
+      for (let k = 0; k < 4; k++) {
+        ctx.beginPath();
+        ctx.arc(-.3 + k * .18, -.24, .1, 0, TAU);
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.ellipse(.38, .02, .12, .2, -.4, 0, TAU);
+      ctx.fill();
+      break;
+    case 'moon':
+      ctx.arc(0, 0, .52, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(.26, -.16, .44, 0, TAU);
+      ctx.fill();
+      break;
+    case 'hex':
+      for (let k = 0; k < 6; k++) {
+        const a = k / 6 * TAU + TAU / 12;
+        if (k) ctx.lineTo(Math.cos(a) * .55, Math.sin(a) * .55);
+        else ctx.moveTo(Math.cos(a) * .55, Math.sin(a) * .55);
+      }
+      ctx.closePath();
+      ctx.lineWidth = .14;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0, 0, .18, 0, TAU);
+      ctx.fill();
+      break;
+    case 'diamond':
+      ctx.moveTo(0, -.62);
+      ctx.lineTo(.46, 0);
+      ctx.lineTo(0, .62);
+      ctx.lineTo(-.46, 0);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 'sparkle':
+      ctx.moveTo(0, -.66);
+      ctx.quadraticCurveTo(.08, -.08, .66, 0);
+      ctx.quadraticCurveTo(.08, .08, 0, .66);
+      ctx.quadraticCurveTo(-.08, .08, -.66, 0);
+      ctx.quadraticCurveTo(-.08, -.08, 0, -.66);
+      ctx.fill();
+      break;
+    default:
+      ctx.restore();
+      star(ctx, cx, cy + r * .04, r * .58, ink);
+      return;
+  }
+  ctx.restore();
+}
+
+// The set symbol: a small black badge with a flame, as on a real expansion.
+function setMark(ctx, cx, cy, r, colour) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, TAU);
+  ctx.fillStyle = '#16130f';
+  ctx.fill();
+  ctx.strokeStyle = mix(colour, '#ffffff', .4);
+  ctx.lineWidth = r * .18;
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  font(ctx, 400, r * 1.1, DISPLAY);
+  ctx.fillText('H', cx, cy + r * .06);
+  ctx.restore();
+  ctx.textBaseline = 'alphabetic';
+}
+
+// The rarity mark: a dot for a common, a diamond for chrome, a star for the
+// numbered pulls, gold stars for the rare ones and the one of ones.
+function rarityMark(ctx, info, cx, cy, r) {
+  const kind = info.rarity;
+  ctx.save();
+  if (kind === 'base') {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * .7, 0, TAU);
+    ctx.fillStyle = '#16130f';
+    ctx.fill();
+  } else if (kind === 'chrome') {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r);
+    ctx.lineTo(cx + r * .75, cy);
+    ctx.lineTo(cx, cy + r);
+    ctx.lineTo(cx - r * .75, cy);
+    ctx.closePath();
+    ctx.fillStyle = '#16130f';
+    ctx.fill();
+  } else {
+    const n = kind === 'one' ? 3 : kind === 'rare' ? 2 : 1;
+    const colour = kind === 'numbered' ? '#16130f' : '#c8961e';
+    for (let k = 0; k < n; k++) {
+      star(ctx, cx + k * r * 2.1, cy, r * 1.05, colour);
+      if (kind !== 'numbered') {
+        ctx.strokeStyle = '#5a3e05';
+        ctx.lineWidth = r * .12;
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+}
+
 const fronts = {
   // An engraved folio: a wanted poster for pirates, a gilt spellbook for wizards.
   archive(ctx, team, text, L, info, words) {
@@ -2757,6 +3078,316 @@ const fronts = {
     const catalog = `HOT · ${seasonYear(text)} · ${String(info.cardNo).padStart(3, '0')}`;
     fit(ctx, catalog, area.w - u * 2, 800, u * .49, SANS, u * .08);
     ctx.fillText(catalog, mid, bottom - u * .24);
+  },
+
+  // Battle: a monster-card layout for the anime, card and game series. Stage and
+  // name over the art, HP and an energy symbol, a ribbon of the character's file
+  // under the art, an ability and two attacks with energy costs and damage, then
+  // weakness, resistance and retreat, the flavour text, the illustrator, the set
+  // number and the rarity mark: every part of a real monster card, filled from the
+  // character's own data.
+  tcg(ctx, team, text, L, info, words, rand) {
+    const {front: F, area} = L;
+    const u = F.w / 20;
+    const zh = isZh(team);
+    const T = battleOf(team, info);
+    const type = ENERGY[T.type];
+    const rim = u * .82;
+    const gilt = info.gold || info.rarity === 'one' ? 'gold' : info.rarity === 'rare' ? 'rose' : '';
+    const inner = {x: F.x + rim, y: F.y + rim, w: F.w - rim * 2, h: F.h - rim * 2};
+    cardBody(ctx, F, u * .7, u, () => {
+      // The rim: warm yellow on the commons, metal on the rare ones, foil on the chase.
+      if (info.rarity === 'one') foilFill(ctx, team, info, F.x, F.y, F.w, F.h, 3);
+      else {
+        ctx.fillStyle = gilt ? metal(ctx, F.y, F.y + F.h, gilt) : (() => {
+          const g = ctx.createLinearGradient(F.x, F.y, F.x + F.w, F.y + F.h);
+          g.addColorStop(0, '#f6d44a');
+          g.addColorStop(.5, '#e9bd2a');
+          g.addColorStop(1, '#f3cf45');
+          return g;
+        })();
+        ctx.fillRect(F.x, F.y, F.w, F.h);
+      }
+      // The body in the type's colour, lighter at the top, with a soft weave.
+      const g = ctx.createLinearGradient(inner.x, inner.y, inner.x + inner.w * .4, inner.y + inner.h);
+      g.addColorStop(0, mix(type.c, '#ffffff', .62));
+      g.addColorStop(.45, mix(type.c, '#ffffff', .3));
+      g.addColorStop(1, mix(type.c, '#ffffff', .52));
+      ctx.save();
+      roundRect(ctx, inner.x, inner.y, inner.w, inner.h, u * .35);
+      ctx.clip();
+      ctx.fillStyle = g;
+      ctx.fillRect(inner.x, inner.y, inner.w, inner.h);
+      ctx.globalAlpha = .1;
+      ctx.strokeStyle = mix(type.c, '#000000', .3);
+      ctx.lineWidth = u * .05;
+      for (let k = -inner.h; k < inner.w; k += u * .38) {
+        ctx.beginPath();
+        ctx.moveTo(inner.x + k, inner.y);
+        ctx.lineTo(inner.x + k + inner.h, inner.y + inner.h);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      // Reverse holo on the parallels: the foil over the body, not the art.
+      if (info.finish) {
+        ctx.globalAlpha = info.rarity === 'chrome' ? .22 : .32;
+        ctx.globalCompositeOperation = 'overlay';
+        foilFill(ctx, team, info, inner.x, inner.y, inner.w, inner.h, 17);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+      }
+      grain(ctx, inner.x, inner.y, inner.w, inner.h, .18);
+      // The series emblem, faint, behind the attacks.
+      if (text.logo && !text.logo.photoStill) watermark(ctx, text.logo, inner.x + inner.w * .5, area.y + area.h + u * 5.6, u * 9, mix(type.c, '#000000', .4), .07, -.08);
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(0,0,0,.25)';
+      ctx.lineWidth = u * .06;
+      roundRect(ctx, inner.x, inner.y, inner.w, inner.h, u * .35);
+      ctx.stroke();
+    });
+    const ink = '#161310';
+    const left = inner.x + u * .55;
+    const right = inner.x + inner.w - u * .55;
+    ctx.textBaseline = 'alphabetic';
+
+    // Top row: stage, name, HP and the energy symbol.
+    const stage = zh ? '基础' : 'BASIC';
+    font(ctx, 900, u * .38, SANS, u * .06, stage);
+    const sw = measure(ctx, stage) + u * .7;
+    ctx.fillStyle = metal(ctx, inner.y + u * .3, inner.y + u * 1.1, 'silver');
+    roundRect(ctx, left - u * .15, inner.y + u * .16, sw, u * .62, u * .31);
+    ctx.fill();
+    ctx.fillStyle = '#1c1c1c';
+    ctx.textAlign = 'left';
+    ctx.fillText(stage, left + u * .2, inner.y + u * .62);
+    const hpText = String(T.hp);
+    const er = u * .74;
+    const ex = right - er;
+    const ey = inner.y + u * 1.32;
+    energy(ctx, T.type, ex, ey, er);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#b3121b';
+    const hs = fit(ctx, hpText, u * 2.6, 400, u * 1.3, DISPLAY, u * .02);
+    ctx.fillText(hpText, ex - er - u * .2, ey + hs * .42);
+    const hpw = measure(ctx, hpText);
+    font(ctx, 900, u * .48, SANS, u * .02);
+    ctx.fillText('HP', ex - er - u * .3 - hpw, ey + hs * .42);
+    const nameRoom = ex - er - u * 1.4 - hpw - u * 1.1 - left;
+    const title = text.customName || team.name;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = ink;
+    const ns = fit(ctx, title, nameRoom, 900, u * 1.1, SANS, u * .01);
+    ctx.fillText(title, left, ey + ns * .4);
+    // The Chinese name small beside it, when the card is not printed in Chinese.
+    if (!zh && team.cn && !text.customName) {
+      const nw = measure(ctx, title);
+      const room = nameRoom - nw - u * .3;
+      if (room > u * 1.2) {
+        ctx.fillStyle = 'rgba(22,19,16,.7)';
+        fit(ctx, team.cn, room, 800, u * .52, SANS);
+        ctx.fillText(team.cn, left + nw + u * .3, ey + ns * .4);
+      }
+    }
+
+    // The art in a gilt frame.
+    const fr = u * .3;
+    ctx.save();
+    shadow(ctx, u * .8, true);
+    ctx.fillStyle = metal(ctx, area.y - fr, area.y + area.h + fr, info.gold ? 'gold' : 'silver');
+    ctx.fillRect(area.x - fr, area.y - fr, area.w + fr * 2, area.h + fr * 2);
+    shadow(ctx, u, false);
+    ctx.restore();
+    const portrait = text.sample && text.mark && text.logo && !text.logo.nameBadge ? text.logo : null;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(area.x, area.y, area.w, area.h);
+    ctx.clip();
+    if (portrait && !portrait.photoStill) {
+      // No photo yet: the character on a scene in its type's colours.
+      const sky = ctx.createRadialGradient(area.x + area.w * .5, area.y + area.h * .45, 0, area.x + area.w * .5, area.y + area.h * .45, area.w * .75);
+      sky.addColorStop(0, mix(type.c, '#ffffff', .75));
+      sky.addColorStop(.6, mix(type.c, '#ffffff', .25));
+      sky.addColorStop(1, mix(type.c, '#000000', .35));
+      ctx.fillStyle = sky;
+      ctx.fillRect(area.x, area.y, area.w, area.h);
+      ctx.globalAlpha = .18;
+      ctx.fillStyle = '#ffffff';
+      for (let k = 0; k < 18; k++) {
+        const a = k / 18 * TAU;
+        ctx.beginPath();
+        ctx.moveTo(area.x + area.w / 2, area.y + area.h * .5);
+        ctx.arc(area.x + area.w / 2, area.y + area.h * .5, area.w, a, a + TAU / 36);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      const s = Math.min(area.w * .86 / portrait.width, area.h * .9 / portrait.height);
+      const pw = portrait.width * s;
+      const ph = portrait.height * s;
+      ctx.drawImage(portrait, area.x + (area.w - pw) / 2, area.y + area.h - ph - area.h * .03, pw, ph);
+    } else if (portrait) {
+      const {sx, sy, sw: cw, sh} = crop(portrait, area, .5, .4);
+      ctx.drawImage(portrait, sx, sy, cw, sh, area.x, area.y, area.w, area.h);
+    } else {
+      text.drawPhoto(area);
+      if (text.mark) photoMarks(ctx, text.logo, area, u * 1.4, 'tr', null);
+    }
+    // Holo art on the numbered pulls and up.
+    if (info.rarity !== 'base' && info.rarity !== 'chrome') foilOnPhoto(ctx, team, info, area, .3);
+    lightUp(ctx, info, rand, area.x, area.y, area.w, area.h, u, .45);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(0,0,0,.35)';
+    ctx.lineWidth = u * .05;
+    ctx.strokeRect(area.x, area.y, area.w, area.h);
+    serialStamp(ctx, info, area.x + area.w - u * .3, area.y + u * .3, u * .72, words, 'right');
+    if (info.mem) {
+      const pw = u * 3.9;
+      const ph = u * 2.9;
+      relic(ctx, team, info, area.x + area.w - pw - u * .3, area.y + area.h - ph - u * .3, pw, ph, u, text, words);
+    }
+    autograph(ctx, info, text, words, area.x + u * .6, area.y + area.h - u * 1.9, area.w * (info.mem ? .55 : .75), u);
+
+    // The ribbon under the art: number, kind, and the character's file.
+    const ry = area.y + area.h + fr + u * .22;
+    const rh = u * .78;
+    ctx.fillStyle = metal(ctx, ry, ry + rh, 'silver');
+    ctx.beginPath();
+    ctx.moveTo(area.x + u * .6, ry);
+    ctx.lineTo(area.x + area.w - u * .6, ry);
+    ctx.lineTo(area.x + area.w - u * .2, ry + rh / 2);
+    ctx.lineTo(area.x + area.w - u * .6, ry + rh);
+    ctx.lineTo(area.x + u * .6, ry + rh);
+    ctx.lineTo(area.x + u * .2, ry + rh / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#26221d';
+    ctx.textAlign = 'center';
+    fit(ctx, T.ribbon, area.w - u * 1.6, 700, u * .4, SANS, u * .02);
+    ctx.fillText(T.ribbon, area.x + area.w / 2, ry + rh * .68);
+
+    // The ability and the attacks, spread over the room down to the foot rows.
+    const top = ry + rh + u * .35;
+    const foot = inner.y + inner.h - u * 4.85;
+    const blocks = [];
+    const effW = right - left - u * .3;
+    if (T.ability) blocks.push({kind: 'ability', h: u * 1.25 + (T.ability[1] ? u * .62 * Math.min(2, lines(ctx, T.ability[1], effW, u)) : 0)});
+    T.moves.forEach(move => blocks.push({kind: 'move', move, h: u * 1.35 + (move.effect ? u * .58 * Math.min(2, lines(ctx, move.effect, effW, u)) : 0)}));
+    let room = foot - top - blocks.reduce((sum, b) => sum + b.h, 0);
+    while (room < 0 && blocks.length > 2) {
+      room += blocks.shift().h;
+    }
+    const step = Math.max(0, room) / (blocks.length + 1);
+    let y = top + step;
+    blocks.forEach((b, k) => {
+      if (b.kind === 'ability') {
+        const word = zh ? '特性' : 'Ability';
+        font(ctx, 900, u * .46, SANS, u * .02, word);
+        const aw = measure(ctx, word) + u * .8;
+        ctx.fillStyle = '#c4161c';
+        roundRect(ctx, left, y + u * .1, aw, u * .78, u * .2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'left';
+        ctx.fillText(word, left + u * .4, y + u * .66);
+        ctx.fillStyle = '#b3121b';
+        fit(ctx, T.ability[0], right - left - aw - u * .4, 900, u * .7, SANS, u * .01);
+        ctx.fillText(T.ability[0], left + aw + u * .35, y + u * .75);
+        if (T.ability[1]) {
+          ctx.fillStyle = ink;
+          font(ctx, 600, u * .42, SANS, u * .01);
+          wrapLines(ctx, T.ability[1], effW, 2).forEach((line, n) => ctx.fillText(line, left + u * .15, y + u * 1.5 + n * u * .58));
+        }
+      } else {
+        const {move} = b;
+        const orbR = u * .36;
+        move.cost.forEach((kind, n) => energy(ctx, kind, left + orbR + n * orbR * 2.15, y + u * .58, orbR));
+        const nx = left + Math.max(3, move.cost.length) * orbR * 2.15 + u * .3;
+        ctx.textAlign = 'right';
+        ctx.fillStyle = ink;
+        const ds = fit(ctx, move.damage, u * 2.6, 400, u * 1.05, DISPLAY, u * .02);
+        ctx.fillText(move.damage, right, y + u * .58 + ds * .38);
+        const dw = measure(ctx, move.damage);
+        ctx.textAlign = 'left';
+        fit(ctx, move.name, right - dw - u * .5 - nx, 900, u * .68, SANS, u * .01);
+        ctx.fillText(move.name, nx, y + u * .82);
+        if (move.effect) {
+          font(ctx, 600, u * .4, SANS, u * .01);
+          ctx.fillStyle = 'rgba(22,19,16,.86)';
+          wrapLines(ctx, move.effect, effW, 2).forEach((line, n) => ctx.fillText(line, left + u * .15, y + u * 1.5 + n * u * .56));
+        }
+      }
+      y += b.h + step;
+      if (k < blocks.length - 1) {
+        ctx.fillStyle = 'rgba(22,19,16,.28)';
+        ctx.fillRect(left, y - step / 2 - u * .05, right - left, Math.max(1, u * .04));
+      }
+    });
+
+    // Weakness, resistance and retreat.
+    const wy = foot + u * .2;
+    ctx.fillStyle = 'rgba(22,19,16,.55)';
+    ctx.fillRect(left, wy, right - left, Math.max(1, u * .05));
+    const cells = [[zh ? '弱点' : 'weakness', T.weak, '×2'], [zh ? '抗性' : 'resistance', T.resist, T.resist ? '-30' : ''], [zh ? '撤退' : 'retreat', null, '']];
+    const cw = (right - left) / 3;
+    cells.forEach(([label, kind, value], k) => {
+      const cx = left + cw * k;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(22,19,16,.75)';
+      fit(ctx, label, cw - u * .2, 800, u * .36, SANS, u * .02);
+      ctx.fillText(label, cx + u * .1, wy + u * .62);
+      const iy = wy + u * 1.25;
+      if (k === 2) {
+        for (let n = 0; n < T.retreat; n++) energy(ctx, 'colorless', cx + u * .45 + n * u * .66, iy, u * .27);
+      } else if (kind) {
+        energy(ctx, kind, cx + u * .45, iy, u * .27);
+        ctx.fillStyle = ink;
+        font(ctx, 900, u * .44, SANS);
+        ctx.fillText(value, cx + u * .85, iy + u * .16);
+      }
+    });
+
+    // Flavour text in a thin box, the illustrator and the set marks beside it.
+    const by = wy + u * 1.75;
+    const bh = inner.y + inner.h - u * .95 - by;
+    const bx = left + (right - left) * .36;
+    const bw = right - bx;
+    ctx.strokeStyle = metal(ctx, by, by + bh, info.gold ? 'gold' : 'silver');
+    ctx.lineWidth = u * .1;
+    roundRect(ctx, bx, by, bw, bh, u * .2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.fill();
+    ctx.fillStyle = ink;
+    ctx.textAlign = 'left';
+    font(ctx, 600, u * .4, SANS, u * .01);
+    const flavourLines = wrapLines(ctx, T.flavour, bw - u * .5, Math.max(1, Math.floor((bh - u * .2) / (u * .54))));
+    const fy = by + (bh - flavourLines.length * u * .54) / 2 + u * .42;
+    flavourLines.forEach((line, n) => ctx.fillText(line, bx + u * .25, fy + n * u * .54));
+    const lw = bx - left - u * .3;
+    ctx.fillStyle = 'rgba(22,19,16,.8)';
+    fit(ctx, zh ? '插画：HOT 工作室' : 'Illus. HOT Studio', lw, 700, u * .36, SANS, u * .02);
+    ctx.fillText(zh ? '插画：HOT 工作室' : 'Illus. HOT Studio', left, by + u * .45);
+    // Regulation letter, set symbol, number in set and rarity.
+    const my = by + u * 1.2;
+    ctx.fillStyle = 'rgba(22,19,16,.9)';
+    roundRect(ctx, left, my - u * .29, u * .56, u * .56, u * .1);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    fit(ctx, T.mark, u * .44, 900, u * .4, SANS);
+    ctx.fillText(T.mark, left + u * .28, my + u * .14);
+    setMark(ctx, left + u * 1.05, my, u * .3, type.c);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = ink;
+    const no = `${String(T.number).padStart(3, '0')}/${String(T.setSize).padStart(3, '0')}`;
+    fit(ctx, no, lw - u * 2.4, 800, u * .4, SANS, u * .02);
+    ctx.fillText(no, left + u * 1.5, my + u * .14);
+    rarityMark(ctx, info, left + u * 1.75 + measure(ctx, no), my, u * .22);
+    ctx.fillStyle = 'rgba(22,19,16,.62)';
+    fit(ctx, `${info.set} · ${info.name}`, lw, 800, u * .3, SANS, u * .04);
+    ctx.fillText(`${info.set} · ${info.name}`, left, by + bh - u * .12);
+    // Fine print along the foot of the body.
+    microPrint(ctx, `©${new Date().getFullYear()} HOT 主场相框 · ${upper(team.group)} · ${info.name}${info.serial ? ` · ${info.serial}` : ''} · ${text.season}${text.date ? ` · ${text.date}` : ''}`,
+      inner.x + inner.w / 2, inner.y + inner.h - u * .32, inner.w - u * 1.2, u * .26, 'rgba(22,19,16,.6)', 0, 'center');
   },
 
   // Chrome: the foil as a frame round the photo, a slanted nameplate.
@@ -3600,7 +4231,7 @@ const fronts = {
     fit(ctx, info.set, tw, 900, u * .42, SANS, u * .14);
     ctx.fillText(info.set, tx, by + bh - u * .45);
     ctx.globalAlpha = 1;
-    rookieMark(ctx, info.rookie === 'shield' ? 'rated' : info.rookie, F.x + u * 3, by + bh * .45, u * 3.7, team, words);
+    rookieMark(ctx, info.rookie === 'shield' || info.rookie === 'banner' ? 'rated' : info.rookie, F.x + u * 3, by + bh * .45, u * 3.7, team, words);
     // Under the banner: the team and position, then the facts.
     const ly = by + bh + u * .95;
     ctx.textAlign = 'center';
@@ -3891,6 +4522,7 @@ function frontArea(L, design) {
   const F = L.front;
   const u = F.w / 20;
   const b = L.b;
+  if (design === 'tcg') return {x: F.x + u * 1.45, y: F.y + u * 3.3, w: F.w - u * 2.9, h: u * 10.9};
   if (design === 'archive') return {x: F.x + u * 1.8, y: F.y + u * 4.28, w: F.w - u * 3.6, h: F.h - u * 10.1};
   if (design === 'full') return {x: F.x, y: F.y, w: F.w, h: F.h};
   if (design === 'skyline') return {x: F.x + b, y: F.y + b, w: F.w - b * 2, h: F.h * .7};
@@ -4075,13 +4707,21 @@ function backClassic(ctx, team, text, L, info) {
     // Each fact: its label in the team colour, then the words, wrapped to fit.
     let line = 0;
     const room = Math.max(1, Math.floor((boxH - u * 1.3) / (u * .82)));
-    info.facts.forEach(([label, value], k) => {
+    const pool = info.more || info.facts;
+    pool.forEach(([label, value], k) => {
       const left = room - line;
       if (left < 1) return;
-      const lines = k === info.facts.length - 1 ? Math.min(3, left) : Math.min(2, Math.max(1, left - 1));
-      ctx.fillStyle = ink;
+      ctx.fillStyle = '#1b1b1b';
+      font(ctx, 700, u * .58, SANS, u * .02);
       font(ctx, 900, u * .46, SANS, u * .06, label);
       const lw = measure(ctx, label) + u * .35;
+      font(ctx, 700, u * .58, SANS, u * .02);
+      const need = wrapLines(ctx, value, wIn - u * 1, 3, wIn - u * 1 - lw).length;
+      // Past the first two, a fact goes in only when it fits whole.
+      if (k >= 2 && need > left) return;
+      const lines = k === pool.length - 1 ? Math.min(3, left) : Math.min(k < 2 ? 2 : 3, Math.max(1, left - (k < 1 ? 1 : 0)));
+      ctx.fillStyle = ink;
+      font(ctx, 900, u * .46, SANS, u * .06, label);
       const ty = y + u * 1.8 + line * u * .82;
       ctx.fillText(label, x0 + u * .5, ty);
       ctx.fillStyle = '#1b1b1b';
@@ -4092,6 +4732,20 @@ function backClassic(ctx, team, text, L, info) {
         line += 1;
       });
     });
+    // Lines to spare: the name across the foot of the box, as a caption.
+    const spare = boxH - u * 1.3 - line * u * .82;
+    if (spare > u * .9) {
+      const top = y + u * 1.3 + line * u * .82;
+      ctx.fillStyle = fill === PAPER ? ink : fill;
+      ctx.globalAlpha = .3;
+      ctx.fillRect(x0 + u * .5, top, wIn - u, Math.max(1, u * .04));
+      ctx.globalAlpha = 1;
+      ctx.textAlign = 'center';
+      const name = zh ? team.name : upper(team.name);
+      const cs = fit(ctx, name, wIn - u * 1.2, 400, Math.min(u * 1.1, spare * .55), DISPLAY, u * .04);
+      ctx.fillText(name, x0 + wIn / 2, top + (spare + cs * .72) / 2);
+      ctx.textAlign = 'left';
+    }
   }
 
   // Slogan.
@@ -4278,6 +4932,18 @@ function triviaBox(ctx, facts, x, y, w, h, u, look, title) {
     wrapLines(ctx, value, w - u * 1.3 - lw, Math.min(3, room)).forEach((line, k) => ctx.fillText(line, x + u * .8 + lw, ty + k * lh));
     ty += lh * Math.min(3, wrapLines(ctx, value, w - u * 1.3 - lw, 3).length) + u * .25;
   }
+  // Room left at the foot of the box: the call in big type, as a cartoon caption.
+  const left = y + h - u * .25 - ty;
+  if (look.call && left > u * 1.1) {
+    ctx.fillStyle = look.line;
+    ctx.globalAlpha = .35;
+    ctx.fillRect(x + u * .5, ty - u * .1, w - u, Math.max(1, u * .04));
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'center';
+    const cs = fit(ctx, look.call, w - u * 1.2, 400, Math.min(u * 1.1, left * .62), DISPLAY, u * .04);
+    ctx.fillText(look.call, x + w / 2, ty + (left + cs * .72) / 2);
+    ctx.textAlign = 'left';
+  }
 }
 
 // An old-style ruled record: labels across the top, the figures under them.
@@ -4290,7 +4956,7 @@ function recordTable(ctx, cells, x, y, w, h, u, ink, dark, title) {
   fit(ctx, title, w, 900, u * .42, SANS, u * .14);
   ctx.fillText(title, x, y + u * .5);
   const ty = y + th;
-  const rowH = Math.min(u * 1.1, (h - th) / 2);
+  const rowH = Math.min(u * 1.45, (h - th) / 2);
   ctx.fillStyle = ink;
   ctx.fillRect(x, ty, w, rowH);
   const cw = w / cells.length;
@@ -4444,8 +5110,8 @@ const backs = {
       y += info.legends.length * u * .95 + u * .3;
     }
     // Trivia in the room left above the foot.
-    triviaBox(ctx, info.facts, x0, y + u * .3, wIn, Math.min(u * 4.4, B.y + B.h - u * 2.9 - y), u,
-      {bg: 'rgba(255,255,255,.7)', line: ink, label: ink, ink: '#1b1b1b'}, words.trivia);
+    triviaBox(ctx, info.more || info.facts, x0, y + u * .3, wIn, Math.min(u * 6.2, B.y + B.h - u * 2.9 - y), u,
+      {bg: 'rgba(255,255,255,.7)', line: ink, label: ink, ink: '#1b1b1b', call: zh ? `「${text.slogan}」` : `“${text.slogan}”`}, words.trivia);
     backFoot(ctx, team, text, B, info, r, u, words);
   },
 
@@ -4583,8 +5249,8 @@ const backs = {
     });
     // The slogan in a slanted bar, and trivia in the room above it.
     const sy = fy - u * 1.6;
-    triviaBox(ctx, info.facts, x0, y + u * .5, wIn, Math.min(u * 4.6, sy - u * .5 - y - u * .5), u,
-      {bg: '#ffffff', line: fill === '#ffffff' ? ink : fill, label: ink, ink: '#1b1b1b'}, words.trivia);
+    triviaBox(ctx, info.more || info.facts, x0, y + u * .5, wIn, Math.min(u * 6, sy - u * .5 - y - u * .5), u,
+      {bg: '#ffffff', line: fill === '#ffffff' ? ink : fill, label: ink, ink: '#1b1b1b', call: zh ? team.name : upper(team.name)}, words.trivia);
     ctx.save();
     ctx.translate(x0, sy);
     ctx.transform(1, 0, -.2, 1, 0, 0);
@@ -4672,7 +5338,8 @@ const backs = {
     const ey = y + panelH * .55;
     if (text.logo) sticker(ctx, text.logo, ex, ey, u * 3.6, u * .7, -.06);
     else drawMotif(ctx, team.motif, ex, ey, u * 3.4, team.ink, team.c1, team.accent);
-    const fact = info.facts[0] || [words.story, team.story];
+    const said = (info.more || info.facts).slice(0, 2);
+    if (!said.length) said.push([words.story, team.story]);
     const bx = x0 + u * 4.8;
     const bw = wIn - u * 5.3;
     ctx.fillStyle = '#ffffff';
@@ -4685,12 +5352,26 @@ const backs = {
     ctx.lineTo(bx + u * .1, y + panelH * .7);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = fill;
-    fit(ctx, fact[0], bw - u, 900, u * .44, SANS, u * .12);
-    ctx.fillText(fact[0], bx + u * .5, y + u * 1.3);
-    ctx.fillStyle = dark;
-    font(ctx, 700, u * .58, SANS, u * .02);
-    wrapLines(ctx, fact[1], bw - u, 4).forEach((line, k) => ctx.fillText(line, bx + u * .5, y + u * 2.15 + k * u * .8));
+    // One fact large, or two when both fit the bubble.
+    font(ctx, 700, u * .54, SANS, u * .02);
+    const sets = said.map(([label, value]) => [label, wrapLines(ctx, value, bw - u, 3)]);
+    const two = sets.length > 1 && sets[0][1].length + sets[1][1].length <= 4;
+    let by = y + u * 1.3;
+    (two ? sets : [[sets[0][0], wrapLines(ctx, said[0][1], bw - u, 4)]]).forEach(([label, lines], k) => {
+      if (k) {
+        ctx.fillStyle = dark;
+        ctx.globalAlpha = .25;
+        ctx.fillRect(bx + u * .5, by - u * .55, bw - u, Math.max(1, u * .04));
+        ctx.globalAlpha = 1;
+      }
+      ctx.fillStyle = fill;
+      fit(ctx, label, bw - u, 900, u * .42, SANS, u * .12);
+      ctx.fillText(label, bx + u * .5, by);
+      ctx.fillStyle = dark;
+      font(ctx, 700, u * (two ? .5 : .58), SANS, u * .02);
+      lines.forEach((line, n) => ctx.fillText(line, bx + u * .5, by + u * .78 + n * u * (two ? .66 : .8)));
+      by += u * .78 + lines.length * u * .66 + u * .7;
+    });
     y += panelH + u * .7;
     // Ruled table of moments in the two inks.
     ctx.fillStyle = fill;
@@ -4717,14 +5398,16 @@ const backs = {
     ctx.fillRect(x0, y, wIn, Math.max(1, u * .04));
     // The ratings as an old ruled record, in what room is left.
     const cells = info.rating.attrs.concat([['OVR', info.rating.ovr]]);
-    recordTable(ctx, cells, x0, y + u * .5, wIn, Math.min(u * 3, fy - u * 1.3 - y - u * .5), u, fill, dark,
+    const th = Math.min(u * 3.6, fy - u * 1.3 - y - u * .5);
+    recordTable(ctx, cells, x0, y + u * .5, wIn, th, u, fill, dark,
       zh ? '能力档案' : 'SCOUTING RECORD');
+    const tableEnd = th < u * 2.4 ? y : y + u * .5 + u * .7 + Math.min(u * 1.45, (th - u * .7) / 2) * 2;
     // The slogan and the fine print, printed in ink straight on the board.
     ctx.fillStyle = fill;
     ctx.textAlign = 'center';
     const call = zh ? `「${text.slogan}」` : `“${text.slogan}”`;
-    fit(ctx, call, wIn, 400, u * .85, VARSITY, u * .03);
-    ctx.fillText(call, B.x + B.w / 2, fy - u * .2);
+    const cs = fit(ctx, call, wIn, 400, Math.min(u * 1.2, Math.max(u * .85, (fy - tableEnd) * .45)), VARSITY, u * .03);
+    ctx.fillText(call, B.x + B.w / 2, Math.min(fy - u * .2, (tableEnd + fy + cs * .5) / 2));
     ctx.fillStyle = dark;
     const fine = `${words.parallel} · ${info.name}${info.serial ? ` · ${info.serial}` : ''} · © ${new Date().getFullYear()} HOT 主场相框 · ${info.set}`;
     fit(ctx, fine, wIn, 700, u * .38, SANS, u * .03);
