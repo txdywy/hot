@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=17';
-import {isZh} from './teams.js?v=17';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=17';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=18';
+import {isZh} from './teams.js?v=18';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=18';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -286,7 +286,12 @@ function cutOut(logo, edge) {
 }
 
 // The logo as a die-cut sticker, size being its long side, tilted by `turn`.
+// Characters get their art bigger than a team's crest: the picture is the point.
+let logoBoost = 1;
+const PLAY_GROUPS = new Set(['ultraman', 'pokemon', 'slamdunk', 'tsubasa', 'hogwarts', 'yugioh', 'dragonball', 'onepiece', 'naruto', 'hok', 'genshin']);
+
 function sticker(ctx, logo, cx, cy, size, m, turn = 0, edge = '#ffffff') {
+  size *= logoBoost;
   const art = cutOut(logo, edge);
   const scale = size / Math.max(art.width, art.height);
   ctx.save();
@@ -299,6 +304,8 @@ function sticker(ctx, logo, cx, cy, size, m, turn = 0, edge = '#ffffff') {
 
 // The logo in one colour, faint, as a watermark.
 function watermark(ctx, logo, cx, cy, size, colour, alpha, turn = 0) {
+  size *= logoBoost > 1 ? 1.25 : 1;
+  alpha *= logoBoost > 1 ? 1.4 : 1;
   const art = flat(logo, colour);
   const scale = size / Math.max(art.width, art.height);
   ctx.save();
@@ -4921,7 +4928,12 @@ export function paint(canvas, source, team, style, text, L, look = {}) {
       ctx.drawImage(source, cut.sx, cut.sy, cut.sw, cut.sh, area.x, area.y, area.w, area.h);
     },
   });
-  painters[style](ctx, team, words, L);
+  logoBoost = PLAY_GROUPS.has(team.group) ? 1.35 : 1;
+  try {
+    painters[style](ctx, team, words, L);
+  } finally {
+    logoBoost = 1;
+  }
   if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
   ctx.textAlign = 'left';
 }
