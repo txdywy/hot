@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=18';
-import {isZh} from './teams.js?v=18';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=18';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=19';
+import {isZh} from './teams.js?v=19';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=19';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -63,7 +63,7 @@ const say = team => {
 export const wordsFor = say;
 // Series that are told as a story, not as a league (Slam Dunk and Captain Tsubasa
 // play real sports, so they keep the sports words).
-const STORY_GROUPS = ['ultraman', 'pokemon', 'yugioh', 'dragonball', 'onepiece', 'naruto', 'hogwarts', 'hok', 'genshin'];
+const STORY_GROUPS = ['ultraman', 'pokemon', 'yugioh', 'dragonball', 'onepiece', 'naruto', 'hogwarts', 'hok', 'genshin', 'chiikawa', 'gta6'];
 export const storyGroup = team => STORY_GROUPS.indexOf(team.group) >= 0;
 const upper = text => String(text).toUpperCase();
 
@@ -288,10 +288,11 @@ function cutOut(logo, edge) {
 // The logo as a die-cut sticker, size being its long side, tilted by `turn`.
 // Characters get their art bigger than a team's crest: the picture is the point.
 let logoBoost = 1;
-const PLAY_GROUPS = new Set(['ultraman', 'pokemon', 'slamdunk', 'tsubasa', 'hogwarts', 'yugioh', 'dragonball', 'onepiece', 'naruto', 'hok', 'genshin']);
+const PLAY_GROUPS = new Set(['ultraman', 'pokemon', 'slamdunk', 'tsubasa', 'hogwarts', 'yugioh', 'dragonball', 'onepiece', 'naruto', 'hok', 'genshin', 'chiikawa', 'gta6']);
 
 function sticker(ctx, logo, cx, cy, size, m, turn = 0, edge = '#ffffff') {
-  size *= logoBoost;
+  // A round name badge fills its whole box, so it reads bigger than cut-out art.
+  size *= logoBoost * (logo.nameBadge ? .86 : 1);
   const art = cutOut(logo, edge);
   const scale = size / Math.max(art.width, art.height);
   ctx.save();
@@ -1337,6 +1338,20 @@ const SERIES = {
     inserts: ['提瓦特', '元素爆发', '七国巡游', '深境螺旋', '命之座'],
     bursts: ['元素爆发！', '暴击！', '满命！', '砰！'],
     relics: {zh: {jersey: '衣角碎片', logo: '神之眼徽记', tag: '冒险家协会吊牌', sneaker: '靴面物料'}},
+  },
+  chiikawa: {
+    attrs: {en: ['CUTE', 'BRAVE', 'APPETITE', 'LUCK', 'WORK', 'FRIENDS'], zh: ['可爱', '勇气', '食量', '运气', '打工', '友情']},
+    levels: [['WEEDING CREW', '除草小队'], ['TOUBATSU LICENSE', '讨伐证'], ['TOUBATSU NO. 1', '讨伐第一']],
+    inserts: ['LITTLE & CUTE', 'WEEDING DAY', 'TOUBATSU', 'RAMEN 郎', 'PICNIC'],
+    bursts: ['WAAH!', 'YAHA!', 'URA!', 'HAAA~'],
+    relics: {en: {jersey: 'PAJAMA SWATCH', logo: 'TOUBATSU BADGE', tag: 'PLUSH TAG', sneaker: 'PICNIC MAT'}, zh: {jersey: '睡衣碎片', logo: '讨伐徽章', tag: '玩偶吊牌', sneaker: '野餐垫物料'}},
+  },
+  gta6: {
+    attrs: {en: ['DRIVE', 'AIM', 'STEALTH', 'STAMINA', 'HEIST', 'HEAT'], zh: ['驾驶', '枪法', '潜行', '体力', '抢劫', '通缉']},
+    levels: [['STREET', '街头'], ['CREW', '团伙'], ['KINGPIN', '大佬']],
+    inserts: ['VICE CITY', 'ONLY IN LEONIDA', 'LEONIDA KEYS', 'WANTED', 'NEON NIGHTS'],
+    bursts: ['WASTED!', 'BUSTED!', 'BOOM!', 'RESPECT +'],
+    relics: {en: {jersey: 'BEACH SHIRT SWATCH', logo: 'VICE PATCH', tag: 'EVIDENCE TAG', sneaker: 'GETAWAY TIRE'}, zh: {jersey: '花衬衫碎片', logo: '罪恶都市补丁', tag: '证物标签', sneaker: '跑路轮胎物料'}},
   },
   slamdunk: {
     inserts: ['INTER-HIGH', 'KANAGAWA', 'REBOUND KING', 'BUZZER BEATER', 'GENIUS'],

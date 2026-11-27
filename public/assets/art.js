@@ -747,6 +747,35 @@ export const motifs = {
     circle(ctx, 50, 50, 15, '#1a1a1a');
     circle(ctx, 50, 50, 9, '#f4f4f4');
   },
+  flower(ctx, fg, bg) {
+    // A five-petal flower, round and soft, with a centre dot.
+    for (let k = 0; k < 5; k++) {
+      const a = -Math.PI / 2 + k * TAU / 5;
+      circle(ctx, 50 + Math.cos(a) * 24, 50 + Math.sin(a) * 24, 21, fg);
+    }
+    circle(ctx, 50, 50, 15, bg);
+    circle(ctx, 50, 50, 9, fg);
+  },
+  palm(ctx, fg, bg) {
+    // A sunset disc with a palm tree against it.
+    circle(ctx, 56, 46, 36, fg);
+    ctx.fillStyle = bg;
+    for (let k = 0; k < 4; k++) ctx.fillRect(16, 52 + k * 9, 80, 3 + k);
+    ctx.strokeStyle = bg;
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(34, 96);
+    ctx.quadraticCurveTo(30, 60, 40, 28);
+    ctx.stroke();
+    ctx.lineWidth = 5;
+    for (const [dx, dy, cx, cy] of [[-30, 2, -16, -14], [26, -2, 12, -16], [-22, 20, -18, 2], [24, 18, 18, 0], [-4, -26, -6, -18]]) {
+      ctx.beginPath();
+      ctx.moveTo(40, 28);
+      ctx.quadraticCurveTo(40 + cx, 28 + cy, 40 + dx, 28 + dy);
+      ctx.stroke();
+    }
+  },
   colortimer(ctx, fg, bg) {
     // The Color Timer on an Ultra hero's chest: a glowing blue lens in a silver ring.
     circle(ctx, 50, 50, 46, '#c9d2dc');
@@ -1544,6 +1573,97 @@ export function venue(ctx, team, w, h) {
       ctx.stroke();
       for (const [x, y] of pts) star(ctx, cx + x * R, cy + y * R, u * 1.6, '#fff4cf', 4, .25);
     }
+  } else if (kind === 'meadow') {
+    // A picnic meadow: pastel grass, little flowers and a checked picnic cloth.
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#dff3d8');
+    g.addColorStop(1, '#bfe3b0');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    const cloth = Math.min(w, h) * .5;
+    const cell = cloth / 6;
+    ctx.save();
+    ctx.translate(w / 2, h * .55);
+    ctx.rotate(-.12);
+    for (let y = 0; y < 6; y++) {
+      for (let x = 0; x < 6; x++) {
+        ctx.fillStyle = (x + y) % 2 ? '#ffffff' : hexA(team.accent || team.c1, .55);
+        ctx.fillRect(-cloth / 2 + x * cell, -cloth / 2 + y * cell, cell, cell);
+      }
+    }
+    ctx.restore();
+    for (let k = 0; k < 60; k++) {
+      const x = (k * 61.7 % 100) / 100 * w;
+      const y = (k * 37.3 % 100) / 100 * h;
+      const r = u * (1 + (k % 3) * .4);
+      const c = ['#ffffff', '#ffd6e0', '#fff2a8', '#cfe6ff'][k % 4];
+      for (let p = 0; p < 5; p++) {
+        const a = p * TAU / 5;
+        circle(ctx, x + Math.cos(a) * r, y + Math.sin(a) * r, r * .8, c);
+      }
+      circle(ctx, x, y, r * .55, '#ffcf5a');
+    }
+  } else if (kind === 'vice') {
+    // A neon beach at sunset: the sun sinking into a striped sea, palms on the shore.
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#2a0b4a');
+    g.addColorStop(.45, '#ff2d95');
+    g.addColorStop(.62, '#ffb347');
+    g.addColorStop(.62, '#123a6b');
+    g.addColorStop(1, '#0a1a3a');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    const sea = h * .62;
+    const R = Math.min(w, h) * .24;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, w, sea);
+    ctx.clip();
+    const sun = ctx.createLinearGradient(0, sea - R * 2, 0, sea);
+    sun.addColorStop(0, '#fff176');
+    sun.addColorStop(1, '#ff6f61');
+    circle(ctx, w / 2, sea, R * 1.2, sun);
+    ctx.fillStyle = '#ff2d95';
+    for (let k = 1; k < 6; k++) ctx.fillRect(0, sea - R * 1.2 + k * R * .22, w, Math.max(2, k * u * .35));
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(45,226,230,.55)';
+    ctx.lineWidth = Math.max(1, u * .3);
+    for (let y = sea + u * 3, k = 1; y < h; y += u * 2 * k, k++) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+    for (let k = 0; k < 9; k++) {
+      const x = w / 2 + (k - 4) * w * .14;
+      ctx.beginPath();
+      ctx.moveTo(w / 2 + (k - 4) * u * 2, sea);
+      ctx.lineTo(x * 1.8 - w * .4, h);
+      ctx.stroke();
+    }
+    const palm = (x, s, flip) => {
+      ctx.save();
+      ctx.translate(x, sea);
+      ctx.scale(flip ? -s : s, s);
+      ctx.strokeStyle = '#14082a';
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(-4, -30, 6, -60);
+      ctx.stroke();
+      ctx.lineWidth = 2.5;
+      for (const [dx, dy, cx, cy] of [[-26, -50, -14, -72], [28, -54, 16, -74], [-20, -38, -18, -56], [24, -40, 20, -58], [2, -82, 0, -76]]) {
+        ctx.beginPath();
+        ctx.moveTo(6, -60);
+        ctx.quadraticCurveTo(cx, cy, dx, dy);
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+    palm(w * .1, u * .9, false);
+    palm(w * .9, u * 1.1, true);
+    palm(w * .2, u * .6, true);
   } else if (kind === 'battle') {
     // A battle field: mown grass, the halfway line and a Poké Ball at the centre.
     const band = Math.max(u * 11, 28);
