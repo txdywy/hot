@@ -210,3 +210,72 @@
 - 鬼灭之刃 7 张剧照从 16:9 裁成 4:3，以人物脸为中心。
 - 龙珠、咒术回战新加的 PNG 用 pngquant 压缩，三个系列从约 10.8MB 降到约 4.1MB。
 - 拉蒂兹的图只有 108×238，放大后会糊，以后有更大的官方图可以替换（替换后 `logoVersion` 加一）。
+
+## 海贼王造型与哈利·波特角色
+
+海贼王收录官网立绘、动画剧照，以及真人剧官网的漫画线稿和真人造型。哈利·波特收录电影剧照、吉姆·凯书籍插画和华纳官方 Q 版素材。
+
+| 系列 | ID | 造型 | 图源 |
+|---|---|---|---|
+| onepiece | `luffy` | 动画立绘 | [官方页面](https://one-piece.com/character/luffy/index.html) · [图片](https://one-piece.com/o/assets/images/anime/character/data/luffy/img.jpg) |
+| onepiece | `zoro` | 动画立绘 | [官方页面](https://one-piece.com/character/zoro/index.html) · [图片](https://one-piece.com/o/assets/images/anime/character/data/zoro/img.jpg) |
+| onepiece | `nami` | 动画立绘 | [官方页面](https://one-piece.com/character/nami/index.html) · [图片](https://one-piece.com/o/assets/images/anime/character/data/nami/img.jpg) |
+| onepiece | `sanji` | 动画立绘 | [官方页面](https://one-piece.com/character/sanji/index.html) · [图片](https://one-piece.com/o/assets/images/anime/character/data/sanji/img.jpg) |
+| onepiece | `ace` | 动画立绘 | [官方页面](https://one-piece.com/character/ace/) · [图片](https://one-piece.com/o/assets/images/anime/character/data/ace/ace_main_wanokuni.png) |
+| onepiece | `usopp` | 动画立绘 | [官方页面](https://one-piece.com/character/usopp/index.html) · [图片](https://one-piece.com/o/assets/images/anime/character/data/usopp/img.jpg) |
+| onepiece | `chopper` | 动画立绘 | [官方页面](https://one-piece.com/character/chopper/index.html) · [图片](https://one-piece.com/o/assets/images/anime/character/data/chopper/img.jpg) |
+| onepiece | `robin` | 动画立绘 | [官方页面](https://one-piece.com/character/robin/index.html) · [图片](https://one-piece.com/o/assets/images/anime/character/data/robin/img.jpg) |
+| onepiece | `franky` | 动画立绘 | [官方页面](https://one-piece.com/character/franky/index.html) · [图片](https://one-piece.com/o/assets/images/anime/character/data/franky/img.jpg) |
+| onepiece | `brook` | 动画立绘 | [官方页面](https://one-piece.com/character/brook/index.html) · [图片](https://one-piece.com/o/assets/images/anime/character/data/brook/img.jpg) |
+| onepiece | `jinbe` | 动画立绘 | [官方页面](https://one-piece.com/character/Jinbe/index.html) · [图片](https://one-piece.com/o/assets/images/anime/character/data/Jinbe/img.jpg) |
+| hogwarts | `harry-potter` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/harry-potter) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/6fjvdemYmo7kJ2V5P5Xqhc/1fc2b0b396123f891e858069e00d0d2b/hp-f6-harry-at-great-hall-table-web-fact-file-image.jpg?w=1100) |
+| hogwarts | `hermione-granger` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/hermione-granger) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/4tNCXEveHBZWp1AgccZg52/39c30ab4bc67842362b78ca5ab8e0eef/HP-F4-goblet-of-fire-hermione-great-hall-smiling-book-web-landscape?w=1100) |
+| hogwarts | `ron-weasley` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/ron-weasley) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/7EgY9XJPTahEXw9d2GaQJf/4626c44aa3d213edaf368a29f3643fff/ron-weasley_1_1800x1248.png?w=1100) |
+| hogwarts | `albus-dumbledore` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/albus-dumbledore) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/3BJZavhBZMxogQwDFJRGvi/d5bb755d86661e1e023a13e1640d8881/albus-dumbledore_2_1800x1248.png?w=1100) |
+| hogwarts | `severus-snape` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/severus-snape) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/toxlayPDePtX8yx2wvWun/b65f6acd9087031b1ff39461d8f22d0a/severus-snape_2_1800x1248.png?w=1100) |
+| hogwarts | `rubeus-hagrid` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/rubeus-hagrid) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/7JMTFJSRKaH6eJmfkz5cSW/d5580ee226f0ebe91120232eb8829913/rubeus-hagrid_4_1800x1248.png?w=1100) |
+| hogwarts | `draco-malfoy` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/draco-malfoy) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/UVem7q7StFtLiccc4W1Yq/43b76ab775914fa8536d6d3297725881/draco-malfoy_2_1800x1248.png?w=1100) |
+| hogwarts | `luna-lovegood` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/luna-lovegood) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/5YHzD6ve73jU2vEPQaTzEr/13ce606c8ae5d7842f86c1ef5fea38ea/luna-lovegood_4_1800x1248.png?w=1100) |
+| hogwarts | `neville-longbottom` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/neville-longbottom) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/22wGSJctwkiuADi2dzsJfY/03823e4dd3e2d379e3764558680aeda5/neville-longbottom_1_1800x1248.png?w=1100) |
+| hogwarts | `ginny-weasley` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/ginny-weasley) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/2gLG1c21U1NigisKwPq2GJ/9006f27bda86ec54cfd28de9c89c6e51/ginny-weasley_3_1800x1248.png?w=1100) |
+| hogwarts | `sirius-black` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/sirius-black) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/1rDt6sbCaazd6HdREpDR89/1c0fef1570094aadd4fb87230218db07/sirius-black_2_1800x1248.png?w=1100) |
+| hogwarts | `remus-lupin` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/remus-lupin) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/ponHm3tZ7uTYGW4c5QpzC/e713a92ef07f1967c93b22a0ffbbb4da/remus-lupin_1_1800x1248.png?w=1100) |
+| hogwarts | `minerva-mcgonagall` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/minerva-mcgonagall) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/10vCYwsiirHUgywDgQusjO/d9013a685666b7524f791998658765be/minerva-mcgonagall_1_1800x1248.png?w=1100) |
+| hogwarts | `lord-voldemort` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/lord-voldemort) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/bL0jwWRYbIyDAgsl8W8Qw/22772152beef835f111dbd91535971eb/lord-voldemort-tom-riddle_3_1800x1248.png?w=1100) |
+| hogwarts | `bellatrix-lestrange` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/bellatrix-lestrange) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/5v8CdkDZjS4L43gnkat8Cb/439b6dfd32b736cb83e1bf04047f3de1/bellatrix-lestrange_3_1800x1248.png?w=1100) |
+| hogwarts | `dobby` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/dobby) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/747HAr2uJS1Wat6CVOEzbH/0003d863999f6644e0b1e4d5cd5beb62/Dobby_3_1800x1248.png?w=1100) |
+| hogwarts | `hedwig` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/hedwig) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/1lfSwIWsmnMe4aXZYO9WZ2/7e7612e50ae3440f6a82a085fdcf0e90/hedwig_1_1800x1248.png?w=1100) |
+| hogwarts | `buckbeak` | 电影剧照 | [官方页面](https://www.harrypotter.com/fact-file/characters-and-pets/buckbeak) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/3QFGThB2e8LExbElV2AtfH/4bd532a9519d304f0a7cbf5b22663212/buckbeak_1_1800x1248.png?w=1100) |
+| hogwarts | `hogwarts-castle` | 书籍插画 | [官方页面](https://www.harrypotter.com/news/a-celebration-of-jim-kay) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/4K3Ae6KSLYeUgqCgwEsKE4/4f3ea3ec50324b542c535bebffb158a0/HP1_Hogwarts_South_elevation01.jpg?w=1250) |
+| onepiece | `luffy-gear5` | 五档尼卡 | [官方页面](https://one-piece.com/anime/62947/index.html) · [图片](https://one-piece.com/img/anime/tvanime_1071_1.png) |
+| onepiece | `luffy-comedy` | 搞笑表情 | [官方页面](https://one-piece.com/character/luffy/index.html) · [图片](https://one-piece.com/img/character/luffy/luffy_08.jpg) |
+| onepiece | `luffy-manga` | 漫画线稿 | [官方页面](https://live-action.onepiece-base.com/character/) · [图片](https://live-action.onepiece-base.com/assets/img/character/manga/luffy.webp) |
+| onepiece | `luffy-screen` | 真人剧版 | [官方页面](https://live-action.onepiece-base.com/character/) · [图片](https://live-action.onepiece-base.com/assets/img/character/photo/luffy1.webp) |
+| onepiece | `zoro-action` | 动画剑士 | [官方页面](https://one-piece.com/character/zoro/index.html) · [图片](https://one-piece.com/img/character/zoro/zoro_02.jpg) |
+| onepiece | `zoro-manga` | 漫画线稿 | [官方页面](https://live-action.onepiece-base.com/character/) · [图片](https://live-action.onepiece-base.com/assets/img/character/manga/zoro.webp) |
+| onepiece | `zoro-screen` | 真人剧版 | [官方页面](https://live-action.onepiece-base.com/character/) · [图片](https://live-action.onepiece-base.com/assets/img/character/photo/zoro1.webp) |
+| onepiece | `nami-comedy` | 搞笑表情 | [官方页面](https://one-piece.com/character/nami/index.html) · [图片](https://one-piece.com/img/character/nami/nami_08.jpg) |
+| onepiece | `nami-manga` | 漫画线稿 | [官方页面](https://live-action.onepiece-base.com/character/) · [图片](https://live-action.onepiece-base.com/assets/img/character/manga/nami.webp) |
+| onepiece | `nami-screen` | 真人剧版 | [官方页面](https://live-action.onepiece-base.com/character/) · [图片](https://live-action.onepiece-base.com/assets/img/character/photo/nami1.webp) |
+| onepiece | `sanji-comedy` | 搞笑表情 | [官方页面](https://one-piece.com/character/sanji/index.html) · [图片](https://one-piece.com/img/character/sanji/sanji_03.jpg) |
+| onepiece | `sanji-manga` | 漫画线稿 | [官方页面](https://live-action.onepiece-base.com/character/) · [图片](https://live-action.onepiece-base.com/assets/img/character/manga/sanji.webp) |
+| onepiece | `sanji-screen` | 真人剧版 | [官方页面](https://live-action.onepiece-base.com/character/) · [图片](https://live-action.onepiece-base.com/assets/img/character/photo/sanji1.webp) |
+| onepiece | `usopp-comedy` | 搞笑表情 | [官方页面](https://one-piece.com/character/usopp/index.html) · [图片](https://one-piece.com/img/character/usopp/usopp_02.jpg) |
+| onepiece | `usopp-sogeking` | 狙击王 | [官方页面](https://one-piece.com/character/usopp/index.html) · [图片](https://one-piece.com/img/character/usopp/usopp_09.jpg) |
+| onepiece | `usopp-manga` | 漫画线稿 | [官方页面](https://live-action.onepiece-base.com/character/) · [图片](https://live-action.onepiece-base.com/assets/img/character/manga/usopp.webp) |
+| onepiece | `usopp-screen` | 真人剧版 | [官方页面](https://live-action.onepiece-base.com/character/) · [图片](https://live-action.onepiece-base.com/assets/img/character/photo/usopp1.webp) |
+| onepiece | `chopper-comedy` | 星星眼 | [官方页面](https://one-piece.com/character/chopper/index.html) · [图片](https://one-piece.com/img/character/chopper/chopper_09.jpg) |
+| onepiece | `chopper-monster` | 怪物形态 | [官方页面](https://one-piece.com/character/chopper/index.html) · [图片](https://one-piece.com/img/character/chopper/chopper_07.jpg) |
+| hogwarts | `harry-kawaii` | 官方Q版 | [官方页面](https://www.harrypotter.com/news/harry-potter-characters-kawaii-designs) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/6mWwi4BAAMAWEcKCkuC2Wm/9cdcc766c7cf1d183334bb34e496dba0/Harry_Potter.png?w=1250) |
+| hogwarts | `hermione-kawaii` | 官方Q版 | [官方页面](https://www.harrypotter.com/news/harry-potter-characters-kawaii-designs) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/7uvSbEoXfi0yowuWOiUM0e/78a2f161545b981f0ec2416c357519d9/Harry_Potter.jpg?w=1250) |
+| hogwarts | `ron-kawaii` | 官方Q版 | [官方页面](https://www.harrypotter.com/news/harry-potter-characters-kawaii-designs) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/7uvSbEoXfi0yowuWOiUM0e/78a2f161545b981f0ec2416c357519d9/Harry_Potter.jpg?w=1250) |
+| hogwarts | `hagrid-kawaii` | 官方Q版 | [官方页面](https://www.harrypotter.com/news/harry-potter-characters-kawaii-designs) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/7uvSbEoXfi0yowuWOiUM0e/78a2f161545b981f0ec2416c357519d9/Harry_Potter.jpg?w=1250) |
+| hogwarts | `draco-kawaii` | 官方Q版 | [官方页面](https://www.harrypotter.com/news/harry-potter-characters-kawaii-designs) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/7uvSbEoXfi0yowuWOiUM0e/78a2f161545b981f0ec2416c357519d9/Harry_Potter.jpg?w=1250) |
+| hogwarts | `dobby-kawaii` | 官方Q版 | [官方页面](https://www.harrypotter.com/news/harry-potter-characters-kawaii-designs) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/7uvSbEoXfi0yowuWOiUM0e/78a2f161545b981f0ec2416c357519d9/Harry_Potter.jpg?w=1250) |
+| hogwarts | `hedwig-kawaii` | 官方Q版 | [官方页面](https://www.harrypotter.com/news/harry-potter-characters-kawaii-designs) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/7uvSbEoXfi0yowuWOiUM0e/78a2f161545b981f0ec2416c357519d9/Harry_Potter.jpg?w=1250) |
+| hogwarts | `hermione-book` | 书籍插画 | [官方页面](https://www.harrypotter.com/news/a-celebration-of-jim-kay) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/52vPQPYTWggsWiSoWyssoK/32d9cda1c415ad29a5a15415466e5fac/Hermione_-_Jim_Kay_1_.jpg?w=1250) |
+| hogwarts | `ron-book` | 书籍插画 | [官方页面](https://www.harrypotter.com/news/a-celebration-of-jim-kay) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/2t1DrvdQeZltnDQS6qgmLC/4b17ba72d5c0498fba3962cc50751050/jim-kay-goblet-of-fire-ron-weasley-hp4.jpg?w=1250) |
+| hogwarts | `hagrid-book` | 书籍插画 | [官方页面](https://www.harrypotter.com/features/jim-kay-interview-with-pottermore-correspondent-illustrated-edition) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/3m1LJzKg4UsWmuuCACkyCM/0b99a782148429efff8719e68d7da73c/Hagrid_-_Jim_Kay_1_.jpg?w=1250) |
+| hogwarts | `dumbledore-book` | 书籍插画 | [官方页面](https://www.harrypotter.com/features/jim-kay-interview-with-pottermore-correspondent-illustrated-edition) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/4wTk1FNvskWeOsqeY6MKuk/43beb248469378c8fe12db455bc42c3e/HP1_Dumbledore_portrait.jpg?w=1250) |
+| hogwarts | `dobby-book` | 书籍插画 | [官方页面](https://www.harrypotter.com/news/jim-kay-exclusive-harry-potter-and-the-chamber-of-secrets-illustrated-edition) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/7he7oSUPuMUa6GumeCg4aG/42f1e2cf0743150f53f7ed599a9e67b3/HP2_Dobby.jpg?w=1250) |
+| hogwarts | `buckbeak-book` | 书籍插画 | [官方页面](https://www.harrypotter.com/news/a-celebration-of-jim-kay) · [图片](https://contentful.harrypotter.com/usf1vwtuqyxm/3IDQy7xryg6gQ6c6KI4Egk/7508670ca2f6aebed5dd6c83f6c69fe3/HP3_Buckbeak-on-bed-_1__COMPRESSED.jpg?w=1250) |

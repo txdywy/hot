@@ -1,8 +1,8 @@
-import {groups, teams, styles, slogans, byId, logos, logoVersion, isZh} from './teams.js?v=26';
-import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=26';
-import {venue, kit, trim, drawMotif} from './art.js?v=26';
-import {photoDate, photoTurn, readStart} from './photo-date.js?v=26';
-import {openDialog, closeDialog, isOpen} from './dialog.js?v=26';
+import {groups, teams, styles, slogans, byId, logos, logoVersion, isZh} from './teams.js?v=27';
+import {layout, paint, crop, demoPhoto, luminance, fontFaces, titleLine, retiredLine, cardInfo, wordsFor} from './render.js?v=27';
+import {venue, kit, trim, drawMotif} from './art.js?v=27';
+import {photoDate, photoTurn, readStart} from './photo-date.js?v=27';
+import {openDialog, closeDialog, isOpen} from './dialog.js?v=27';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -169,8 +169,10 @@ function dateText() {
 }
 
 function words() {
+  const customName = state.name.trim().toUpperCase();
   return {
-    name: (state.name.trim() || 'HOME').toUpperCase(),
+    name: customName || 'HOME',
+    customName,
     number: state.number || state.team.number,
     slogan: state.slogan.trim() || state.team.slogan,
     date: dateText(),
@@ -299,7 +301,7 @@ function windowShape(source) {
 }
 
 function look() {
-  return {x: state.x, y: state.y, logo: logoFor(state.team), mark: state.mark};
+  return {x: state.x, y: state.y, logo: logoFor(state.team), mark: state.mark, sample: !own};
 }
 
 let frame = 0;
@@ -480,6 +482,7 @@ const playGroup = id => groups.some(item => item[0] === id && item[3] === 'play'
 function drawTeams() {
   const box = $('teams');
   box.classList.toggle('dragonball-roster', state.group === 'dragonball');
+  box.classList.toggle('variant-roster', state.group === 'onepiece' || state.group === 'hogwarts');
   box.setAttribute('aria-label', playGroup(state.group) ? '角色' : '主队');
   const cards = document.createDocumentFragment();
   for (const team of teams.filter(item => item.group === state.group)) {
@@ -669,8 +672,13 @@ function updateCardNote() {
   if (key === cardNoteKey) return;
   cardNoteKey = key;
   const info = cardInfo(state.team, state.seed);
-  $('draw-note').textContent = `这张：${info.label}`;
+  $('draw-finish').textContent = info.finishLabel;
+  $('draw-serial').textContent = info.serial;
+  $('draw-serial').hidden = !info.serial;
+  $('draw-details').textContent = info.details.join(' · ');
+  $('draw-details').hidden = !info.details.length;
   $('draw-note').dataset.tier = info.tier.id;
+  stage.dataset.tier = info.tier.id;
 }
 
 $('draw').addEventListener('click', () => {

@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=26';
-import {groups, isZh} from './teams.js?v=26';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=26';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=27';
+import {groups, isZh} from './teams.js?v=27';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=27';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -1277,6 +1277,11 @@ const HERO_RELICS = {
   en: {jersey: 'BATTLE SUIT SWATCH', logo: 'EMBLEM PATCH', tag: 'COSTUME TAG', sneaker: 'HERO BOOT', number: 'NUMBER PATCH', dual: 'DUAL RELIC'},
   zh: {jersey: '战衣碎片', logo: '徽记补丁', tag: '战衣洗标', sneaker: '战靴物料', number: '号码补丁', dual: '双物料'},
 };
+const ARCHIVE_CARDS = {
+  onepiece: {id: 'archive', en: 'WANTED FILE', zh: '航海悬赏', heading: 'WANTED', paper: '#f0d9aa', ink: '#352014', border: '#795137'},
+  hogwarts: {id: 'archive', en: 'SPELLBOUND', zh: '魔法典藏', heading: 'SPELLBOUND', paper: '#25203a', ink: '#f7e4b5', border: '#c09b62'},
+};
+
 const SERIES = {
   ultraman: {
     attrs: {en: ['POW', 'SPD', 'BEAM', 'DEF', 'TECH', 'LIGHT'], zh: ['力量', '速度', '光线', '防御', '技巧', '光能']},
@@ -1490,7 +1495,11 @@ export function cardInfo(team, seed) {
 
   // The design and how the card is shown.
   const showcase = rand() < .75 ? 'premium' : 'obsidian';
-  const design = auto && mem && rand() < .5 ? DESIGNS.find(item => item.id === showcase) : weighted(rand, DESIGNS);
+  const standard = auto && mem && rand() < .5 ? DESIGNS.find(item => item.id === showcase) : weighted(rand, DESIGNS);
+  // A separate roll leaves the finish, numbering and other traits of existing seeds intact.
+  const archive = ARCHIVE_CARDS[team.group];
+  const useArchive = archive && !(auto && mem) && seeded(hash(`${team.id}|${seed}|archive`))() < .29;
+  const design = useArchive ? archive : standard;
   const show = weighted(rand, SHOWS).id;
   const grade = weighted(rand, GRADES.map(([n, word, w]) => ({n, word, w})));
 
@@ -1538,18 +1547,20 @@ export function cardInfo(team, seed) {
   const known = (team.facts || []).slice();
   while (known.length && facts.length < 2) facts.push(known.splice(Math.floor(rand() * known.length), 1)[0]);
   while (trivia.length && facts.length < 2) facts.push(trivia.splice(Math.floor(rand() * trivia.length), 1)[0]);
-  const designZh = design.id === 'chrome' ? '' : {
+  const designZh = useArchive ? design.zh : design.id === 'chrome' ? '' : {
     full: '全幅', skyline: '城市', comic: '漫画', stained: '彩窗', premium: '珍藏',
     select: `精选${levelNames[1]}`, classic: '经典', rated: '评分', obsidian: '黑曜',
   }[design.id];
-  const label = [
-    nameZh, serialText, designZh ? `${designZh}版式` : '', auto ? '签字' : '', mem ? mem.zh : '',
+  const details = [
+    designZh ? `${designZh}版式` : '', auto ? '签字' : '', mem ? mem.zh : '',
     show === 'slab' ? `评级 ${grade.n}` : '',
-  ].filter(Boolean).join(' · ');
+  ].filter(Boolean);
+  const label = [nameZh, serialText, ...details].filter(Boolean).join(' · ');
   return {
     tier: {id: rarity}, rarity, gold: Boolean(gold), finish: finish ? finish.id : '', colour: colour ? colour.id : '',
     name: zh ? nameZh : name, run, serial: serialText, auto, mem, design: design.id,
     set: zh ? design.zh : design.en, show, grade, cardNo, role, insert, burst, moments, legends, facts, label,
+    finishLabel: nameZh, details,
     rookie, level, stats, rating: {ovr, attrs, real}, back,
     seed: hash(`${team.id} ${seed}`),
   };
@@ -2661,6 +2672,93 @@ function gem(ctx, cx, cy, r, colour) {
 // Each draws the front in L.front, with the photo in L.area.
 
 const fronts = {
+  // An engraved folio: a wanted poster for pirates, a gilt spellbook for wizards.
+  archive(ctx, team, text, L, info, words) {
+    const {front: F, area} = L;
+    const u = F.w / 20;
+    const {paper, ink, border, heading} = ARCHIVE_CARDS[team.group];
+    const mid = F.x + F.w / 2;
+    const frame = u * .74;
+    const top = F.y + frame * 2;
+    const bottom = F.y + F.h - frame * 2;
+    cardBody(ctx, F, u * .7, u, () => {
+      ctx.fillStyle = paper;
+      ctx.fillRect(F.x, F.y, F.w, F.h);
+      ctx.save();
+      ctx.globalAlpha = .24;
+      foilFill(ctx, team, info, F.x, F.y, F.w, F.h, 41);
+      ctx.globalAlpha = .20;
+      guilloche(ctx, F.x, F.y, F.w, F.h, u * 1.4, border);
+      ctx.restore();
+      ctx.strokeStyle = border;
+      for (const inset of [frame, frame * 1.30]) {
+        ctx.lineWidth = u * (inset === frame ? .12 : .047);
+        roundRect(ctx, F.x + inset, F.y + inset, F.w - inset * 2, F.h - inset * 2, u * .33);
+        ctx.stroke();
+      }
+      for (const x of [F.x + frame, F.x + F.w - frame]) {
+        star(ctx, x, top, u * .42, ink);
+        star(ctx, x, bottom, u * .42, ink);
+      }
+    });
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = ink;
+    fit(ctx, heading, area.w - u, 800, u * 2.32, 'Georgia, serif', u * .14);
+    ctx.fillText(heading, mid, F.y + u * 3.48);
+
+    const portrait = text.sample && text.mark && text.logo && !text.logo.nameBadge ? text.logo : null;
+    if (portrait) {
+      ctx.save();
+      roundRect(ctx, area.x, area.y, area.w, area.h, u * .26);
+      ctx.clip();
+      if (portrait.photoStill) {
+        const {sx, sy, sw, sh} = crop(portrait, area, .5, .44);
+        ctx.drawImage(portrait, sx, sy, sw, sh, area.x, area.y, area.w, area.h);
+      } else {
+        const glow = ctx.createLinearGradient(area.x, area.y, area.x + area.w, area.y + area.h);
+        glow.addColorStop(0, mix(paper, team.accent, .38));
+        glow.addColorStop(1, mix(paper, team.c1, .63));
+        ctx.fillStyle = glow;
+        ctx.fillRect(area.x, area.y, area.w, area.h);
+        guilloche(ctx, area.x, area.y, area.w, area.h, u * 1.2, 'rgba(246,231,199,.23)');
+        const scale = Math.min(area.w * .9 / portrait.width, area.h * .89 / portrait.height);
+        const w = portrait.width * scale;
+        const h = portrait.height * scale;
+        ctx.drawImage(portrait, mid - w / 2, area.y + (area.h - h) / 2, w, h);
+      }
+      foilOnPhoto(ctx, team, info, area, .26);
+      ctx.restore();
+    } else {
+      photo(ctx, team, info, text, area, u, u * .26, 'tl');
+    }
+    ctx.strokeStyle = border;
+    ctx.lineWidth = u * .16;
+    roundRect(ctx, area.x, area.y, area.w, area.h, u * .26);
+    ctx.stroke();
+    const photoBottom = area.y + area.h;
+    if (info.mem) {
+      const pw = u * 4.4;
+      const ph = u * 3.45;
+      relic(ctx, team, info, area.x + area.w - pw - u * .35, photoBottom - ph - u * .4, pw, ph, u, text, words);
+    }
+    autograph(ctx, info, text, words, area.x + u * .8, photoBottom - u * 1.85, area.w * (info.mem ? .57 : .78), u);
+    serialStamp(ctx, info, area.x + area.w - u * .35, area.y + u * .36, u * .78, words, 'right');
+
+    ctx.fillStyle = ink;
+    ctx.textAlign = 'center';
+    const name = text.customName || team.name;
+    fit(ctx, name, area.w - u * .5, 900, u * 1.70, SANS, u * .025);
+    ctx.fillText(name, mid, photoBottom + u * 2.46);
+    const bounty = (team.facts || []).find(([label]) => label === 'BOUNTY');
+    const credit = bounty ? bounty[1] : team.variant || (text.customName ? team.short : info.role);
+    fit(ctx, credit, area.w - u * 2, 800, u * .70, SANS, u * .08);
+    ctx.fillText(credit, mid, photoBottom + u * 3.69);
+    const catalog = `HOT · ${seasonYear(text)} · ${String(info.cardNo).padStart(3, '0')}`;
+    fit(ctx, catalog, area.w - u * 2, 800, u * .49, SANS, u * .08);
+    ctx.fillText(catalog, mid, bottom - u * .24);
+  },
+
   // Chrome: the foil as a frame round the photo, a slanted nameplate.
   chrome(ctx, team, text, L, info, words, rand) {
     const F = L.front;
@@ -3793,6 +3891,7 @@ function frontArea(L, design) {
   const F = L.front;
   const u = F.w / 20;
   const b = L.b;
+  if (design === 'archive') return {x: F.x + u * 1.8, y: F.y + u * 4.28, w: F.w - u * 3.6, h: F.h - u * 10.1};
   if (design === 'full') return {x: F.x, y: F.y, w: F.w, h: F.h};
   if (design === 'skyline') return {x: F.x + b, y: F.y + b, w: F.w - b * 2, h: F.h * .7};
   if (design === 'comic') return {x: F.x + u * 2, y: F.y + u * 3.2, w: F.w - u * 4, h: F.h * .62};
@@ -4889,6 +4988,7 @@ function holder(ctx, F, paintCard) {
 function card(ctx, team, text, L) {
   const {W, H} = L;
   const info = cardInfo(team, text.seed);
+  if (info.design === 'archive' && !text.customName) text = {...text, name: team.name};
   // The photo window moves with the design; app.js reads it back for dragging.
   L.area = frontArea(L, info.design);
   const words = cardWords(team);
@@ -4949,6 +5049,7 @@ export function paint(canvas, source, team, style, text, L, look = {}) {
   const words = Object.assign({season: seasonText(team)}, text, {
     logo: look.logo || null,
     mark: look.mark !== false,
+    sample: Boolean(look.sample),
     drawPhoto(area) {
       if (!source) {
         ctx.fillStyle = '#2a2622';
