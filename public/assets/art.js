@@ -93,6 +93,17 @@ function star(ctx, x, y, r, colour, points = 5, inner = .42) {
   ctx.fill();
 }
 
+// A colour between two hex colours (t = 0 is a, 1 is b), and a hex colour with alpha.
+function mixHex(a, b, t) {
+  const p = c => [1, 3, 5].map(k => parseInt(c.slice(k, k + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return `rgb(${x.map((v, k) => Math.round(v + (y[k] - v) * t)).join(',')})`;
+}
+function hexA(c, a) {
+  const [r, g, b] = [1, 3, 5].map(k => parseInt(c.slice(k, k + 2), 16));
+  return `rgba(${r},${g},${b},${a})`;
+}
+
 function line(ctx, colour, width, points) {
   ctx.beginPath();
   ctx.moveTo(points[0], points[1]);
@@ -714,6 +725,128 @@ export const motifs = {
       circle(ctx, x, 80, 3.5, fg);
     }
     line(ctx, fg, 3, [90, 62, 99, 72]);
+  },
+  pokeball(ctx, fg, bg) {
+    // A Poké Ball: red top, white foot, the black band and button.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(50, 50, 44, 0, TAU);
+    ctx.clip();
+    ctx.fillStyle = '#e3350d';
+    ctx.fillRect(0, 0, 100, 50);
+    ctx.fillStyle = '#f4f4f4';
+    ctx.fillRect(0, 50, 100, 50);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 45, 100, 10);
+    ctx.restore();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.arc(50, 50, 44, 0, TAU);
+    ctx.stroke();
+    circle(ctx, 50, 50, 15, '#1a1a1a');
+    circle(ctx, 50, 50, 9, '#f4f4f4');
+  },
+  colortimer(ctx, fg, bg) {
+    // The Color Timer on an Ultra hero's chest: a glowing blue lens in a silver ring.
+    circle(ctx, 50, 50, 46, '#c9d2dc');
+    circle(ctx, 50, 50, 38, '#7d8a96');
+    const g = ctx.createRadialGradient(42, 40, 2, 50, 50, 34);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(.35, '#8fe7ff');
+    g.addColorStop(1, '#1366d6');
+    circle(ctx, 50, 50, 33, g);
+    fillPath(ctx, 'M34 30 C40 24 52 22 60 26 C50 26 40 30 36 38Z', 'rgba(255,255,255,.8)');
+  },
+  dragonball(ctx, fg, bg) {
+    // The four-star Dragon Ball.
+    const g = ctx.createRadialGradient(38, 34, 4, 50, 50, 46);
+    g.addColorStop(0, '#fff3c2');
+    g.addColorStop(.45, '#ffb020');
+    g.addColorStop(1, '#e06a00');
+    circle(ctx, 50, 50, 45, g);
+    for (const [x, y] of [[40, 40], [60, 40], [40, 60], [60, 60]]) star(ctx, x, y, 9, '#e3241b', 5, .45);
+    fillPath(ctx, 'M24 30 C30 18 44 12 56 13 C44 18 34 24 28 36Z', 'rgba(255,255,255,.75)');
+  },
+  jollyroger(ctx, fg, bg) {
+    // The Straw Hat Pirates' flag: a skull in a straw hat over crossed bones.
+    line(ctx, fg, 9, [18, 78, 82, 30]);
+    line(ctx, fg, 9, [18, 30, 82, 78]);
+    for (const [x, y] of [[14, 80], [14, 28], [86, 80], [86, 28]]) circle(ctx, x, y, 6, fg);
+    fillPath(ctx, 'M50 30 C68 30 76 42 76 54 C76 64 70 70 64 72 V80 H36 V72 C30 70 24 64 24 54 C24 42 32 30 50 30Z', fg);
+    circle(ctx, 40, 56, 7, bg);
+    circle(ctx, 60, 56, 7, bg);
+    fillPath(ctx, 'M50 62 L45 70 H55Z', bg);
+    fillPath(ctx, 'M14 40 C20 34 30 32 34 32 C34 16 42 8 50 8 C58 8 66 16 66 32 C70 32 80 34 86 40 C74 44 26 44 14 40Z', '#f2c94c');
+    ctx.fillStyle = '#d0312d';
+    ctx.fillRect(34, 26, 32, 6);
+  },
+  konoha(ctx, fg) {
+    // The Hidden Leaf's mark: a spiral with a leaf tip, as on the forehead protector.
+    ctx.strokeStyle = fg;
+    ctx.lineWidth = 7;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let t = 0; t <= 3.6 * Math.PI; t += .1) {
+      const r = 3 + t * 3.1;
+      ctx.lineTo(50 + Math.cos(t) * r, 54 + Math.sin(t) * r);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(18, 50);
+    ctx.quadraticCurveTo(8, 28, 30, 8);
+    ctx.quadraticCurveTo(34, 26, 34, 34);
+    ctx.stroke();
+  },
+  millennium(ctx, fg) {
+    // The Millennium Puzzle's eye inside its inverted pyramid.
+    fillPath(ctx, 'M6 10 H94 L50 94Z', fg);
+    fillPath(ctx, 'M24 30 C34 20 66 20 76 30 C66 40 34 40 24 30Z', '#1a1a1a');
+    circle(ctx, 50, 30, 6, fg);
+    line(ctx, '#1a1a1a', 3, [44, 37, 40, 50, 46, 50]);
+    line(ctx, '#1a1a1a', 3, [56, 37, 64, 52]);
+  },
+  vision(ctx, fg, bg, accent) {
+    // A Vision: a gem set in a gold four-point frame.
+    star(ctx, 50, 50, 48, '#e9c46a', 4, .55);
+    star(ctx, 50, 50, 40, '#b8862b', 4, .55);
+    const g = ctx.createRadialGradient(42, 40, 2, 50, 50, 26);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(.4, accent || fg);
+    g.addColorStop(1, bg);
+    circle(ctx, 50, 50, 22, g);
+  },
+  snake(ctx, fg, bg) {
+    // Slytherin's serpent, coiled into an S.
+    ctx.strokeStyle = fg;
+    ctx.lineWidth = 12;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(30, 88);
+    ctx.bezierCurveTo(80, 88, 82, 56, 52, 52);
+    ctx.bezierCurveTo(22, 48, 20, 16, 64, 16);
+    ctx.stroke();
+    fillPath(ctx, 'M60 6 C74 6 84 12 84 18 C84 24 74 28 62 26Z', fg);
+    circle(ctx, 72, 15, 2.6, bg);
+    line(ctx, '#d0312d', 2.4, [84, 18, 94, 16, 98, 12]);
+    line(ctx, '#d0312d', 2.4, [94, 16, 98, 20]);
+  },
+  eagle(ctx, fg, bg) {
+    // Ravenclaw's eagle, wings spread.
+    fillPath(ctx, 'M50 30 C40 20 22 18 4 26 C16 30 22 36 26 44 C18 44 12 48 8 54 C22 52 34 54 42 60 L50 92 L58 60 C66 54 78 52 92 54 C88 48 82 44 74 44 C78 36 84 30 96 26 C78 18 60 20 50 30Z', fg);
+    fillPath(ctx, 'M44 18 C44 10 56 10 56 18 C56 24 52 28 50 30 C48 28 44 24 44 18Z', fg);
+    fillPath(ctx, 'M54 16 L62 20 L55 22Z', '#e9b949');
+    circle(ctx, 51, 16, 1.8, bg);
+  },
+  badger(ctx, fg, bg) {
+    // Hufflepuff's badger: a white blaze down a dark head.
+    fillPath(ctx, 'M50 12 C78 12 92 40 90 62 C88 82 70 92 50 92 C30 92 12 82 10 62 C8 40 22 12 50 12Z', '#1a1a1a');
+    fillPath(ctx, 'M50 14 C58 30 60 60 56 92 H44 C40 60 42 30 50 14Z', '#f4f4f4');
+    fillPath(ctx, 'M18 40 C26 52 30 62 30 72 C22 66 16 56 18 40Z M82 40 C74 52 70 62 70 72 C78 66 84 56 82 40Z', '#f4f4f4');
+    circle(ctx, 36, 54, 3.4, fg);
+    circle(ctx, 64, 54, 3.4, fg);
+    circle(ctx, 50, 84, 5, '#1a1a1a');
+    fillPath(ctx, 'M14 26 L22 10 L30 22Z M86 26 L78 10 L70 22Z', '#1a1a1a');
   },
   lionhead(ctx, fg, bg) {
     // Roar-ee: a lion's head inside a spiked mane.
@@ -1339,6 +1472,227 @@ export function venue(ctx, team, w, h) {
     ctx.arc(w / 2, h / 2, Math.min(w, h) * .14, 0, TAU);
     ctx.stroke();
     ctx.restore();
+  } else if (kind === 'cosmos' || kind === 'hall' || kind === 'teyvat') {
+    // Space for the Ultra heroes (the Land of Light glowing below), the Great Hall's
+    // enchanted ceiling with floating candles, or Teyvat's night sky with its
+    // constellations.
+    const dark = mixHex(team.c1, '#03030c', .78);
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#03030c');
+    g.addColorStop(.55, dark);
+    g.addColorStop(1, mixHex(team.c1, '#03030c', kind === 'hall' ? .7 : .45));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    // Nebulae in the team's colours.
+    for (const [x, y, r, c, a] of [[.2, .3, .5, team.c1, .35], [.8, .55, .45, team.c2, .22], [.5, .85, .6, team.accent || team.c3, .18]]) {
+      const n = ctx.createRadialGradient(w * x, h * y, 0, w * x, h * y, Math.max(w, h) * r);
+      n.addColorStop(0, hexA(c, a));
+      n.addColorStop(1, hexA(c, 0));
+      ctx.fillStyle = n;
+      ctx.fillRect(0, 0, w, h);
+    }
+    // Stars, the same every time.
+    for (let k = 0; k < 160; k++) {
+      const x = (k * 73.13 % 100) / 100 * w;
+      const y = (k * 41.71 % 100) / 100 * h;
+      const r = Math.max(.6, u * (.12 + (k % 7) * .05));
+      circle(ctx, x, y, r, `rgba(255,255,255,${.35 + (k % 5) * .13})`);
+    }
+    if (kind === 'cosmos') {
+      // The planet's rim of light at the foot.
+      const R = Math.max(w, h) * 1.4;
+      const rim = ctx.createRadialGradient(w / 2, h + R * .86, R * .9, w / 2, h + R * .86, R);
+      rim.addColorStop(0, hexA(team.c2, .0));
+      rim.addColorStop(.85, hexA(team.accent || team.c2, .55));
+      rim.addColorStop(1, hexA('#ffffff', 0));
+      ctx.fillStyle = rim;
+      ctx.fillRect(0, 0, w, h);
+      star(ctx, w * .82, h * .18, u * 3, 'rgba(255,255,255,.9)', 4, .18);
+    } else if (kind === 'hall') {
+      for (let k = 0; k < 18; k++) {
+        const x = ((k * 37 + 11) % 100) / 100 * w;
+        const y = ((k * 59 + 7) % 70) / 100 * h + u * 4;
+        const s = u * (1.1 + (k % 3) * .35);
+        const glow = ctx.createRadialGradient(x, y - s * 1.6, 0, x, y - s * 1.6, s * 5);
+        glow.addColorStop(0, 'rgba(255,214,120,.55)');
+        glow.addColorStop(1, 'rgba(255,214,120,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(x - s * 5, y - s * 6.6, s * 10, s * 10);
+        ctx.fillStyle = '#f3ead2';
+        ctx.fillRect(x - s * .45, y - s * .6, s * .9, s * 3.4);
+        ctx.fillStyle = '#ffcf5a';
+        ctx.beginPath();
+        ctx.ellipse(x, y - s * 1.3, s * .4, s * .8, 0, 0, TAU);
+        ctx.fill();
+      }
+    } else {
+      // A constellation: stars joined by fine golden lines round a ring.
+      ctx.strokeStyle = 'rgba(240,215,150,.5)';
+      ctx.lineWidth = Math.max(1, u * .2);
+      const cx = w / 2;
+      const cy = h * .42;
+      const R = Math.min(w, h) * .34;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, TAU);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * 1.08, 0, TAU);
+      ctx.stroke();
+      const pts = [[-.6, -.2], [-.25, -.55], [.15, -.3], [.55, -.5], [.4, .1], [-.05, .35], [-.45, .25]];
+      ctx.beginPath();
+      pts.forEach(([x, y], k) => (k ? ctx.lineTo : ctx.moveTo).call(ctx, cx + x * R, cy + y * R));
+      ctx.stroke();
+      for (const [x, y] of pts) star(ctx, cx + x * R, cy + y * R, u * 1.6, '#fff4cf', 4, .25);
+    }
+  } else if (kind === 'battle') {
+    // A battle field: mown grass, the halfway line and a Poké Ball at the centre.
+    const band = Math.max(u * 11, 28);
+    for (let y = 0, k = 0; y < h; y += band, k++) {
+      ctx.fillStyle = k % 2 ? '#5fb043' : '#6cbd4e';
+      ctx.fillRect(0, y, w, band);
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.9)';
+    ctx.lineWidth = Math.max(2, u * .8);
+    const m = u * 6;
+    ctx.strokeRect(m, m, w - m * 2, h - m * 2);
+    ctx.beginPath();
+    ctx.moveTo(m, h / 2);
+    ctx.lineTo(w - m, h / 2);
+    ctx.stroke();
+    const r = Math.min(w, h) * .2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, r, 0, TAU);
+    ctx.clip();
+    ctx.fillStyle = '#e3350d';
+    ctx.fillRect(w / 2 - r, h / 2 - r, r * 2, r);
+    ctx.fillStyle = '#f4f4f4';
+    ctx.fillRect(w / 2 - r, h / 2, r * 2, r);
+    ctx.restore();
+    ctx.lineWidth = Math.max(3, r * .1);
+    ctx.strokeStyle = '#222222';
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, r, 0, TAU);
+    ctx.moveTo(w / 2 - r, h / 2);
+    ctx.lineTo(w / 2 + r, h / 2);
+    ctx.stroke();
+    circle(ctx, w / 2, h / 2, r * .3, '#222222');
+    circle(ctx, w / 2, h / 2, r * .2, '#f4f4f4');
+  } else if (kind === 'duel') {
+    // A duel field: a dark mat, glowing card zones and a hexagon grid.
+    ctx.fillStyle = '#0b0614';
+    ctx.fillRect(0, 0, w, h);
+    const s = Math.max(u * 6, 16);
+    ctx.strokeStyle = hexA(team.accent || team.c2, .14);
+    ctx.lineWidth = 1;
+    for (let y = 0, row = 0; y < h + s; y += s * .87, row++) {
+      for (let x = (row % 2) * s * .75; x < w + s; x += s * 1.5) {
+        ctx.beginPath();
+        for (let k = 0; k < 6; k++) ctx.lineTo(x + Math.cos(k * Math.PI / 3) * s / 2, y + Math.sin(k * Math.PI / 3) * s / 2);
+        ctx.closePath();
+        ctx.stroke();
+      }
+    }
+    const zw = Math.min(w / 6.4, u * 16);
+    const zh = zw * 1.45;
+    ctx.lineWidth = Math.max(2, u * .5);
+    for (const row of [h * .2, h * .8 - zh]) {
+      for (let k = 0; k < 5; k++) {
+        const x = w / 2 + (k - 2.5) * zw * 1.18 + zw * .09;
+        ctx.fillStyle = hexA(team.c1, .25);
+        ctx.fillRect(x, row, zw, zh);
+        ctx.strokeStyle = hexA(team.accent || '#ffd36b', .75);
+        ctx.strokeRect(x, row, zw, zh);
+      }
+    }
+    const glow = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * .5);
+    glow.addColorStop(0, hexA(team.c1, .45));
+    glow.addColorStop(1, hexA(team.c1, 0));
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+  } else if (kind === 'arena') {
+    // A stone ring: square tiles with worn grout, like a tournament stage.
+    ctx.fillStyle = '#c9c2b2';
+    ctx.fillRect(0, 0, w, h);
+    const t = Math.max(u * 12, 30);
+    for (let y = 0; y < h; y += t) {
+      for (let x = 0; x < w; x += t) {
+        const n = (Math.floor(x * 7 + y * 13) & 255) / 255;
+        ctx.fillStyle = `hsl(42, ${8 + n * 8}%, ${70 + n * 10}%)`;
+        ctx.fillRect(x + 1.5, y + 1.5, t - 3, t - 3);
+      }
+    }
+    ctx.fillStyle = hexA(team.c1, .85);
+    const edge = Math.max(u * 3, 8);
+    ctx.fillRect(0, 0, w, edge);
+    ctx.fillRect(0, h - edge, w, edge);
+  } else if (kind === 'ocean') {
+    // The open sea: deep blue, swell lines and a compass rose.
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#0a5c9e');
+    g.addColorStop(1, '#063a66');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(255,255,255,.16)';
+    ctx.lineWidth = Math.max(1.5, u * .5);
+    for (let y = u * 4, k = 0; y < h; y += u * 7, k++) {
+      ctx.beginPath();
+      for (let x = -u * 8 + (k % 2) * u * 6; x < w + u * 8; x += u * 12) {
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + u * 3, y - u * 2.2, x + u * 6, y);
+      }
+      ctx.stroke();
+    }
+    const R = Math.min(w, h) * .2;
+    ctx.save();
+    ctx.translate(w / 2, h / 2);
+    ctx.strokeStyle = 'rgba(255,240,200,.45)';
+    ctx.lineWidth = Math.max(1.5, u * .4);
+    ctx.beginPath();
+    ctx.arc(0, 0, R, 0, TAU);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,240,200,.4)';
+    for (let k = 0; k < 8; k++) {
+      ctx.rotate(Math.PI / 4);
+      ctx.beginPath();
+      ctx.moveTo(0, -R * (k % 2 ? .7 : 1.15));
+      ctx.lineTo(R * .1, 0);
+      ctx.lineTo(-R * .1, 0);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  } else if (kind === 'canyon') {
+    // The canyon map: jungle green, a river across, and the lanes from base to base.
+    ctx.fillStyle = '#1f3b2a';
+    ctx.fillRect(0, 0, w, h);
+    for (let k = 0; k < 70; k++) {
+      const x = (k * 61.7 % 100) / 100 * w;
+      const y = (k * 37.3 % 100) / 100 * h;
+      ctx.fillStyle = k % 2 ? 'rgba(60,110,70,.5)' : 'rgba(20,45,30,.6)';
+      ctx.beginPath();
+      ctx.ellipse(x, y, u * 5, u * 3.5, k, 0, TAU);
+      ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(70,160,220,.55)';
+    ctx.lineWidth = Math.max(8, u * 5);
+    ctx.beginPath();
+    ctx.moveTo(0, h * .15);
+    ctx.bezierCurveTo(w * .4, h * .35, w * .6, h * .65, w, h * .85);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(214,190,140,.7)';
+    ctx.lineWidth = Math.max(5, u * 3);
+    const a = [w * .12, h * .88];
+    const b = [w * .88, h * .12];
+    ctx.beginPath();
+    ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+    ctx.moveTo(a[0], a[1]); ctx.lineTo(a[0], b[1]); ctx.lineTo(b[0], b[1]);
+    ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], a[1]); ctx.lineTo(b[0], b[1]);
+    ctx.stroke();
+    circle(ctx, a[0], a[1], u * 6, '#2f7be0');
+    circle(ctx, b[0], b[1], u * 6, '#d8383a');
+    circle(ctx, a[0], a[1], u * 3, '#bfe0ff');
+    circle(ctx, b[0], b[1], u * 3, '#ffc2c2');
   } else if (kind === 'gridiron') {
     ctx.fillStyle = '#2e7a34';
     ctx.fillRect(0, 0, w, h);

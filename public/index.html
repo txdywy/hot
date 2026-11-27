@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; font-src 'self'; img-src 'self' blob: data: https://www.googletagmanager.com https://*.google-analytics.com; connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://*.google.com">
-  <script defer src="./assets/analytics.js?v=16"></script>
+  <script defer src="./assets/analytics.js?v=17"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d0c0b">
   <meta name="color-scheme" content="dark">
@@ -16,15 +16,15 @@
   <link rel="apple-touch-icon" href="./assets/icon-180.png">
   <link rel="preload" href="./assets/fonts/anton.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="./assets/fonts/graduate.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="./assets/style.css?v=16">
-  <link rel="modulepreload" href="./assets/teams.js?v=16">
-  <link rel="modulepreload" href="./assets/render.js?v=16">
-  <link rel="modulepreload" href="./assets/art.js?v=16">
-  <link rel="modulepreload" href="./assets/photo-date.js?v=16">
-  <link rel="modulepreload" href="./assets/dialog.js?v=16">
-  <link rel="modulepreload" href="./assets/foil.js?v=16">
-  <script src="./assets/old.js?v=16"></script>
-  <script type="module" src="./assets/app.js?v=16"></script>
+  <link rel="stylesheet" href="./assets/style.css?v=17">
+  <link rel="modulepreload" href="./assets/teams.js?v=17">
+  <link rel="modulepreload" href="./assets/render.js?v=17">
+  <link rel="modulepreload" href="./assets/art.js?v=17">
+  <link rel="modulepreload" href="./assets/photo-date.js?v=17">
+  <link rel="modulepreload" href="./assets/dialog.js?v=17">
+  <link rel="modulepreload" href="./assets/foil.js?v=17">
+  <script src="./assets/old.js?v=17"></script>
+  <script type="module" src="./assets/app.js?v=17"></script>
 </head>
 <body>
   <svg class="sprite" aria-hidden="true" focusable="false">
@@ -75,14 +75,14 @@
 
     <section class="panel" id="editor" aria-label="设计你的相框">
       <div class="hero">
-        <p class="kicker">NBA · CBA · NCAA · CAMPUS · EUROPE · CSL</p>
+        <p class="kicker">NBA · CBA · NCAA · EUROPE · CSL · 奥特曼 · 宝可梦 · 王者荣耀</p>
         <h1>你的主队，<em>印在照片上</em></h1>
         <p>选主队配色，挑一种款式，写上你的名字和号码。照片只在你的手机里处理，不上传。</p>
       </div>
 
       <section class="step" aria-labelledby="step-team">
-        <h2 class="label" id="step-team"><span>01</span> 选主队</h2>
-        <div class="groups" id="groups" role="group" aria-label="分组"></div>
+        <h2 class="label" id="step-team"><span>01</span> 选主队或角色</h2>
+        <div class="group-rows" id="groups"></div>
         <div class="teams" id="teams" role="group" aria-label="主队"></div>
         <article class="dossier" id="dossier" aria-label="主队档案"></article>
       </section>
@@ -127,7 +127,7 @@
         <label class="toggle">
           <input type="checkbox" id="mark">
           <span class="switch" aria-hidden="true"></span>
-          <span class="toggle-text">照片上加队徽 <small>队徽贴纸和水印</small></span>
+          <span class="toggle-text" id="mark-text">照片上加队徽 <small>队徽贴纸和水印</small></span>
         </label>
       </section>
     </section>
@@ -188,7 +188,7 @@
       <h2 id="help-title">怎么用</h2>
       <ol class="how">
         <li><b>选照片</b>：点下面的「选一张照片」，从相册挑一张。照片只在这台设备上处理，不会上传。</li>
-        <li><b>选主队和款式</b>：点一支球队或一所学校，再选球衣、球票、徽章或球星卡。球星卡每次随机抽出稀有度、编号和背面的队史，点「再抽一张」换一张。</li>
+        <li><b>选主队和款式</b>：点一支球队、一所学校或一个动漫游戏角色，再选球衣、球票、徽章或球星卡。球星卡每次随机抽出稀有度、编号和背面的队史，点「再抽一张」换一张。</li>
         <li><b>印上你的字</b>：写名字、号码和口号，可以加上拍照日期。</li>
         <li id="help-save"><b>保存</b>：点「做好照片」，再按提示存进相册。</li>
       </ol>
