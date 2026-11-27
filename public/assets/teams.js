@@ -5435,6 +5435,47 @@ export const teams = [
   // ---- /动漫、卡牌和游戏 ----
 ];
 
+// Keep alternate looks next to the original character, sharing the same dossier
+// and frame defaults. Each look has its own ID for selection and restoration.
+for (const id of ['chiikawa', 'hachiware', 'usagi']) {
+  const index = teams.findIndex(team => team.id === id);
+  const original = teams[index];
+  teams.splice(index + 1, 0,
+    {...original, id: id + '-anime', variant: '动画版'},
+    {...original, id: id + '-island', variant: '人鱼岛'});
+}
+
+const strawHats = [
+  {id: 'usopp', name: 'Usopp', short: 'USOPP', cn: '乌索普', nick: 'God Usopp', city: 'SYRUP VILLAGE', role: 'SNIPER', est: 1998, c1: '#73451b', accent: '#f1bb60', story: '草帽团狙击手，梦想成为勇敢的海上战士。'},
+  {id: 'chopper', name: 'Tony Tony Chopper', short: 'CHOPPER', cn: '托尼托尼·乔巴', nick: 'Cotton Candy Lover', city: 'DRUM ISLAND', role: 'DOCTOR', est: 2000, c1: '#ae3265', accent: '#ffd0e2', story: '吃下人人果实的驯鹿，也是草帽团的船医。'},
+  {id: 'robin', name: 'Nico Robin', short: 'ROBIN', cn: '妮可·罗宾', nick: 'Devil Child', city: 'OHARA', role: 'ARCHAEOLOGIST', est: 1999, c1: '#553477', accent: '#dfbcff', story: '草帽团考古学家，能够解读历史正文。'},
+  {id: 'franky', name: 'Franky', short: 'FRANKY', cn: '弗兰奇', nick: 'Cyborg', city: 'WATER SEVEN', role: 'SHIPWRIGHT', est: 2004, c1: '#145f85', accent: '#98e9ff', story: '改造人船匠，造出了千阳号。'},
+  {id: 'brook', name: 'Brook', short: 'BROOK', cn: '布鲁克', nick: 'Soul King', city: 'WEST BLUE', role: 'MUSICIAN', est: 2007, c1: '#51416e', accent: '#e1c4fc', story: '草帽团音乐家，带着与拉布重逢的约定踏上旅途。'},
+  {id: 'jinbe', name: 'Jinbe', short: 'JINBE', cn: '甚平', nick: 'Knight of the Sea', city: 'FISH-MAN ISLAND', role: 'HELMSMAN', est: 2009, c1: '#194f82', accent: '#a9d9ff', story: '擅长鱼人空手道的鲸鲨鱼人，也是草帽团的舵手。'},
+];
+
+const shinobi = [
+  {id: 'neji', name: 'Neji Hyuga', short: 'NEJI', cn: '日向宁次', nick: 'Hyuga Prodigy', role: 'TEAM GUY', est: 2000, c1: '#56556e', accent: '#e6e0ff', story: '日向一族的忍者，以白眼和柔拳闻名。'},
+  {id: 'orochimaru', name: 'Orochimaru', short: 'OROCHIMARU', cn: '大蛇丸', nick: 'Legendary Sannin', role: 'LEGENDARY SANNIN', est: 2000, c1: '#4c345e', accent: '#e4c461', story: '木叶传说中的三忍之一，执着于探索禁术。'},
+  {id: 'sai', name: 'Sai', short: 'SAI', cn: '佐井', nick: 'Ink Artist', role: 'TEAM KAKASHI', est: 2005, c1: '#334358', accent: '#c8dcf1', story: '擅长用超兽伪画把墨画化成实体。'},
+  {id: 'guy', name: 'Might Guy', short: 'GUY', cn: '迈特凯', nick: 'Blue Beast', role: 'TEAM GUY', est: 2000, c1: '#28633b', accent: '#beed86', story: '洛克·李的老师，擅长体术和八门遁甲。'},
+];
+
+for (const [group, roster, last, home, homeNick, motif, floor] of [
+  ['onepiece', strawHats, 'ace', 'THOUSAND SUNNY', 'STRAW HAT PIRATES', 'jollyroger', 'ocean'],
+  ['naruto', shinobi, 'tsunade', 'HIDDEN LEAF', 'KONOHAGAKURE', 'konoha', 'arena'],
+]) {
+  const index = teams.findIndex(team => team.id === last);
+  const additions = roster.map(character => ({
+    ...character, group, city: character.city || home, home, homeNick,
+    letter: character.short[0], c2: '#232235', c3: character.accent, ink: '#ffffff',
+    number: '01', slogan: group === 'onepiece' ? 'STRAW HAT PIRATES' : 'WILL OF FIRE',
+    motif, floor, kit: 'tone', collar: 'crew', season: 'year',
+    titles: {label: character.role},
+  }));
+  teams.splice(index + 1, 0, ...additions);
+}
+
 export const styles = [
   ['jersey', '球衣', '背后印上你的名字和号码'],
   ['ticket', '球票', '一张写着日期的入场券'],
@@ -5568,6 +5609,40 @@ export const logos = {
   akagi: "characters/slamdunk/akagi.jpg",
   mitsui: "characters/slamdunk/mitsui.jpg",
   miyagi: "characters/slamdunk/miyagi.jpg",
+  // Additional animation and manga character art.
+  "chiikawa-anime": "characters/chiikawa/chiikawa-anime.png",
+  "chiikawa-island": "characters/chiikawa/chiikawa-island.png",
+  "hachiware-anime": "characters/chiikawa/hachiware-anime.png",
+  "hachiware-island": "characters/chiikawa/hachiware-island.png",
+  "usagi-anime": "characters/chiikawa/usagi-anime.png",
+  "usagi-island": "characters/chiikawa/usagi-island.png",
+  oozora: "characters/tsubasa/oozora.png",
+  misaki: "characters/tsubasa/misaki.png",
+  wakabayashi: "characters/tsubasa/wakabayashi.png",
+  hyuga: "characters/tsubasa/hyuga.png",
+  misugi: "characters/tsubasa/misugi.png",
+  matsuyama: "characters/tsubasa/matsuyama.png",
+  wakashimazu: "characters/tsubasa/wakashimazu.png",
+  ishizaki: "characters/tsubasa/ishizaki.png",
+  roberto: "characters/tsubasa/roberto.png",
+  schneider: "characters/tsubasa/schneider.png",
+  neji: "characters/naruto/neji.png",
+  orochimaru: "characters/naruto/orochimaru.png",
+  sai: "characters/naruto/sai.png",
+  guy: "characters/naruto/guy.png",
+  jiraiya: "characters/naruto/jiraiya.jpg",
+  kogure: "characters/slamdunk/kogure.jpg",
+  haruko: "characters/slamdunk/haruko.jpg",
+  anzai: "characters/slamdunk/anzai.jpg",
+  sendoh: "characters/slamdunk/sendoh.jpg",
+  maki: "characters/slamdunk/maki.jpg",
+  sawakita: "characters/slamdunk/sawakita.jpg",
+  usopp: "characters/onepiece/usopp.jpg",
+  chopper: "characters/onepiece/chopper.jpg",
+  robin: "characters/onepiece/robin.jpg",
+  franky: "characters/onepiece/franky.jpg",
+  brook: "characters/onepiece/brook.jpg",
+  jinbe: "characters/onepiece/jinbe.jpg",
   // Other play logos
   shohoku: "shohoku.png",
   sannoh: "sannoh.png",
