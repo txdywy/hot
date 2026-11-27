@@ -2,9 +2,9 @@
 // team's colours, its real names, its history (founding year, home, titles,
 // retired numbers, big moments) and its official logo (see logos in teams.js),
 // plus the words typed in. Chinese teams and schools are printed in Chinese.
-import {drawMotif, kit, trim, luminanceOf} from './art.js?v=19';
-import {isZh} from './teams.js?v=19';
-import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=19';
+import {drawMotif, kit, trim, luminanceOf} from './art.js?v=20';
+import {isZh} from './teams.js?v=20';
+import {seeded, foilCanvas, holo, sparkles, shards, mix} from './foil.js?v=20';
 
 const TAU = Math.PI * 2;
 const CJK = '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC"';
@@ -305,6 +305,7 @@ function sticker(ctx, logo, cx, cy, size, m, turn = 0, edge = '#ffffff') {
 
 // The logo in one colour, faint, as a watermark.
 function watermark(ctx, logo, cx, cy, size, colour, alpha, turn = 0) {
+  if (logo.photoStill) return;
   size *= logoBoost > 1 ? 1.25 : 1;
   alpha *= logoBoost > 1 ? 1.4 : 1;
   const art = flat(logo, colour);
@@ -319,6 +320,7 @@ function watermark(ctx, logo, cx, cy, size, colour, alpha, turn = 0) {
 
 // The logo repeated in rows over an area, like a monogram print.
 function monogram(ctx, logo, x, y, w, h, cell, colour, alpha) {
+  if (logo.photoStill) return;
   const art = flat(logo, colour);
   const size = cell * .5;
   const scale = size / Math.max(art.width, art.height);
