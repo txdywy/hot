@@ -479,7 +479,7 @@ const playGroup = id => groups.some(item => item[0] === id && item[3] === 'play'
 
 function drawTeams() {
   const box = $('teams');
-  box.dataset.group = state.group;
+  box.classList.toggle('dragonball-roster', state.group === 'dragonball');
   box.setAttribute('aria-label', playGroup(state.group) ? '角色' : '主队');
   const cards = document.createDocumentFragment();
   for (const team of teams.filter(item => item.group === state.group)) {
